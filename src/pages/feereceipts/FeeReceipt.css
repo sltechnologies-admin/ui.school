@@ -1,0 +1,103 @@
+.receipt-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #f5f5f5;
+    padding: 10px;
+}
+  
+.receipt-box {
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 1000px;
+    width: 100%;
+    border: 1px solid #ccc;
+}
+  
+.receipt-table {
+    width: 100%;
+    border-spacing: 0;                
+    margin-bottom: 10px;
+    font-size: 12px;
+}
+  
+.receipt-table th, .receipt-table td {
+    border: 1px solid #ccc;
+    padding: 6px 8px;
+    line-height: 1.2;
+    text-align: left;
+}
+
+.receipt-table thead th {
+    background: #0d6efd !important;
+    color: #fff; 
+    font-weight: bold;
+    text-align: center;
+    padding: 8px;
+}
+
+.receipt-table thead tr:first-child th:first-child {
+    border-top-left-radius: 8px;
+}
+
+.receipt-table thead tr:first-child th:last-child {
+    border-top-right-radius: 8px;
+}
+
+.receipt-table tfoot td {
+    font-weight: bold;
+    background: #f0f0f0;
+    text-align: right;
+    padding: 6px 8px;
+}
+  
+.title {
+    font-size: 12px;
+    text-align: center;
+    background: #e0f7fa;
+    padding: 10px;
+    font-weight: bold;
+    color: #fff;
+}
+  
+.text-right {
+    text-align: right;
+}
+
+
+.receipt-table td:first-child,
+.receipt-table td:nth-child(3),
+.receipt-table td:nth-child(5) {
+    width: 150px; 
+    white-space: nowrap;
+}
+
+.receipt-table input {
+    width: 100%;
+    border: 1px solid #ccc;
+    padding: 2px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.receipt-table select {
+    width: 100%;
+    padding: 2px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+
+.receipt-table tbody tr {
+    line-height: 1;         
+    padding: 0;        
+}
+
+.receipt-table td, 
+.receipt-table th {
+    padding: 1px 2px;      
+}

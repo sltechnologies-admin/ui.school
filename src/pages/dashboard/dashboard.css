@@ -1,0 +1,207 @@
+ /* Card Titles */
+ .dashboard-card h5 {
+     font-size: 16px;
+     font-weight: 600;
+ }
+
+ /* Card Numbers */
+ .dashboard-card h2 {
+     margin: 0;
+     font-size: 28px;
+     color: #0088FE;
+
+ }
+
+ .dashboard-card1 h1 {
+     margin: 0;
+     font-size: 18px;
+     color: #0088FE;
+ }
+
+
+ /* Responsive Container */
+ .responsive-container {
+     width: 100%;
+     height: 100%;
+ }
+
+ /* Adjust Page Right */
+ .pageRight {
+     padding: 10px;
+ }
+
+ /* Notifications Section */
+ .notifications-section {
+     margin-top: 20px;
+     background: #f8f9fa;
+     border-radius: 10px;
+     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+ }
+
+ /* Header for Notifications */
+ .notifications-section h6 {
+     margin-bottom: 12px;
+     font-size: 14px;
+     font-weight: 600;
+     color: #444;
+     text-align: center;
+     border-bottom: 1px solid #ddd;
+     padding-bottom: 5px;
+     text-transform: uppercase;
+     letter-spacing: 0.5px;
+ }
+
+
+
+
+ /* Individual notification styling */
+ .notification-list li {
+     height: 30px;
+     display: flex;
+     align-items: center;
+     font-size: 13px;
+     color: #333;
+     position: relative;
+     padding-left: 25px;
+     white-space: nowrap;
+     overflow: hidden;
+     text-overflow: ellipsis;
+ }
+
+ /* Small icon before each notification */
+ .notification-list li::before {
+     content: '🔔';
+     position: absolute;
+     left: 5px;
+     top: 50%;
+     transform: translateY(-50%);
+     font-size: 14px;
+     opacity: 0.7;
+ }
+
+ /* Optional: add hover effect */
+ .notification-list li:hover {
+     background: #f1f1f1;
+     border-radius: 5px;
+     cursor: pointer;
+ }
+
+ .react-calendar {
+     width: 100%;
+     border: none;
+     font-size: 12px;
+     border-radius: 10px;
+     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+ }
+
+ /* Event List */
+ .event-list {
+     list-style: none;
+     padding: 0;
+     margin: 0;
+     font-size: 14px;
+ }
+
+ .event-list li {
+     background: #f9f9f9;
+     margin-bottom: 8px;
+     border-radius: 8px;
+     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+     transition: all 0.3s ease;
+ }
+
+ .event-list li:hover {
+     background: #e9ecef;
+     cursor: pointer;
+ }
+
+ /* dashboard.css */
+
+ /* Ensure cards are always spaced */
+ .dashboard-card {
+     box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+     border: none;
+     height: 340px;
+ }
+
+
+
+ /* For small devices */
+ @media (max-width: 768px) {
+     .dashboard-card {
+         margin-bottom: 15px;
+     }
+
+     .notifications-container,
+     .event-list {
+         max-height: 200px;
+         overflow-y: auto;
+     }
+
+     .pie-chart-wrapper {
+         overflow-x: auto;
+     }
+
+     .bar-chart-wrapper {
+         height: 250px;
+     }
+ }
+
+ /* Pie and Bar charts wrapping */
+ .pie-chart-wrapper,
+ .bar-chart-wrapper {
+     display: flex;
+     justify-content: center;
+     align-items: center;
+ }
+
+ /* Notification and event lists */
+ .notification-list,
+ .event-list {
+     list-style: none;
+     padding-left: 0;
+     margin: 0;
+ }
+
+ /* Scrollable area fix */
+ .notifications-container,
+ .event-list {
+     max-height: 300px;
+     overflow-y: auto;
+ }
+
+ /* Add breathing space */
+ .mb-3 {
+     margin-bottom: 1rem !important;
+ }
+
+
+ /* dashboard.css */
+
+ /* Whole right side scrollable content */
+ .dashboard-container {
+     height: calc(100vh - 80px);
+     /* Adjust 80px to your header height */
+     overflow-y: auto;
+     padding: 20px;
+     padding-right: 10px;
+     /* Extra space for scrollbar */
+ }
+
+ /* Prevent horizontal scrolling */
+ .dashboard-container::-webkit-scrollbar {
+     width: 8px;
+ }
+
+ .dashboard-container::-webkit-scrollbar-track {
+     background: #f1f1f1;
+ }
+
+ .dashboard-container::-webkit-scrollbar-thumb {
+     background: #888;
+     border-radius: 4px;
+ }
+
+ .dashboard-container::-webkit-scrollbar-thumb:hover {
+     background: #555;
+ }
