@@ -1,0 +1,170 @@
+.leftNav
+{
+    width: 230px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    /* transition: width 0.6s ease-in-out; */
+    background-color: #0d6efd0d;
+
+}
+.leftNav.closeNav
+{
+    width: 86px;
+    overflow: hidden;
+}
+.leftNav.closeNav .toggleNavBtn
+{
+    transform: rotate(180deg);
+}
+.leftNav.closeNav .leftNavIconLabel
+{
+    display: none;
+}
+.leftNav.closeNav .leftNavTopPart
+{
+    height: 70px;
+    padding: 16px 16px 16px;
+    transition: width 0.6s ease-in-out;
+}
+.leftNav.closeNav .collapse.show .nav-link
+{
+    padding-left: 0px;
+}
+.leftNav.closeNav .collapse.show .nav-link.active
+{   
+    padding-left: 16px;
+}
+.leftNav .collapse .leftNavIcon
+{
+    display: none;
+}
+.leftNav .collapse .leftNavIconLabel
+{
+    padding-left: 8px;
+}
+.leftNav.closeNav .collapse .leftNavIcon
+{
+    display: block;
+}
+.leftNav .nav-pills
+{
+    display: flex;
+    height: calc(100% - 60px);
+    overflow-y: scroll;
+    flex-direction: row;
+    padding: 0px 16px
+}
+.leftNav .nav-pills .accordion
+{
+    width: 100%;
+}
+.leftNav .accordion-item
+{
+    background-color: transparent;
+    border: 0px;
+}
+.leftNav .accordion-button
+{
+    background-color: transparent;
+    padding: 16px 0px;
+}
+.leftNav .accordion-button:focus
+{
+    box-shadow: none;
+}
+.leftNav .accordion-body
+{
+    padding: 0px 18px;  
+}
+.leftNavTopPart
+{
+    display: flex;
+    justify-content: space-between;
+    transition: width 0.6s ease-in-out;
+    height: 70px;
+    align-items: center;
+    padding: 0px 16px;
+}
+.navIcon
+{
+    color: var(--navIcon);
+    padding-right: 10px;
+}
+.navLabel
+{
+    color: var(--navLabel);
+}
+.navSubLabel
+{
+    color: var(--navSubLabel) !important; 
+    padding-bottom: 0px;
+    font-size: 14px;
+}
+
+/* new */
+.active-accordion .accordion-header {
+    background-color: #007bff !important;
+    color: white !important;
+    border-radius: 5px;
+}
+
+.active-accordion .accordion-button {
+    background-color: #007bff !important;
+    color: white !important;
+}
+
+.active-accordion .accordion-button:not(.collapsed) {
+    color: white;
+}
+.appLogoIcon
+{
+    display: none;
+}
+.leftNav.closeNav .appLogoIcon
+{
+    display: block;
+}
+.leftNav.closeNav .appLogo
+{
+    display: none;
+}
+.toggleNavBtnPart
+{
+    position: absolute;
+    left: 210px;    
+}
+.leftNav.closeNav .leftNavTopPart .toggleNavBtnPart
+{
+    left: 65px;
+}   
+.toggleNavBtn
+{
+    background-color: var(--whiteColor);
+    border: 1px solid #bbbbbb;
+    padding: 0px;
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    color: #212121;
+    font-size: 18px;    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.leftNavIcon 
+{
+    color: var(--navIcon);
+    padding-right: 10px;
+}
+.leftNavIconLabel
+{
+    color: var(--navLabel);
+    font-size: 13px;
+    font-weight: 500;
+}
+.leftNav .nav-link.active .leftNavIcon,
+.leftNav .nav-link.active .leftNavIconLabel
+{
+    color: var(--whiteColor);
+}

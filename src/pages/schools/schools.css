@@ -1,0 +1,11 @@
+.schoolCard .card-footer
+{
+    background-color: transparent;
+    border-top: 1px dashed #A1A1A1; 
+    padding-top: 16px;
+}
+.schoolCard .addressText
+{
+    color: #757575;
+    font-weight: 500;
+}
