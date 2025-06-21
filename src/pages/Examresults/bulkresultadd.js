@@ -40,13 +40,13 @@ function BulkAddExamResult() {
   const [studentMarks, setStudentMarks] = useState([]);
  
   useEffect(() => {
-    fetchDataRead("/classes", setClasses, userObj.school_id);
-    fetchDataRead("/students", setStudents, userObj.school_id);
-    fetchDataRead("/subjectmaster", setSubjects, userObj.school_id);
-    fetchDataRead("/exammaster", setExams, userObj.school_id);
-    fetchDataRead("/grades", setGrades, userObj.school_id);
-    fetchDataRead("/Sections", setSections, userObj.school_id);
-    fetchDataRead("/AcademicYear", setAcademicYears, userObj.school_id);
+    fetchDataRead("/classes/", setClasses, userObj.school_id);
+    fetchDataRead("/students/", setStudents, userObj.school_id);
+    fetchDataRead("/subjectmaster/", setSubjects, userObj.school_id);
+    fetchDataRead("/exammaster/", setExams, userObj.school_id);
+    fetchDataRead("/grades/", setGrades, userObj.school_id);
+    fetchDataRead("/Sections/", setSections, userObj.school_id);
+    fetchDataRead("/AcademicYear/", setAcademicYears, userObj.school_id);
   }, []);
  
   useEffect(() => {
@@ -289,7 +289,7 @@ function BulkAddExamResult() {
  
         switch (status) {
           case 400:
-            toast.error(errorMessage.includes("Exam schedule not found") ? "Exam schedule not found." : "Invalid request. Please check your input.");
+            toast.error(errorMessage.includes("Exam schedule not found") ? "Exam schedule not found." : "Their is no students for the class and section,please check");
             break;
           case 409:
             toast.error("Record already exists for this student and exam.");

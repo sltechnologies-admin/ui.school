@@ -80,18 +80,22 @@ function Addexam() {
                                         <div className="commonInput">
                                             <Form.Group>
                                                 <Form.Label> Exam Name <span className="requiredStar">*</span></Form.Label>
-                                                <Form.Control required id="exam_name" value={form.exam_name} placeholder="Enter Exam Name"  maxLength={35}
-                                                    onChange={(e) => {const filteredValue = e.target.value.replace(/[^a-zA-Z0-9 ]/g, "");   setForm({ ...form, exam_name: filteredValue });   }} />   
+                                                <Form.Control required id="exam_name" value={form.exam_name} placeholder="Enter Exam Name" maxLength={35}
+                                                    onChange={(e) => {
+                                                        const filteredValue = e.target.value.replace(/[^a-zA-Z0-9 -]/g, ""); // allow a-z, A-Z, 0-9, space, and hyphen
+                                                        setForm({ ...form, exam_name: filteredValue });
+                                                    }}
+                                                />
                                             </Form.Group>
                                         </div>
                                     </Col>
                                 </Row>
                                 <div className="d-flex justify-content-between mt-3">
                                     <div>
-                                        <Button type="button" className='btn btn-info clearBtn' onClick={() => setForm({ exam_name: "", school_id: "" })}>Reset</Button>        
+                                        <Button type="button" className='btn btn-info clearBtn' onClick={() => setForm({ exam_name: "", school_id: "" })}>Reset</Button>
                                     </div>
                                     <div>
-                                        <Button type="button" variant="primary" className='btn-danger secondaryBtn' onClick={() => window.history.back()}> Cancel</Button> 
+                                        <Button type="button" variant="primary" className='btn-danger secondaryBtn' onClick={() => window.history.back()}> Cancel</Button>
                                         <Button type="submit" variant="success" className="btn btn-success primaryBtn">  Submit  </Button>
                                     </div>
                                 </div>

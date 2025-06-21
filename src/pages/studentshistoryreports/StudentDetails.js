@@ -3,14 +3,15 @@ import LeftNav from '../../components/layout/leftNav/leftNav';
 import Header from '../../components/layout/header/header';
 import axios from "axios";
 import { useParams } from "react-router-dom";
-import { Col, Row, Card } from "react-bootstrap";
+import { Col, Row, Card, Modal } from "react-bootstrap";
 import stdimage from "../../assets/images/common/Screenshot.png";
 import { Tooltip } from '@mui/material';
 import DataTable from "react-data-table-component";
 import dayjs from "dayjs";
 import Button from 'react-bootstrap/Button';
 import { fetchDataRead } from "../../Utility";
-
+import loading from "../../assets/images/common/loading.gif";
+import { useLocation, Link } from "react-router-dom";
 const styles = `
   .student-info-card { box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: none; overflow: hidden; margin-bottom: 2rem; }
   .student-info-card .card-body { background: #f9fafb; overflow-y: auto; padding: 1rem; }
@@ -29,8 +30,9 @@ const StudentDetails = () => {
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
     const userData = sessionStorage.getItem('user');
     const userObj = userData ? JSON.parse(userData) : {};
-    const [loading, setLoading] = useState(true);
     const { student_id } = useParams();
+    const [class_id, setClassId] = useState(null);
+    const [section_id, setSectionId] = useState(null);
     const [studentDetails, setStudentDetails] = useState(null);
     const [feesTerms, setFeesTerms] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -38,23 +40,58 @@ const StudentDetails = () => {
     const [holidays, setHolidays] = useState([]);
     const [examsdetails, setExamsDeatails] = useState([]);
     const [sectionName, setSectionName] = useState('');
+    const [records, setRecords] = useState([]);
+    const [selectedHomework, setSelectedHomework] = useState('');
+    const [showModal, setShowModal] = useState(false);
+    const routeLocation = useLocation();
 
     useEffect(() => {
         const fetchStudentDetails = async () => {
             try {
+                setIsLoading(true);
                 const response = await axios.post(baseUrl + "/students/", {
-                    action: "FILTER", student_id: student_id
+                    action: "FILTER",
+                    student_id: student_id,
+                    school_id:userObj.school_id,
+                    academic_year_id:userObj.academic_year_id
                 });
+
+                const student = response.data[0];
                 setStudentDetails(response.data);
-                setSectionName(response.data[0].section_name);
-                setLoading(false);
+                setSectionName(student?.section_name);
+                setClassId(student?.class_id);
+                setSectionId(student?.section_id);
             } catch (error) {
                 console.error("Error fetching students:", error);
-                setLoading(false);
+            } finally {
+                setIsLoading(false);
             }
         };
-        fetchStudentDetails();
+        if (student_id) {
+            fetchStudentDetails();
+        }
     }, [student_id]);
+
+    useEffect(() => {
+        if (class_id && section_id) {
+            const fetchHomework = async () => {
+                try {
+                    const response = await axios.post(baseUrl + "/homework/", {
+                        action: "FILTER",
+                        class_id: class_id,
+                        section_id: section_id,
+                        school_id: userObj.school_id,
+                        academic_year_id: userObj.academic_year_id
+                    });
+                    setRecords(response.data);
+                    console.log("Homework:", response.data);
+                } catch (error) {
+                    console.error("Error fetching Homework:", error);
+                }
+            };
+            fetchHomework();
+        }
+    }, [class_id, section_id]);
 
     useEffect(() => {
         fetchDataRead("/StudentAttendance/", setAttendanceData, userObj.school_id)
@@ -90,7 +127,7 @@ const StudentDetails = () => {
         }
     }, [student_id]);
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="loadingContainer">
                 <img src={loading} alt="Loading..." className="loadingGif" />
@@ -103,8 +140,96 @@ const StudentDetails = () => {
     }
     const student = studentDetails[0];
 
-    const tabs = ["Profile", "Fees", "Exam", "Attendance", "Documents" ];
+    const tabs = ["Profile", "Fees", "Exam", "Attendance", "Documents", "Homework"];
 
+    const handleHomeworkClick = (homeworkDetails) => {
+        setSelectedHomework(homeworkDetails);
+        setShowModal(true);
+    };
+    const HomeworkDetailsModal = ({ show, onHide, homeworkDetails }) => {
+        return (
+            <Modal show={show} onHide={onHide} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Homework Details</Modal.Title>
+                </Modal.Header>
+                <Modal.Body style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+                    <p>{homeworkDetails}</p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={onHide}>
+                        Close
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+        );
+    };
+    const HomeworkData = [
+        {
+            name: "Date",
+            selector: row => formatDate(row.homework_date),
+            cell: row => <Tooltip title={formatDate(row.homework_date)}><span>{formatDate(row.homework_date)}</span></Tooltip>,
+            sortable: true
+        },
+        {
+            name: "Class",
+            selector: row => row.class_name,
+            cell: row => <Tooltip title={row.class_name}><span>{row.class_name}</span></Tooltip>,
+            sortable: true
+        },
+        {
+            name: "Section",
+            selector: row => row.section_name,
+            cell: row => <Tooltip title={row.section_name}><span>{row.section_name}</span></Tooltip>,
+            sortable: true
+        },
+        {
+            name: "Subject",
+            selector: row => row.subject_name,
+            cell: row => <Tooltip title={row.subject_name}><span>{row.subject_name}</span></Tooltip>,
+            sortable: true
+        },
+        {
+            name: 'Homework Details',
+            selector: (row) => row.homework_details,
+            sortable: true,
+            cell: (row) => (
+                <div
+                    className="homework-details-cell"
+                    onClick={() => handleHomeworkClick(row.homework_details)}
+                    style={{
+                        cursor: 'pointer',
+                    }}
+                >
+                    {(row.homework_details || []).length > 50
+                        ? `${row.homework_details.substring(0, 50)}...`
+                        : row.homework_details}
+                </div>
+            ),
+        },
+        {
+            name: "Attachments",
+            selector: (row) => row.attachments,
+            sortable: true,
+            cell: (row) => (
+                <div className="homework-details-cell">
+
+                    <Tooltip title={row.attachments}>
+                        <Link
+                            to={`/StudentDetails/${row.student_id}`}
+                            style={{ color: 'blue', textDecoration: 'none' }}
+                            onClick={() => setIsLoading(true)}
+
+                        >
+                            <span>{`${row.student_first_name} ${row.student_last_name}`}</span>
+                        </Link>
+                        <span>{row.attachments}</span>
+                    </Tooltip>
+
+                </div>
+            ),
+
+        },
+    ];
     const columnsFeesItem = [
         {
             name: "Student Name",
@@ -236,10 +361,10 @@ const StudentDetails = () => {
                     student_id: data.student_id,
                 }));
                 setFeesItems1(fetchedData);
-                }catch (error) {
-                    console.error("Error fetching fee receipt details:", error);
+            } catch (error) {
+                console.error("Error fetching fee receipt details:", error);
 
-                }finally {
+            } finally {
                 setIsLoading1(false);
             }
         }, [data.student_id]);
@@ -360,7 +485,7 @@ const StudentDetails = () => {
                 attendance: {}
             };
         }
-         if (!acc[studentId].attendance[attendanceDate]) {
+        if (!acc[studentId].attendance[attendanceDate]) {
             acc[studentId].attendance[attendanceDate] = [];
         }
         acc[studentId].attendance[attendanceDate].push({
@@ -383,7 +508,7 @@ const StudentDetails = () => {
                 else if (entry.is_present === false) absent++;
             });
         });
-         return { present, absent };
+        return { present, absent };
     };
 
     const { present, absent } = getAttendanceStats();
@@ -394,7 +519,7 @@ const StudentDetails = () => {
         let totalHolidays = 0;
         for (let monthIndex = 0; monthIndex < months.length; monthIndex++) {
             const daysInMonth = new Date(currentYear, monthIndex + 1, 0).getDate();
-             for (let date = 1; date <= daysInMonth; date++) {
+            for (let date = 1; date <= daysInMonth; date++) {
                 const dateStr = dayjs(`${currentYear}-${monthIndex + 1}-${date}`).format("YYYY-MM-DD");
                 const isSunday = dayjs(dateStr).day() === 0;
                 const isHoliday = formattedHolidays.includes(dateStr);
@@ -403,7 +528,7 @@ const StudentDetails = () => {
                 }
             }
         }
-    return totalHolidays;
+        return totalHolidays;
     };
 
     const totalHolidays = getHolidayStats();
@@ -460,7 +585,8 @@ const StudentDetails = () => {
             selector: row => row.date,
             width: "60px",
             center: true,
-            style: { padding: "2px 4px",
+            style: {
+                padding: "2px 4px",
                 margin: 0,
             }
         },
@@ -519,11 +645,11 @@ const StudentDetails = () => {
                     student_id: data.student_id,
                     fee_receipt_no: data.fee_receipt_no
                 });
-               const fetchedData = Array.isArray(response.data) ? response.data : [];
-               setFeesItems1(fetchedData);
-             } catch (error) {
+                const fetchedData = Array.isArray(response.data) ? response.data : [];
+                setFeesItems1(fetchedData);
+            } catch (error) {
                 console.error("Error fetching fee receipt details:", error);
-            }finally {
+            } finally {
                 setIsLoading1(false);
             }
         }, [data.fee_receipt_no]);
@@ -586,7 +712,7 @@ const StudentDetails = () => {
 
         return (
             <div
-                style={{  padding: "12px", marginLeft: "20px", border: "1px solid #ccc",  borderRadius: "8px", background: "linear-gradient(135deg, #f9f9f9 0%, #e6e6e6 100%)",  boxShadow: "2px 4px 10px rgba(0, 0, 0, 0.1)",}}>
+                style={{ padding: "12px", marginLeft: "20px", border: "1px solid #ccc", borderRadius: "8px", background: "linear-gradient(135deg, #f9f9f9 0%, #e6e6e6 100%)", boxShadow: "2px 4px 10px rgba(0, 0, 0, 0.1)", }}>
                 {isLoading1 ? (
                     <div className="loadingContainer">
                         <img src={loading} alt="Loading..." className="loadingGif" />
@@ -600,7 +726,7 @@ const StudentDetails = () => {
                             feesItems1.length > 0
                                 ? [...feesItems1, footerRow]
                                 : [{ fees_item: "No records found" }]
-                            }
+                        }
                         highlightOnHover
                         responsive
                         fixedHeader
@@ -633,8 +759,8 @@ const StudentDetails = () => {
                             </tbody>
                         </table>
                     </div>
-                   <div className="w-[75%] bg-white shadow-lg p-6 rounded-xl flex flex-col" style={{ width: "70%", background: "#f9f9f9" }}>
-                         <div className="mb-4 flex space-x-2">
+                    <div className="w-[75%] bg-white shadow-lg p-6 rounded-xl flex flex-col" style={{ width: "70%", background: "#f9f9f9" }}>
+                        <div className="mb-4 flex space-x-2">
                             {tabs.map((tab) => (
                                 <button
                                     key={tab}
@@ -659,7 +785,7 @@ const StudentDetails = () => {
                                                     <span className="info-value">{student.admission_number}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">First Name</span>
                                                     <span className="info-value">{student.student_first_name}</span>
@@ -713,7 +839,7 @@ const StudentDetails = () => {
                                                     <span className="info-value">{student.roll_no}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">DOE</span>
                                                     <span className="info-value">{student.date_of_exit}</span>
@@ -728,7 +854,7 @@ const StudentDetails = () => {
                                                     <span className="info-value">{userObj.academic_year_name}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">Admission To</span>
                                                     <span className="info-value">{student.class_name}</span>
@@ -740,7 +866,7 @@ const StudentDetails = () => {
                                                     <span className="info-value">{student.class_name}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">Section</span>
                                                     <span className="info-value">{student.section_name}</span>
@@ -755,13 +881,13 @@ const StudentDetails = () => {
                                             <Col xs={12}>
                                                 <span className="section-header">ID Details</span>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">Aadhar Number</span>
                                                     <span className="info-value">{student.aadhar_card_no}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">Caste</span>
                                                     <span className="info-value">{student.caste}</span>
@@ -773,13 +899,13 @@ const StudentDetails = () => {
                                                     <span className="info-value">{student.birth_certificate_no}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">Nationality</span>
                                                     <span className="info-value">{student.nationality}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">Religion</span>
                                                     <span className="info-value">{student.religion_name}</span>
@@ -788,31 +914,31 @@ const StudentDetails = () => {
                                             <Col xs={12}>
                                                 <span className="section-header">Previous School</span>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">Previous School</span>
                                                     <span className="info-value">{student.previous_school_name}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">Previous Class</span>
                                                     <span className="info-value">{student.class_name}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">First Language</span>
                                                     <span className="info-value">{student.first_language_name}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">Second Language</span>
                                                     <span className="info-value">{student.second_language_name}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">Third Language</span>
                                                     <span className="info-value">{student.third_language_name}</span>
@@ -821,31 +947,31 @@ const StudentDetails = () => {
                                             <Col xs={12}>
                                                 <span className="section-header">Father Details</span>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field highlight">
                                                     <span className="info-label">Father Name</span>
                                                     <span className="info-value">{student.father_firstname + " " + student.father_surname}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field highlight">
                                                     <span className="info-label">Father Contact</span>
                                                     <span className="info-value">{student.father_phone_number}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">Father Email</span>
                                                     <span className="info-value">{student.father_email}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">Father Aadhar Number</span>
                                                     <span className="info-value">{student.father_aadhar_number}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">Father Occupation</span>
                                                     <span className="info-value">{student.father_occupation}</span>
@@ -854,19 +980,19 @@ const StudentDetails = () => {
                                             <Col xs={12}>
                                                 <span className="section-header">Mother Details</span>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field highlight">
                                                     <span className="info-label">Mother Name</span>
                                                     <span className="info-value">{student.mother_firstname + " " + student.mother_surname}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field highlight">
                                                     <span className="info-label">Mother Contact</span>
                                                     <span className="info-value">{student.mother_phone_number}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">Mother Email</span>
                                                     <span className="info-value">{student.mother_email}</span>
@@ -887,13 +1013,13 @@ const StudentDetails = () => {
                                             <Col xs={12}>
                                                 <span className="section-header">Location Details</span>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">City</span>
                                                     <span className="info-value">{student.city}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">State</span>
                                                     <span className="info-value">{student.state_name}</span>
@@ -911,7 +1037,7 @@ const StudentDetails = () => {
                                                     <span className="info-value">{student.address}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">Permanent Address</span>
                                                     <span className="info-value">{student.permanent_address}</span>
@@ -926,13 +1052,13 @@ const StudentDetails = () => {
                                                     <span className="info-value">{student.sibling1_name}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">Sibling 2</span>
                                                     <span className="info-value">{student.sibling2_name}</span>
                                                 </div>
                                             </Col>
-                                             <Col xs={12} md={6} lg={4} xxl={3}>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
                                                 <div className="info-field">
                                                     <span className="info-label">Sibling 3</span>
                                                     <span className="info-value">{student.sibling3_name}</span>
@@ -969,8 +1095,8 @@ const StudentDetails = () => {
                                                     fixedHeader
                                                     fixedHeaderScrollHeight="calc(100vh - 170px)"
                                                     expandableRows
-                                                    expandableRowsComponent={ExpandableRowComponent}/>
-                                                )}
+                                                    expandableRowsComponent={ExpandableRowComponent} />
+                                            )}
                                         </div>
                                     </div>
                                 </Card.Body>
@@ -1054,6 +1180,61 @@ const StudentDetails = () => {
                                     ))}
                                 </div>
                             </>
+                        )}
+                        {activeTab === "Homework" && (
+                            <Card>
+                                <style>{styles}</style>
+                                <Card.Body className="hide-scrollbar scroll-fee">
+                                    <div className="commonTable height100">
+                                        <div className="tableBody">
+                                            {isLoading ? (
+                                                <div className="loadingContainer">
+                                                    <img src={loading} alt="Loading..." className="loadingGif" />
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <DataTable
+                                                        className="custom-table"
+                                                        columns={HomeworkData}
+                                                        data={
+                                                            Array.isArray(records) && records.length > 0
+                                                                ? records
+                                                                : [{
+                                                                    class_id: 'No Records Found',
+                                                                    section_id: 'No Records Found',
+                                                                }]
+                                                        }
+                                                        pagination={Array.isArray(records) && records.length > 0}
+                                                        highlightOnHover
+                                                        responsive
+                                                        fixedHeader
+                                                        fixedHeaderScrollHeight="calc(100vh - 170px)"
+                                                        conditionalRowStyles={[
+                                                            {
+                                                                when: row => row.student_id === 'No Records Found',
+                                                                style: {
+                                                                    textAlign: 'center',
+                                                                    fontSize: '16px',
+                                                                    color: 'red',
+                                                                    backgroundColor: '#f9f9f9',
+                                                                },
+                                                            },
+                                                        ]}
+                                                    />
+                                                    <HomeworkDetailsModal
+                                                        show={showModal}
+                                                        onHide={() => setShowModal(false)}
+                                                        homeworkDetails={selectedHomework}
+                                                    />
+                                                </>
+
+                                            )}
+                                        </div>
+
+
+                                    </div>
+                                </Card.Body>
+                            </Card>
                         )}
                     </div>
                     <div className="position-relative">

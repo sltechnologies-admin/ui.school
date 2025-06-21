@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
-import { Button, Modal, Row, Col, Form ,OverlayTrigger} from "react-bootstrap";
-import { MdEdit,MdAddCircle,MdFilterList,MdDelete } from "react-icons/md";
+import { Button, Modal, Row, Col, Form, OverlayTrigger } from "react-bootstrap";
+import { MdEdit, MdAddCircle, MdFilterList, MdDelete } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import Header from '../../components/layout/header/header';
 import LeftNav from '../../components/layout/leftNav/leftNav';
@@ -21,14 +21,16 @@ const Subjects = () => {
     const navigate = useNavigate();
     const userData = sessionStorage.getItem('user');
     const userObj = JSON.parse(userData);
+     const readOnlyRoles = ["Class Teacher", "Teacher", "Class Incharge"];
+    const canSubmit = !readOnlyRoles.includes(userObj.role_name?.trim());
     const [form, setForm] = useState({
         subject_name: "",
-        is_active:"",
+        is_active: "",
         action: "FILTER"
     });
     useEffect(() => {
         setIsLoading(true);
-        fetchData("/subjects/", setSubjects).finally(() => setIsLoading(false));
+        fetchData().finally(() => setIsLoading(false));
     }, []);
 
     const handleEditClick = (subject_id) => {
@@ -37,13 +39,13 @@ const Subjects = () => {
         if (employeemasterToEdit) {
             navigate("/addsubject", { state: { subjectData: employeemasterToEdit } });
         } else {
-            console.error(`User with ID ${subject_id} not found.`);
+            console.error(`Subject with ID ${subject_id} not found.`);
         }
     };
     const fetchData = async () => {
         try {
-            const response = await axios.post(baseUrl + "/subjectmaster/", { action: "READ",school_id:userObj.school_id });
-            setSubjects(response.data);    
+            const response = await axios.post(baseUrl + "/subjectmaster/", { action: "READ", school_id: userObj.school_id });
+            setSubjects(response.data);
         } catch (error) {
             console.log("Error fetching data:", error);
         }
@@ -59,7 +61,7 @@ const Subjects = () => {
             subject_id: subject_id,
             action: "DELETE"
         };
-        
+
         try {
             const response = await axios.post(baseUrl + '/subjectmaster/', requestBody, {
                 headers: {
@@ -76,63 +78,107 @@ const Subjects = () => {
         }
     };
 
-    const columns = [
-                    {
-                        name: 'Subject',
-                        selector: (row) => row.subject_name,
-                        cell: (row) => <Tooltip title={row.subject_name}><span>{row.subject_name}</span></Tooltip>,
-                        sortable: true,
-                    },
-                    {
-                        name: 'Is Active',
-                        selector: (row) => row.is_active,
-                        cell: (row) => <Tooltip title={row.is_active}><span>{row.is_active}</span></Tooltip>,
-                        sortable: true,
-                    },
-                     {
-                            name: "Actions",
-                            cell: (row) =>
-                                filteredRecords.length > 0 ? (
-                                    <div className='tableActions'>
-                                        <Tooltip title="Edit" arrow>
-                                            <a className='commonActionIcons' onClick={() => handleEditClick(row.subject_id)}>
-                                                <span><MdEdit /></span>
-                                            </a>
-                                        </Tooltip>
-                                        <Tooltip title="Delete" arrow>
-                                            <a className='commonActionIcons' onClick={() => handleDeleteClick(row.subject_id)}>
-                                                <span><MdDelete /></span>
-                                            </a>
-                                        </Tooltip>
-                                    </div>
-                                ) : null, 
-                            
-                        },
-    ];
+  const baseColumns = [
+    {
+        name: 'Subject',
+        selector: (row) => row.subject_name,
+        cell: (row) => <Tooltip title={row.subject_name}><span>{row.subject_name}</span></Tooltip>,
+        sortable: true,
+    },
+    {
+        name: 'Is Cocurricular',
+        selector: (row) => row.is_cocurricular,
+        cell: (row) => (
+            <Tooltip title={row.is_cocurricular ? "Yes" : "No"}>
+                <span>{row.is_cocurricular ? "Yes" : "No"}</span>
+            </Tooltip>
+        ),
+        sortable: true,
+    },
+    {
+        name: 'Is Language',
+        selector: (row) => row.is_language,
+        cell: (row) => (
+            <Tooltip title={row.is_language}>
+                <span>{row.is_language}</span>
+            </Tooltip>
+        ),
+        sortable: true,
+    },
+    {
+        name: 'Status',
+        selector: (row) => row.is_active,
+        cell: (row) => <Tooltip title={row.is_active}><span>{row.is_active}</span></Tooltip>,
+        sortable: true,
+    },
+];
+
+// Add Actions column only if canSubmit is true
+const columns = canSubmit
+    ? [
+        ...baseColumns,
+        {
+            name: "Actions",
+            cell: (row) =>
+                filteredRecords.length > 0 ? (
+                    <div className="tableActions">
+                        <Tooltip title="Edit" arrow>
+                            <span
+                                className="commonActionIcons"
+                                onClick={() => handleEditClick(row.subject_id)}
+                            >
+                                <MdEdit />
+                            </span>
+                        </Tooltip>
+                        <Tooltip title="Delete" arrow>
+                            <span
+                                className="commonActionIcons"
+                                onClick={() => handleDeleteClick(row.subject_id)}
+                            >
+                                <MdDelete />
+                            </span>
+                        </Tooltip>
+                    </div>
+                ) : null,
+        },
+    ]
+    : baseColumns;
+
+    const normalizeValue = (val) => {
+        if (val === true || val === 'true' || val === 'True') return 'yes';
+        if (val === false || val === 'false' || val === 'False') return 'no';
+        if (typeof val === 'string') return val.toLowerCase();
+        return '';
+    };
+
     const searchableColumns = [
-        (row) => row.subject_name,
-        (row) => row.is_active,
+        (row) => (row.subject_name || ''),
+        (row) => normalizeValue(row.is_active),
+        (row) => normalizeValue(row.is_cocurricular),
+        (row) => normalizeValue(row.is_language)
     ];
+
+
+    const normalizedQuery = (searchQuery || '').toLowerCase().replace(/[-\s]+/g, '');
 
     const filteredRecords = (subjects || []).filter((item) =>
         searchableColumns.some((selector) => {
             const value = selector(item);
-            const stringValue = String(value || '').toLowerCase().replace(/[-\s]+/g, '');
-            const normalizedQuery = searchQuery.toLowerCase().replace(/[-\s]+/g, '');
+            const stringValue = value.toLowerCase().replace(/[-\s]+/g, '');
+            console.log('Comparing:', stringValue, 'with query:', normalizedQuery);
             return stringValue.includes(normalizedQuery);
         })
     );
-    
+
     const handleInputChange = (e) => {
         const { id, value } = e.target;
-        const trimmedValue = value.trim(); 
-    
+
         setForm((prevForm) => ({
             ...prevForm,
-            [id]: trimmedValue
+            [id]: value
         }));
     };
-    
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -140,7 +186,7 @@ const Subjects = () => {
         const formData = {
             subject_name: form.subject_name,
             is_active: form.is_active || "A",
-             school_id:userObj.school_id,
+            school_id: userObj.school_id,
             action: 'FILTER',
         };
 
@@ -151,12 +197,12 @@ const Subjects = () => {
                 },
             });
             const filterData = response.data || [];
-            console.log("API Response:", filterData);
+
             setSubjects(filterData);
 
             setShowFilterModal(false);
         } catch (error) {
-            console.log("Full error object:", error);
+            console.error("Full error object:", error);
         }
     };
 
@@ -171,7 +217,7 @@ const Subjects = () => {
     const handleSearchChange = (event) => {
         setSearchQuery(event.target.value);
     };
-    
+
     return (
         <div className="pageMain">
             <ToastContainer />
@@ -180,7 +226,7 @@ const Subjects = () => {
                 <div className="pageHead">
                     <Header />
                 </div>
-                             <div className="pageBody">
+                <div className="pageBody">
                     <div className="commonDataTableHead">
                         <div className="d-flex justify-content-between align-items-center w-100">
                             <div className="d-flex align-items-center" style={{ gap: "10px" }}>
@@ -201,12 +247,13 @@ const Subjects = () => {
                                         <MdFilterList />
                                     </Button>
                                 </OverlayTrigger>
- 
+ {canSubmit && (
                                 <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Add</Tooltip>}>
-                                    <Button className="primaryBtn" variant="primary" onClick={() => navigate("/addsubject")}>
+                                    <Button className="primaryBtn"  disabled={!canSubmit} variant="primary" onClick={() => navigate("/addsubject")}>
                                         <MdAddCircle />
                                     </Button>
                                 </OverlayTrigger>
+ )}
                             </div>
                         </div>
                     </div>
@@ -220,15 +267,15 @@ const Subjects = () => {
                                 <DataTable
                                     className="custom-table"
                                     columns={columns}
-                                    data={filteredRecords.length > 0 ? filteredRecords : [{ is_active: 'No records found', is_active: 'No records found' }]}
-                                    pagination={Array.isArray(filteredRecords) && filteredRecords.length > 0} 
+                                    data={filteredRecords.length > 0 ? filteredRecords : [{ is_language: 'No records found', is_language: 'No records found' }]}
+                                    pagination={Array.isArray(filteredRecords) && filteredRecords.length > 0}
                                     highlightOnHover
                                     responsive
                                     fixedHeader
                                     fixedHeaderScrollHeight="calc(100vh - 170px)"
                                     conditionalRowStyles={[
                                         {
-                                            when: (row) => row.is_active === "No records found",
+                                            when: (row) => row.is_language === "No records found",
                                             style: { textAlign: 'center', fontSize: '16px', color: 'red', backgroundColor: '#f9f9f9' },
                                         },
                                     ]}
@@ -270,7 +317,7 @@ const Subjects = () => {
                         <Button variant="secondary" className="btn-danger secondaryBtn me-2" onClick={() => { handleCloseFilterModal(); }}>
                             Cancel
                         </Button>
- 
+
                         <Button variant="primary" className="btn-success primaryBtn" onClick={handleSubmit}>
                             Search
                         </Button>

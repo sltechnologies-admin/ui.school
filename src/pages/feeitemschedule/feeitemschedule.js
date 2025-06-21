@@ -11,6 +11,7 @@ import { MdFilterList } from "react-icons/md";
 import Header from "../../components/layout/header/header";
 import LeftNav from "../../components/layout/leftNav/leftNav";
 import loading from "../../assets/images/common/loading.gif";
+import { useFeeModuleAccess } from "../hooks/useFeeModuleAccess";
 
 const Feeitemschedule = () => {
     const userData = sessionStorage.getItem("user");
@@ -27,6 +28,9 @@ const Feeitemschedule = () => {
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
     const [feesTerms, setFeesTerms] = useState([]);
     const [baseFeesTerms, setBaseFeesTerms] = useState([]);
+
+    const currentUserRole = userObj.role_name?.trim();
+    const { canWrite } = useFeeModuleAccess(currentUserRole);
 
     useEffect(() => {
         document.title = "SCHOLAS";
@@ -47,6 +51,17 @@ const Feeitemschedule = () => {
             const filteredParent = filterData.filter(
                 (item) => item.category?.toLowerCase() === "class total"
             );
+            const filteredWithOnetime = filteredParent.map((item) => {
+                const isOnetime = item.schedule_name?.toLowerCase().includes("others");
+                return {
+                    ...item,
+                    schedule_display_name: isOnetime ? "Others" : item.schedule_name
+                };
+            });
+            setFeesTerms(filteredWithOnetime);
+            setBaseFeesTerms(filteredWithOnetime);
+
+            console.log(filteredParent);
             setFeesTerms(filteredParent);
             setBaseFeesTerms(filteredParent);
 
@@ -128,9 +143,9 @@ const Feeitemschedule = () => {
         const termKeys = new Set();
         data.forEach((item) => {
             Object.keys(item).forEach((key) => {
-                if (key.startsWith("Term")) {
+             
                     termKeys.add(key);
-                }
+              
             });
         });
         return Array.from(termKeys).sort();
@@ -163,18 +178,17 @@ const Feeitemschedule = () => {
             : feesTerms || [];
 
     const columnsFeesItem = [
-        {
-            name: "Academic Year",
-            selector: (row) => userObj.academic_year_name,
-            sortable: true,
-            cell: (row) =>
-                filteredRecords1.length > 0 ? (
-                    <Tooltip title={userObj.academic_year_name}> {userObj.academic_year_name}</Tooltip>
-                ) : (
-                    <div className="noDataMessage">No Records Found</div>
-                ),
-        },
-
+        // {
+        //     name: "Academic Year",
+        //     selector: (row) => userObj.academic_year_name,
+        //     sortable: true,
+        //     cell: (row) =>
+        //         filteredRecords1.length > 0 ? (
+        //             <Tooltip title={userObj.academic_year_name}> {userObj.academic_year_name}</Tooltip>
+        //         ) : (
+        //             <div className="noDataMessage">No Records Found</div>
+        //         ),
+        // },
         {
             name: "Class",
             selector: (row) => row.class_name,
@@ -198,6 +212,7 @@ const Feeitemschedule = () => {
         },
         {
             name: "Actions",
+            omit: !canWrite,
             cell: (row) =>
                 filteredRecords1.length > 0 ? (
                     <div className="tableActions">
@@ -253,6 +268,8 @@ const Feeitemschedule = () => {
 
                 const fetchedData = Array.isArray(response.data) ? response.data : [];
                 setFeesItems1(fetchedData);
+                
+
             } finally {
                 setIsLoading1(false);
             }
@@ -309,16 +326,27 @@ const Feeitemschedule = () => {
         });
 
         const columns = [
+            // {
+            //     name: "Fees Item",
+            //     selector: (row) => row.fees_item,
+            //     cell: (row) => (
+            //         <Tooltip title={row.fees_item}>
+            //             <span>{row.fees_item}</span>
+            //         </Tooltip>
+            //     ),
+            //     sortable: true,
+            //     width: "150px"
+            // },
             {
                 name: "Fees Item",
                 selector: (row) => row.fees_item,
-                cell: (row) => (
-                    <Tooltip title={row.fees_item}>
-                        <span>{row.fees_item}</span>
-                    </Tooltip>
-                ),
-                sortable: true,
-                width: "150px"
+               
+                cell: (row) =>
+                    feesItems1.length > 0 ? (
+                        <Tooltip title={row.fees_item}> {row.fees_item}</Tooltip>
+                    ) : (
+                        <div className="noDataMessage">No Records Found</div>
+                    ),
             },
             ...dynamicColumns,
             {
@@ -345,13 +373,22 @@ const Feeitemschedule = () => {
             return acc;
         }, {});
 
-        const footerRow = {
+        // const footerRow = {
+        //     //feesItems1
+        //     class_name: "Total",
+        //     fees_item: "Total",
+        //     ...Object.fromEntries(
+        //         Object.keys(columnSums).map((key) => [key, columnSums[key] || "-"])
+        //     ),
+        // };
+
+        const footerRow = feesItems1.length > 0 ? {
             class_name: "Total",
             fees_item: "Total",
             ...Object.fromEntries(
                 Object.keys(columnSums).map((key) => [key, columnSums[key] || "-"])
             ),
-        };
+        } : [];
 
         const conditionalRowStyles = [
             {
@@ -453,18 +490,20 @@ const Feeitemschedule = () => {
                                         <MdFilterList />
                                     </Button>
                                 </OverlayTrigger>
-                                <OverlayTrigger
-                                    placement="top"
-                                    overlay={<Tooltip id="tooltip-top">Add</Tooltip>}
-                                >
-                                    <Button
-                                        className="primaryBtn"
-                                        variant="primary"
-                                        onClick={() => navigate("/addfeeitemschedule")}
+                                {canWrite && (
+                                    <OverlayTrigger
+                                        placement="top"
+                                        overlay={<Tooltip id="tooltip-top">Add</Tooltip>}
                                     >
-                                        <MdAddCircle />
-                                    </Button>
-                                </OverlayTrigger>
+                                        <Button
+                                            className="primaryBtn"
+                                            variant="primary"
+                                            onClick={() => navigate("/addfeeitemschedule")}
+                                        >
+                                            <MdAddCircle />
+                                        </Button>
+                                    </OverlayTrigger>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -511,7 +550,7 @@ const Feeitemschedule = () => {
                             <Col xs={12}>
                                 <div className="commonInput">
                                     <Form.Group>
-                                        <Form.Label>Class</Form.Label>
+                                        <Form.Label> Class</Form.Label>
                                         <select
                                             type="number"
                                             className="form-select"
@@ -521,7 +560,7 @@ const Feeitemschedule = () => {
                                                 setFilter({ ...filter, class_id: e.target.value })
                                             }
                                         >
-                                            <option value="">Class</option>
+                                            <option value="">Select Class</option>
                                             {(classes || []).map((classe) => (
                                                 <option key={classe.class_id} value={classe.class_id}>
                                                     {classe.class_name}

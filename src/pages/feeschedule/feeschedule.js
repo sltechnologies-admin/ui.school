@@ -16,6 +16,7 @@ import LeftNav from '../../components/layout/leftNav/leftNav';
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import DataTable from "react-data-table-component";
+import { useFeeModuleAccess } from "../hooks/useFeeModuleAccess";
 
 const FeeSchedule = () => {
     const [showFilterModal, setShowFilterModal] = useState(false);
@@ -28,6 +29,9 @@ const FeeSchedule = () => {
     const navigate = useNavigate();
     const userData = sessionStorage.getItem('user');
     const userObj = userData ? JSON.parse(userData) : {};
+
+    const currentUserRole = userObj.role_name?.trim();
+    const { canWrite } = useFeeModuleAccess(currentUserRole);
 
     useEffect(() => {
         document.title = "SCHOLAS";
@@ -52,15 +56,10 @@ const FeeSchedule = () => {
 
     const columns = [
         {
-            name: "Academic Year",
-            selector: (row) => row.academic_year_name,
+            name: "Schedule Type",
+            selector: (row) => row.fee_schedule_type_name,
             sortable: true,
-            cell: (row) =>
-                filteredRecords.length > 0 ? (
-                    <Tooltip title={row.academic_year_name}> {row.academic_year_name}</Tooltip>
-                ) : (
-                    <div className="noDataMessage">No Records Found</div>
-                ),
+            cell: row => <Tooltip title={row.fee_schedule_type_name}><span>{row.fee_schedule_type_name}</span></Tooltip>,
         },
         {
             name: "Schedule Name",
@@ -69,29 +68,78 @@ const FeeSchedule = () => {
             sortable: true,
         },
         {
+            name: "Start Date",
+            selector: (row) => row.start_date,
+            sortable: true,
+            cell: (row) =>
+                filteredRecords.length > 0 ? (
+                    <Tooltip title={row.start_date ? formatDate(row.start_date) : ""}>
+                        <span>{row.start_date ? formatDate(row.start_date) : ""}</span>
+                    </Tooltip>
+                ) : (
+                    <div className="noDataMessage"></div>
+                ),
+        },
+        {
+            name: "End Date",
+            selector: (row) => row.end_date,
+            sortable: true,
+            cell: (row) =>
+                filteredRecords.length > 0 ? (
+                    <Tooltip title={row.end_date ? formatDate(row.end_date) : ""}>
+                        <span>{row.end_date ? formatDate(row.end_date) : ""}</span>
+                    </Tooltip>
+                ) : (
+                    <div className="noDataMessage">No Records Found</div>
+                ),
+        },
+        {
             name: "Due Date",
             selector: (row) => row.due_date,
             sortable: true,
-            cell: row => (
-                <Tooltip title={row.due_date ? formatDate(row.due_date) : ""}>
-                    <span>{row.due_date ? formatDate(row.due_date) : ""}</span>
-                </Tooltip>
-            ),
+            cell: (row) =>
+                filteredRecords.length > 0 ? (
+                    <Tooltip title={row.due_date ? formatDate(row.due_date) : ""}>
+                        <span>{row.due_date ? formatDate(row.due_date) : ""}</span>
+                    </Tooltip>
+                ) : (
+                    <div className="noDataMessage"></div>
+                ),
         },
         {
-            name: "Alerts On",
-            selector: (row) => row.alerts_on,
-            cell: row => <Tooltip title={row.alerts_on}><span>{row.alerts_on}</span></Tooltip>,
+            name: "Alerts Start Date",
+            selector: (row) => row.alerts_start_date,
             sortable: true,
-
+            cell: (row) =>
+                filteredRecords.length > 0 ? (
+                    <Tooltip title={row.alerts_start_date ? formatDate(row.alerts_start_date) : ""}>
+                        <span>{row.alerts_start_date ? formatDate(row.alerts_start_date) : ""}</span>
+                    </Tooltip>
+                ) : (
+                    <div className="noDataMessage"></div>
+                ),
         },
+        // {
+        //     name: "Alerts On",
+        //     selector: (row) => row.alerts_on,
+        //     cell: row => <Tooltip title={row.alerts_on}><span>{row.alerts_on}</span></Tooltip>,
+        //     sortable: true,
+
+        // },
         {
             name: "Status",
-            selector: (row) => <Tooltip title={row.status}><span>{row.status}</span></Tooltip>,
+            selector: (row) => row.status,
             sortable: true,
-        },
+            cell: (row) => (
+                <Tooltip title={row.status}>
+                    <span>{row.status}</span>
+                </Tooltip>
+            ),
+        }
+,
         {
             name: "Actions",
+            omit: !canWrite,
             cell: (row) =>
                 filteredRecords.length > 0 ? (
                     <div className='tableActions'>
@@ -163,26 +211,51 @@ const FeeSchedule = () => {
         (row) => row.academic_year_name,
         (row) => row.schedule_name,
         (row) => row.due_date,
+        (row) => row.alerts_start_date,
+        (row) => row.end_date,
+        (row) => row.start_date,
         (row) => row.alerts_on,
         (row) => row.status,
     ];
 
     const trimmedQuery = searchQuery.trim().toLowerCase();
-    const filteredRecords =
-        trimmedQuery.length > 0
-            ? (feeschedule || []).filter((feeschedule) =>
-                searchableColumns.some((selector) => {
-                    const value = selector(feeschedule);
-                    return String(value || "")
-                        .toLowerCase()
-                        .includes(trimmedQuery);
-                })
-            )
-            : feeschedule || [];
+    function formatDateForSearch(dateStr) {
+    // Handles both Date objects and strings
+    const date = new Date(dateStr);
+    if (isNaN(date)) return String(dateStr); // fallback
+
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`; // Format as dd-mm-yyyy
+}
+
+const filteredRecords =
+    trimmedQuery.length > 0
+        ? (feeschedule || []).filter((feeschedule) =>
+              searchableColumns.some((selector) => {
+                  let value = selector(feeschedule);
+
+                  // If value is a date or date string, format it
+                  if (!isNaN(Date.parse(value))) {
+                      value = formatDateForSearch(value);
+                  }
+
+                  return String(value || "")
+                      .toLowerCase()
+                      .includes(trimmedQuery);
+              })
+          )
+        : feeschedule || [];
+
 
     const [filter, setFilter] = useState({
         schedule_name: "",
         due_date: "",
+        start_date: "",
+        end_date: "",
+        alerts_start_date: "",
         alerts_on: "",
         status: "",
         action: "FILTER",
@@ -194,6 +267,9 @@ const FeeSchedule = () => {
             academic_year_id: userObj.academic_year_id || 0,
             schedule_name: filter.schedule_name || "",
             due_date: filter.due_date || "",
+            start_date: filter.start_date || "",
+            end_date: filter.end_date || "",
+            alerts_start_date: filter.alerts_start_date || "",
             alerts_on: filter.alerts_on || "",
             school_id: userObj.school_id,
             action: "FILTER",
@@ -229,6 +305,9 @@ const FeeSchedule = () => {
         setFilter({
             schedule_name: "",
             due_date: "",
+            start_date: "",
+            end_date: "",
+            alerts_start_date: "",
             alerts_on: "",
             status: "",
             action: "FILTER"
@@ -243,6 +322,9 @@ const FeeSchedule = () => {
         setFilter({
             schedule_name: "",
             due_date: "",
+            start_date: "",
+            end_date: "",
+            alerts_start_date: "",
             alerts_on: "",
             status: ""
         });
@@ -251,15 +333,14 @@ const FeeSchedule = () => {
     };
 
     return (
-        <Container fluid>
-            <ToastContainer />
+        <>
             <div className="pageMain">
+                <ToastContainer />
                 <LeftNav />
                 <div className="pageRight">
                     <div className="pageHead">
                         <Header />
                     </div>
-                    <br />
                     <div className="pageBody">
                         <div className="commonDataTableHead">
                             <div className="d-flex justify-content-between align-items-center w-100">
@@ -281,11 +362,13 @@ const FeeSchedule = () => {
                                             <MdFilterList />
                                         </Button>
                                     </OverlayTrigger>
-                                    <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Add</Tooltip>}>
-                                        <Button className="primaryBtn" variant="primary" onClick={() => navigate("/addfeeschedule")}>
-                                            <MdAddCircle />
-                                        </Button>
-                                    </OverlayTrigger>
+                                    {canWrite && (
+                                        <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Add</Tooltip>}>
+                                            <Button className="primaryBtn" variant="primary" onClick={() => navigate("/addfeeschedule")}>
+                                                <MdAddCircle />
+                                            </Button>
+                                        </OverlayTrigger>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -343,6 +426,34 @@ const FeeSchedule = () => {
                             <Col xs={12} >
                                 <div className='commonInput'>
                                     <Form.Group>
+                                        <Form.Label>Start Date</Form.Label>
+                                        <Form.Control
+                                            type="date"
+                                            id="start_date"
+                                            value={filter.start_date}
+                                            placeholder="Enter Start Date"
+                                            onChange={handleInputChange}
+                                        />
+                                    </Form.Group>
+                                </div>
+                            </Col>
+                            <Col xs={12} >
+                                <div className='commonInput'>
+                                    <Form.Group>
+                                        <Form.Label>End Date</Form.Label>
+                                        <Form.Control
+                                            type="date"
+                                            id="end_date"
+                                            value={filter.end_date}
+                                            placeholder="Enter End Date"
+                                            onChange={handleInputChange}
+                                        />
+                                    </Form.Group>
+                                </div>
+                            </Col>
+                            <Col xs={12} >
+                                <div className='commonInput'>
+                                    <Form.Group>
                                         <Form.Label>Due Date</Form.Label>
                                         <Form.Control
                                             type="date"
@@ -355,6 +466,20 @@ const FeeSchedule = () => {
                                 </div>
                             </Col>
                             <Col xs={12} >
+                                <div className='commonInput'>
+                                    <Form.Group>
+                                        <Form.Label>Alerts Start Date</Form.Label>
+                                        <Form.Control
+                                            type="date"
+                                            id="alerts_start_date"
+                                            value={filter.alerts_start_date}
+                                            placeholder="Enter Alerts Start Date"
+                                            onChange={handleInputChange}
+                                        />
+                                    </Form.Group>
+                                </div>
+                            </Col>
+                            {/* <Col xs={12} >
                                 <div className='commonInput'>
                                     <Form.Group controlId="alerts_on">
                                         <Form.Label>Alert On</Form.Label>
@@ -370,7 +495,7 @@ const FeeSchedule = () => {
                                         <Form.Control.Feedback>Required</Form.Control.Feedback>
                                     </Form.Group>
                                 </div>
-                            </Col>
+                            </Col> */}
                         </Row>
                     </Form>
                 </Modal.Body>
@@ -394,7 +519,7 @@ const FeeSchedule = () => {
                     </div>
                 </Modal.Footer>
             </Modal>
-        </Container>
+        </>
     );
 };
 export default FeeSchedule;

@@ -37,9 +37,12 @@ const Syllabus = () => {
         setOpenModal(true);
     };
 
+    const readOnlyRoles = ["Class Incharge"];
+    const canSubmit = !readOnlyRoles.includes(userObj.role_name?.trim());
+
     const fetchSyllabus = async () => {
         try {
-            const response = await axios.post(baseUrl + '/syllabusplan/', { action: 'READ' });
+            const response = await axios.post(baseUrl + '/syllabusplan/', { action: 'READ', school_id: userObj.school_id });
             setSyllabusmap(response.data);
         } catch (error) {
             console.error('Error fetching academic data:', error);
@@ -72,42 +75,45 @@ const Syllabus = () => {
         setShowFilterModal(true);
     }
     const [filter, setFilter] = useState({
-        academic_year_id: 0,
+        academic_year_id: userObj.academic_year_id,
         class_id: 0,
         section_id: 0,
         subject_id: 0,
         userid: 0,
+        school_id: userObj.school_id,
         is_completed: '',
         month_id: 0,
         action: 'FILTER',
     });
 
+
     const handleFilterSubmit = async (e) => {
         e.preventDefault();
-        const isOnlyFilterAction = (
-            filter.action?.toUpperCase() === "FILTER" &&
-            filter.class_id === 0 &&
-            filter.section_id === 0 &&
-            filter.subject_id === 0 &&
-            filter.userid === 0 &&
-            filter.is_completed === "" &&
-            filter.month_id === 0
-        );
-        if (isOnlyFilterAction) {
-            handleFilterClear();
-            handleCloseFilterModal();
-
-            return;
-        }
+        const formData = {
+            academic_year_id: userObj.academic_year_id,
+            class_id: filter.class_id || 0,
+            section_id: filter.section_id || 0,
+            subject_id: filter.subject_id || 0,
+            userid: filter.userid,
+            month_id: filter.month_id || 0,
+            is_completed: filter.is_completed || "",
+            school_id: userObj.school_id,
+            action: "FILTER",
+        };
+        // const isAnyFieldFilled = Object.values(filter).some(val => val !== "" && val !== "FILTER");
+        // if (isAnyFieldFilled) {
         try {
-            const response = await axios.post(baseUrl + '/syllabusplan/', filter, {
-                headers: { 'Content-Type': 'application/json' },
+            const response = await axios.post(baseUrl + "/syllabusplan/", formData, {
+                headers: {
+                    "Content-Type": "application/json",
+                },
             });
             setSyllabusmap(response.data || []);
             handleCloseFilterModal();
         } catch (error) {
-            console.error('Error fetching data:', error);
+            console.error("Error fetching data:", error);
         }
+        // }
     };
 
     const handleFilterClear = async () => {
@@ -208,12 +214,24 @@ const Syllabus = () => {
     const fetchAcademicYears = async () => {
         try {
             const response = await axios.post(baseUrl + "/AcademicYear/", {
-                action: "READ",
-                school_id: userObj.school_id
+                action: "DROPDOWNREAD",
+                school_id: userObj.school_id,
             });
-            setAcademic(response.data)
+
+            const years = response.data || [];
+
+            setAcademic(years);
+
+            // Set default academic year from user object if exists
+            const defaultYearId = userObj.academic_year_id;
+            if (defaultYearId && !filter.academic_year_id) {
+                setFilter((prev) => ({
+                    ...prev,
+                    academic_year_id: defaultYearId,
+                }));
+            }
         } catch (error) {
-            console.log("Error fetching academicyears:", error)
+            console.error("Error fetching academic years:", error);
         }
     };
 
@@ -230,7 +248,7 @@ const Syllabus = () => {
     };
     const fetchDropdownData = async (endpoint, setter) => {
         try {
-            const response = await axios.post(baseUrl + endpoint, { action: 'READ', });
+            const response = await axios.post(baseUrl + endpoint, { action: 'READ', school_id: userObj.school_id });
             setter(response.data);
         } catch (error) {
             console.error(`Error fetching ${endpoint}:`, error);
@@ -238,13 +256,21 @@ const Syllabus = () => {
     };
 
     useEffect(() => {
-        if (filter.class_id != 0) {
-            fetchSections(filter.class_id || 0);
-        }
-        else {
-            setSection()
+        if (filter.class_id !== 0) {
+            fetchSections(filter.class_id);
         }
     }, [filter.class_id]);
+
+
+    useEffect(() => {
+        if (Number(filter.class_id) > 0) {
+            fetchSubjects(filter.class_id, filter.section_id);
+        }
+        else {
+            setSection([]);
+        }
+    }, [filter.class_id]);
+
 
     const fetchSections = async (class_id) => {
         try {
@@ -259,35 +285,34 @@ const Syllabus = () => {
         }
     };
 
-    useEffect(() => {
-        if (Number(filter.class_id) > 0 && Number(filter.section_id) > 0) {
-            fetchSubjects(filter.academic_year_id, filter.class_id);
-        }
-    }, [filter.academic_year_id, filter.class_id]);
+    // useEffect(() => {
+    //     if (Number(filter.class_id) > 0 && Number(filter.section_id) > 0) {
+    //         fetchSubjects(filter.academic_year_id, filter.class_id);
+    //     }
+    // }, [filter.academic_year_id, filter.class_id]);
 
-    const fetchSubjects = async () => {
+    const fetchSubjects = async (class_id, section_id) => {
         try {
             const response = await axios.post(baseUrl + "/teacherssubjectsmap/", {
-                action: "FILTER",
+                action: "SFILTER",
                 school_id: userObj?.school_id || 0,
-                academic_year_id: userObj.academic_year_id,
-                class_id: filter.class_id,
+                class_id: class_id, section_id: section_id, academic_year_id: userObj.academic_year_id
             });
             setSubjects(response?.data || []);
         } catch (error) {
             console.error("Error fetching Subjects!", error);
         }
     };
-
+    
     const fetchTeachers = async () => {
         try {
             const response = await axios.post(baseUrl + "/Users/", {
-                action: "TREAD"
+                action: "TREAD",
+                school_id: userObj?.school_id || 0
             });
-            setTeachers(response.data)
-
+            setTeachers(response.data);
         } catch (error) {
-            console.log("Error fetching students name:", error)
+            console.log("Error fetching teachers name:", error)
         }
     };
 
@@ -350,8 +375,17 @@ const Syllabus = () => {
         },
         {
             name: "Teacher ",
-            selector: (row) => row.user_name,
-            cell: row => <Tooltip title={row.user_name}><span>{row.user_name}</span></Tooltip>,
+            selector: (row) => row.user_name || "",
+            cell: row => {
+                const teacherName = row.user_name || " ";
+                return (
+                    <Tooltip title={teacherName}>
+                        <span>
+                            {teacherName.length > 15 ? teacherName.substring(0, 15) + "..." : teacherName}
+                        </span>
+                    </Tooltip>
+                );
+            },
             sortable: true,
         },
         {
@@ -375,32 +409,58 @@ const Syllabus = () => {
             sortable: true,
         },
         {
-            name: "Is Completed",
+            name: (<div style={{ width: '100%', textAlign: 'center' }}> Is Completed</div>),
             selector: (row) => row.is_completed,
-            cell: (row) => (<Tooltip title={row.is_completed}>
-                <div style={{ display: 'flex', justifyContent: 'center', cursor: 'pointer', fontSize: '18px', fontWeight: 'normal', }}>
-                    {row.is_completed === 'Yes' ? (<span style={{ color: 'green', fontWeight: 'bold' }} onClick={() => handleStatusToggle(row, 'N')} > ✔ </span>) : row.is_completed === 'No' ? (
-                        <span style={{ color: 'red' }} onClick={() => handleStatusToggle(row, 'Y')}>✘</span>
-                    ) : (
-                        filteredRecords.length > 0 && row.syllabus_plan_id !== "No Records Found" ? (
-                            <span style={{ color: "#aaa", fontSize: "18px", cursor: "pointer" }} onClick={() => handleCreateRecord(row, 'Y')}><Tooltip title="Add">+</Tooltip> </span>
-                        ) : null
-                    )}
-                </div></Tooltip>),
+            cell: (row) => {
+                const isYes = row.is_completed === 'Yes';
+                const isNo = row.is_completed === 'No';
+                const isAddable = filteredRecords.length > 0 && row.syllabus_plan_id !== "No Records Found";
+
+                return (
+                    <div style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        {isYes ? (
+                            <Tooltip title="Mark as incomplete">
+                                <span
+                                    style={{ color: 'green', fontWeight: 'bold', cursor: 'pointer' }}
+                                    onClick={() => handleStatusToggle(row, 'N')} > ✔ </span>
+                            </Tooltip>
+                        ) : isNo ? (
+                            <Tooltip title="Mark as complete">
+                                <span
+                                    style={{ color: 'red', cursor: 'pointer' }}
+                                    onClick={() => handleStatusToggle(row, 'Y')} > ✘
+                                </span>
+                            </Tooltip>
+                        ) : isAddable ? (
+                            <Tooltip title="Add">
+                                <span
+                                    style={{ color: "#aaa", fontSize: "18px", cursor: "pointer" }}
+                                    onClick={() => handleCreateRecord(row, 'Y')} > +
+                                </span>
+                            </Tooltip>
+                        ) : null}
+                    </div>
+                );
+            },
             sortable: true,
+            center: true,
         },
         {
             name: "Actions",
             cell: (row) => row.syllabus_plan_id !== "No Records Found" ? (
                 <div className='tableActions'>
+                    {canSubmit && (
                     <Tooltip title="Edit" arrow>
                         <a className='commonActionIcons' style={{ cursor: 'pointer' }} onClick={() => handleEditClick(row.syllabus_plan_id)}>
                             <span><MdEdit /></span>  </a>
                     </Tooltip>
+                    )}
+                    {canSubmit && (
                     <Tooltip title="Delete" arrow>
                         <a className='commonActionIcons' style={{ cursor: 'pointer' }} onClick={() => handleDeleteClick(row.syllabus_plan_id)}>
                             <span><MdDelete /></span> </a>
                     </Tooltip>
+                    )}
                 </div>
             ) : null
         },
@@ -434,11 +494,13 @@ const Syllabus = () => {
                                         <MdFilterList />
                                     </Button>
                                 </OverlayTrigger>
+                                {canSubmit && (
                                 <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Add</Tooltip>}>
                                     <Button className="primaryBtn" variant="primary" onClick={() => navigate("/addsyllabus")}>
                                         <MdAddCircle />
                                     </Button>
                                 </OverlayTrigger>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -504,18 +566,21 @@ const Syllabus = () => {
                     <Form id="filterForm" onSubmit={handleFilterSubmit}>
                         <Row>
                             <Col xs={12}>
-                                <div className='commonInput'>
-                                    <Form.Group controlId="academic">
-                                        <Form.Label>AcademicYear</Form.Label>
+                                <div className="commonInput">
+                                    <Form.Group controlId="academic_year_id">
+                                        <Form.Label>Academic Year</Form.Label>
                                         <Form.Select
-                                            name="academic_year_name"
-                                            id="academic_year_id"
-                                            value={filter.academic_year_id}
-                                            onChange={(e) => setFilter({ ...filter, academic_year_id: e.target.value })}>
-                                            <option value="">Select Academic</option>
-                                            {(academic || []).map((academic) => (
-                                                <option key={academic.academic_year_id} value={academic.academic_year_id}>
-                                                    {academic.academic_year_name}
+                                            as="select"
+                                            className="custom-select"
+                                            value={userObj.academic_year_id}
+                                            onChange={(e) =>
+                                                setFilter({ ...filter, academic_year_id: parseInt(e.target.value) })
+                                            }
+                                        >
+                                            <option value="">Select Academic Year</option>
+                                            {(academic || []).map((year) => (
+                                                <option key={year.academic_year_id} value={year.academic_year_id}>
+                                                    {year.academic_year_name}
                                                 </option>
                                             ))}
                                         </Form.Select>
@@ -593,12 +658,14 @@ const Syllabus = () => {
                                             id="subject_id"
                                             value={filter.subject_id}
                                             onChange={(e) => setFilter({ ...filter, subject_id: e.target.value })}>
-                                            <option value="">Select Subject</option>
-                                            {(subjects || [])  .filter((subject) => subject.is_active === "Active").map((subject,index) => (
-                                                <option key={index} value={subject.subject_id}>
-                                                    {subject.subject_name}
-                                                </option>
-                                            ))}
+                                            <option value="0">Select Subject</option>
+                                            {(subjects || [])
+                                                .filter((subjectItem) => subjectItem.is_active === "Active")
+                                                .map((subjects) => (
+                                                    <option key={subjects.subject_id} value={subjects.subject_id}>
+                                                        {subjects.subject_name}
+                                                    </option>
+                                                ))}
                                         </select>
                                     </Form.Group>
                                 </div>

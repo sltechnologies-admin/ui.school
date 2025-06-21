@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { Container, Row, Col, Card, Modal, Form, Badge, Image, Button, OverlayTrigger } from "react-bootstrap";
+import { Row, Col, Modal, Form, Button, OverlayTrigger } from "react-bootstrap";
 import DataTable from "react-data-table-component";
 import { useNavigate } from "react-router-dom";
-import { MdEdit, MdDelete, MdAddCircle, MdRemoveRedEye } from "react-icons/md";
+import { MdEdit, MdDelete, MdAddCircle, MdRemoveRedEye, MdExitToApp } from "react-icons/md";
 import { Tooltip } from '@mui/material';
 import { ToastContainer, toast } from 'react-toastify';
 import { MdFilterList } from "react-icons/md";
@@ -11,14 +11,148 @@ import * as XLSX from 'xlsx';
 import Header from "../../components/layout/header/header";
 import LeftNav from "../../components/layout/leftNav/leftNav";
 import loading from "../../assets/images/common/loading.gif";
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { Table } from 'react-bootstrap';
+
+
 
 const Students = () => {
     const userData = sessionStorage.getItem('user');
     const userObj = userData ? JSON.parse(userData) : {};
+    const [fees, setFees] = useState([]);
+    const [form, setForm] = useState({
+        student_id: "",
+        student_first_name: "",
+        student_last_name: "",
+        dob: "",
+        blood_group_id: "",
+        blood_group_name: "",
+        address: "",
+        city: "",
+        state: "",
+        state_name: "",
+        country: "",
+        country_name: "",
+        date_of_join: "",
+        date_of_exit: "",
+        createdby: "",
+        lastmodifiedby: "",
+        image_id: "",
+        class_id: "",
+        class_name: "",
+        section_id: "",
+        section_name: "",
+        roll_no: "",
+        student_class_teacher_id: 0,
+        student_class_teacher_name: "",
+        aadhar_card_no: "",
+        birth_certificate_no: "",
+        gender: "",
+        permanent_address: "",
+        caste: "",
+        religion_id: "",
+        aadhar_card_upload: "",
+        caste_upload: "",
+        birth_certificate_upload: "",
+        previous_years_tc: "",
+        roll_no: "",
+        passport_size_photo: "",
+        academic_year_id: 0,
+        academic_year_name: "",
+        admission_number: "",
+        mother_tongue: "",
+        nationality: "",
+        father_occupation: "",
+        mother_occupation: "",
+        class_last_studied: "",
+        class_last_studied_name: "",
+        class_name: "",
+        previous_school_name: "",
+        admission_to: "",
+        class_name: "",
+        first_language_id: "",
+        first_language_name: "",
+        second_language_id: "",
+        second_language_name: "",
+        vaccination: "",
+        primary_contact: "",
+        father_surname: "",
+        father_firstname: "",
+        mother_surname: "",
+        mother_firstname: "",
+        father_email: "",
+        mother_email: "",
+        father_phone_number: "",
+        mother_phone_number: "",
+        school_id: 0,
+        password: "",
+        father_aadhar_number: "",
+        father_aadhar_upload: "",
+        mother_aadhar_number: "",
+        mother_aadhar_upload: "",
+        sibling1: "",
+        sibling2: "",
+        sibling3: "",
+        third_language_id: "",
+        third_language_name: "",
+        student_info: "",
+        sibling1_name: "",
+        sibling1_phone: "",
+        sibling1_date: "",
+        sibling2_name: "",
+        sibling2_phone: "",
+        sibling2_date: "",
+        sibling3_name: "",
+        sibling3_phone: "",
+        sibling3_date: "",
+        sibling1_id: "",
+        sibling2_id: "",
+        sibling3_id: "",
+        teacher_id: "",
+        guardian_surname: "",
+        guardian_firstname: "",
+        guardian_email: "",
+        guardian_phone_number: "",
+        guardian_aadhar_number: "",
+        guardian_aadhar_upload: "",
+        guardian_occupation: "",
+        previous_school_percentage: "",
+        permanent_education_number: "",
+        date_of_admission: "",
+        mole_1: "",
+        mole_2: "",
+        residential_proof: "",
+        medium: "",
+        class_of_leaving_id: "",
+        class_of_leaving: "",
+        tc_upload: "",
+        reason_of_leaving: "",
+        date_of_tc_issued: "",
+        which_school_student_has_gone: "",
+        primary_language_id: "",
+        primary_language: "",
+        sports_certificate: "",
+        blood_group_certificate: "",
+        record_sheet_date: "",
+        record_sheet_upload: "",
+        record_sheet_submitted: "",
+        remarks: "",
+        apaar_number: "",
+        tc_number: "",
+        Total_Fee: "",
+        Total_Due: "",
+        grand_total: "",
+        exit_type: "",
+        document: "",
+        exit_reason: "",
+        exit_status: "",
+        date_of_exit: "",
+        comments: "",
+    })
 
     const [showFilterModal, setShowFilterModal] = useState(false);
     const handleCloseFilterModal = () => setShowFilterModal(false);
-    const handleShowFilterModal = () => setShowFilterModal(true);
+    const handleClosePopupModal = () => setShowExitForm(false);
     const [searchQuery, setSearchQuery] = useState("");
     const fileInputRef = useRef(null);
     const [file, setFile] = useState(null);
@@ -26,23 +160,55 @@ const Students = () => {
     const [sections, setSections] = useState([]);
     const [users, setUsers] = useState([]);
     const [students, setStudents] = useState([]);
+    const [academicYears, setAcademicYears] = useState([]);
+    const [exitstudent, setExitStudent] = useState([]);
+    const [readexitstudent, setReadExitStudent] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
+    const [imageSetName, setImageSetName] = useState("");
+    const [imagePath, setImagePath] = useState("");
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [fileNamesString, setFileNamesString] = useState("");
+    const [uploadedFileNames, setUploadedFileNames] = useState([]);
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
-    useEffect(() => {
-        fetchStudents();
-        fetchDropdownData('/Users/', setUsers, userObj.school_id);
-        fetchDropdownData('/classes/', setClasses, userObj.school_id);
-    }, []);
+    const readOnlyRoles = ["Class Teacher", "Teacher", "Class Incharge"];
+    const canSubmit = !readOnlyRoles.includes(userObj.role_name?.trim());
 
-    const fetchDropdownData = async (endpoint, setter) => {
+    const Roles = ["School Admin"];
+    const Admin = !Roles.includes(userObj.role_name?.trim());
+    
+
+    const handleShowFilterModal = () => {
+        if (classes.length === 0) {
+            fetchDropdownData('/classes/', setClasses, userObj.school_id);
+        }
+        if (users.length === 0) {
+            fetchUsers();
+        }
+        if (academicYears.length === 0) {
+            fetchAcademicYears();
+        }
+        setShowFilterModal(true);
+    }
+
+    const fetchDropdownData = async (endpoint, setter, school_id) => {
         try {
             let action = 'READ';
             if (endpoint === "/Users/") {
                 action = 'TREAD';
             }
-            const response = await axios.post(baseUrl + endpoint, { action });
+            //  if (endpoint === "/AcademicYear/") {
+            //     action = 'DROPDOWNREAD';
+            // }
+
+            const payload = { action };
+
+            if (school_id) {
+                payload.school_id = school_id;
+            }
+
+            const response = await axios.post(baseUrl + endpoint, payload);
             setter(response.data);
         } catch (error) {
             console.error(`Error fetching ${endpoint}:`, error);
@@ -62,15 +228,149 @@ const Students = () => {
         }
     };
 
+    const fetchUsers = async () => {
+        try {
+            const response = await axios.post(baseUrl + "/Users/", {
+                action: "TREAD",
+                school_id: userObj.school_id
+            });
+            setUsers(response.data);
+        } catch (error) {
+            console.error("Error fetching user:", error);
+        }
+    };
+
     const fetchStudents = async () => {
         try {
             const response = await axios.post(baseUrl + "/students/", {
-                action: "READ", school_id: userObj.school_id
+                action: "FILTER", school_id: userObj.school_id,
+                academic_year_id: userObj.academic_year_id
             });
-            setStudents(response.data);
+            setStudents(response.data || []);
         } catch (error) {
             console.error("Error fetching students:", error);
         }
+    };
+
+    const fetchAcademicYears = async () => {
+        try {
+            const response = await axios.post(baseUrl + "/AcademicYear/", {
+                action: "DROPDOWNREAD",
+                school_id: userObj.school_id,
+            });
+
+            const years = response.data || [];
+
+            setAcademicYears(years);
+
+            // Set default academic year from user object if exists
+            const defaultYearId = userObj.academic_year_id;
+            if (defaultYearId && !filter.academic_year_id) {
+                setFilter((prev) => ({
+                    ...prev,
+                    academic_year_id: defaultYearId,
+                }));
+            }
+        } catch (error) {
+            console.error("Error fetching academic years:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchExitStudent();
+        fetchFees();
+    }, []);
+    const fetchExitStudent = async () => {
+        try {
+            const response = await axios.post(baseUrl + "/exitstudent/", {
+                action: "UPDATE", school_id: userObj.school_id
+            });
+            setExitStudent(response.data);
+        } catch (error) {
+            console.error("Error fetching students:", error);
+        }
+    };
+
+    // const [read, setRead] = useState({
+    //     exit_reason: '',
+    //     exit_date: '',
+    //     exit_status: ''
+    // });
+
+    // const fetchExitStudentdetails = async (student_id) => {
+    //     try {
+    //         const response = await axios.post(baseUrl + "/exitstudent/", {
+    //             action: "READ", school_id: userObj.school_id, student_id: student_id
+    //         });
+    //         setRead(response.data);
+    //         console.log(response.data);
+    //     } catch (error) {
+    //         console.error("Error fetching students:", error);
+    //     }
+    // };
+
+
+    const [termSummary, setTermSummary] = useState([]);
+    const fetchFees = async (student_id) => {
+        try {
+            const response = await axios.get(baseUrl + "/main/get_fee_details_by_student_id", {
+                params: {
+                    p_school_id: userObj.school_id,
+                    p_academic_year_id: userObj.academic_year_id,
+                    p_student_id: student_id
+                }
+            });
+
+            const data = response.data.get_fees_student_receipt_structure_bystudent || [];
+            setFees(response.data);
+
+            const terms = new Set();
+
+            data.forEach(item => {
+                Object.keys(item).forEach(key => {
+                    if (key.startsWith("Term") && !key.includes("Bal") && !key.includes("due_date")) {
+                        terms.add(key);
+                    }
+                });
+            });
+
+            const summary = [...terms].map(term => {
+                const total = data.reduce((sum, item) => sum + (item[term] || 0), 0);
+                const due = data.reduce((sum, item) => sum + (item[`${term} Bal`] || 0), 0);
+                const paid = total - due;
+                return { term, total, paid, due };
+            });
+
+            setTermSummary(summary);
+
+        } catch (error) {
+            console.error("Error fetching Fees:", error);
+        }
+    };
+
+
+    const grandTotal = termSummary.reduce((sum, item) => sum + item.total, 0);
+    const totalDue = termSummary.reduce((sum, item) => sum + Number(item.due), 0);
+
+    useEffect(() => {
+        const grandTotal = termSummary.reduce((sum, item) => sum + Number(item.total), 0);
+        const totalDue = termSummary.reduce((sum, item) => sum + Number(item.due), 0);
+
+        setForm(prev => ({
+            ...prev,
+            grand_total: grandTotal,
+            Total_Due: totalDue,
+        }));
+    }, [termSummary]);
+
+    const handleInputChange = (e) => {
+        const { id, value, files } = e.target;
+
+        setForm((prevForm) => ({
+            ...prevForm,
+            [id]: value
+        }));
+
     };
 
     useEffect(() => {
@@ -116,6 +416,18 @@ const Students = () => {
 
     const columns = [
         {
+            name: "Student ID",
+            selector: row => row.student_id,
+            cell: row => (
+                <Tooltip title={row.student_id}>
+                    <span>{row.student_id}</span>
+                </Tooltip>
+            ),
+            sortable: true,
+            width: "135px"
+        }
+        ,
+        {
             name: "Image",
             selector: (row) => row.passport_size_photo,
             cell: () => null,
@@ -129,25 +441,43 @@ const Students = () => {
             sortable: true
         },
         {
-            name: "First Name",
-            selector: row => row.student_first_name,
-            cell: row => <Tooltip title={row.student_first_name}><span>{row.student_first_name}</span></Tooltip>,
-            sortable: true,
-            width: "120px"
-        },
-        {
             name: "Surname",
             selector: row => row.student_last_name,
-            cell: row => <Tooltip title={row.student_last_name}><span>{row.student_last_name}</span></Tooltip>,
+            cell: row => {
+                const surName = row.student_last_name || " ";
+                return (
+                    <Tooltip title={surName}>
+                        <span>
+                            {surName.length > 12 ? surName.substring(0, 12) + "..." : surName}
+                        </span>
+                    </Tooltip>
+                );
+            },
             sortable: true,
             width: "135px"
+        },
+        {
+            name: "First Name",
+            selector: row => row.student_first_name,
+            cell: row => {
+                const firstName = row.student_first_name || " ";
+                return (
+                    <Tooltip title={firstName}>
+                        <span>
+                            {firstName.length > 12 ? firstName.substring(0, 12) + ".." : firstName}
+                        </span>
+                    </Tooltip>
+                );
+            },
+            sortable: true,
+            width: "120px"
         },
         {
             name: "Roll Number",
             selector: row => row.roll_no,
             cell: row => <Tooltip title={row.roll_no}><span>{row.roll_no}</span></Tooltip>,
             sortable: true,
-            width: "105px"
+            width: "105px"  // increased from 105px
         },
         {
             name: "DOJ",
@@ -166,7 +496,8 @@ const Students = () => {
             name: "Section",
             selector: row => row.section_name,
             cell: row => <Tooltip title={row.section_name}><span>{row.section_name}</span></Tooltip>,
-            sortable: true
+            sortable: true,
+            width: "90px"
         },
         {
             name: "Class Teacher",
@@ -189,72 +520,104 @@ const Students = () => {
             selector: row => row.gender,
             cell: row => <Tooltip title={row.gender}><span>{row.gender}</span></Tooltip>,
             sortable: true,
-            width: "80px"
+            width: "100px"  // increased from 80px
         },
         {
             name: "Status",
             selector: row => row.status,
             cell: row => <Tooltip title={row.status}><span>{row.status}</span></Tooltip>,
-            sortable: true
+            sortable: true,
+            width: "100px"
         },
         {
             name: "Actions",
             cell: row => (
                 (filteredRecords || []).length > 0 ? (
                     <div className="tableActions">
-                        <Tooltip title="Edit" arrow>
-                            <a className="commonActionIcons">
-                                <span onClick={() => handleEditClick(row.student_id)}> <MdEdit /></span>
-                            </a>
-                        </Tooltip>
-                        <Tooltip title="Delete" arrow>
-                            <a className="commonActionIcons">
-                                <span onClick={() => handleDeleteClick(row.student_id)}><MdDelete /></span>
-                            </a>
-                        </Tooltip>
+                        {canSubmit && Admin && (
+                            <Tooltip title="Edit" arrow>
+                                <span
+                                    className="commonActionIcons"
+                                    onClick={() => handleEditClick(row.student_id)}
+                                >
+                                    <MdEdit />
+                                </span>
+                            </Tooltip>
+                        )}
                         <Tooltip title="View" arrow>
                             <a className="commonActionIcons">
                                 <span onClick={() => handleViewClick(row.student_id)}><MdRemoveRedEye /></span>
                             </a>
                         </Tooltip>
+                        {canSubmit && (
+                            <Tooltip title="Delete" arrow>
+                                <span
+                                    className="commonActionIcons"
+                                    onClick={() => handleDeleteClick(row.student_id)}
+                                >
+                                    <MdExitToApp />
+                                </span>
+                            </Tooltip>
+                        )}
+
                     </div>
                 ) : null
             ),
         },
     ];
 
-    const handleDeleteClick = async (student_id) => {
-        const confirmDelete = window.confirm("Are you sure you want change the status?");
+    const [showExitForm, setShowExitForm] = useState(false);
 
-        if (!confirmDelete) {
-            return;
-        }
-        const requestBody = {
-            student_id: student_id,
-            action: "DELETE"
-        };
+    // const handleDeleteClick = async (student_id) => {
+    //     try {
+    //         const studentToEdit = (students || []).find(student => student.student_id === student_id);
+    //         // console.log(studentToEdit);
+
+    //         setForm(studentToEdit);
+    //         fetchFees(student_id);
+    //         // fetchExitStudentdetails(student_id);
+    //         // await fetchExitStudentdetails(student_id);
+    //         setShowExitForm(true);
+    //     } catch (error) {
+    //         console.error("Failed to fetch student details", error);
+    //         alert("Error fetching student data");
+    //     }
+    // };
+
+    const handleDeleteClick = async (student_id) => {
         try {
-            const response = await axios.post(baseUrl + "/students/", requestBody, {
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-            });
-            if (response.status < 200 || response.status >= 300) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
+            setTermSummary([]);
+            const studentToEdit = (students || []).find(student => student.student_id === student_id);
+
+            if (studentToEdit) {
+                setForm(studentToEdit);
+                fetchFees(student_id);
+
+                // Load already uploaded files (comma-separated string) into array
+                if (studentToEdit.document) {
+                    const filesArray = studentToEdit.document.split(',').map(f => f.trim()).filter(Boolean);
+                    setUploadedFileNames(filesArray);
+                } else {
+                    setUploadedFileNames([]); // clear if no document
+                }
+
+                setShowExitForm(true);
+            } else {
+                console.error("Student not found.");
             }
-            toast.success("Record Set to InActive");
-            fetchStudents();
         } catch (error) {
-            console.error('Error:', error);
+            console.error("Failed to fetch student details", error);
+            alert("Error fetching student data");
         }
     };
 
     const searchableColumns = [
+        (row) => row.student_id,
         (row) => row.admission_number,
         (row) => row.student_first_name,
         (row) => row.student_last_name,
         (row) => row.roll_no,
-        (row) => row.date_of_join,
+        (row) => formatDate1(row.date_of_join),
         (row) => row.class_name,
         (row) => row.section_name,
         (row) => row.student_class_teacher_name,
@@ -280,6 +643,8 @@ const Students = () => {
         student_class_teacher_id: 0,
         gender: "",
         date_of_join: "",
+        academic_year_id: userObj.academic_year_id,
+        school_id: userObj.school_id,
         action: "FILTER",
     });
 
@@ -288,14 +653,29 @@ const Students = () => {
             fetchSections(filter.class_id || 0);
         }
         else {
-            setSections()
+            setSections([]);
         }
     }, [filter.class_id]);
 
     const handleFilterSubmit = async (e) => {
         e.preventDefault();
+        const formData = {
+            student_first_name: filter.student_first_name || "",
+            student_last_name: filter.student_last_name || "",
+            class_id: filter.class_id || 0,
+            section_id: filter.section_id || 0,
+            admission_number: filter.admission_number || "",
+            student_class_teacher_id: filter.student_class_teacher_id || 0,
+            gender: filter.gender || "",
+            date_of_join: filter.date_of_join || "",
+            academic_year_id: userObj.academic_year_id,
+            school_id: userObj.school_id,
+            action: "FILTER",
+        };
+        // const isAnyFieldFilled = Object.values(filter).some(val => val !== "" && val !== "FILTER");
+        // if (isAnyFieldFilled) {
         try {
-            const response = await axios.post(baseUrl + "/students/", filter, {
+            const response = await axios.post(baseUrl + "/students/", formData, {
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -305,6 +685,135 @@ const Students = () => {
         } catch (error) {
             console.error("Error fetching data:", error);
         }
+        // }
+    };
+
+    const handleFileChange1 = (e) => {
+        const files = Array.from(e.target.files);
+        setSelectedFile(files);
+
+
+        const fileNames = files.map((file) => file.name).join(", ");
+        setFileNamesString(fileNames);
+    };
+
+    const handleRemoveFile = (fileNameToRemove) => {
+        setUploadedFileNames((prevFiles) => {
+            const updatedFiles = (prevFiles || []).filter((fileName) => fileName !== fileNameToRemove);
+
+            const updatedFileNamesString = updatedFiles.join(", ");
+            setFileNamesString(updatedFileNamesString);
+
+            return updatedFiles;
+        });
+    };
+
+    const uploadLogo = async () => {
+        if (!selectedFile || selectedFile.length === 0) {
+            toast.error("Please select at least one file");
+            return null;
+        }
+
+        const formData = new FormData();
+        selectedFile.forEach((file) => {
+            formData.append("files", file);
+        });
+
+        try {
+            const response = await axios.post(`${baseUrl}/uploads/multipleupload/`, formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+
+            const uploadedFilePaths = response.data.uploaded_files.map((file) => file.location);
+            return uploadedFilePaths;
+        } catch (error) {
+            console.error("Error uploading files:", error);
+            toast.error("Error uploading files");
+            return null;
+        }
+    };
+
+    const resetForm = () => {
+        setForm({
+            student_id: "",
+            date_of_exit: "",
+            exit_type: "",
+            document: "",
+            exit_reason: "",
+            which_school_student_has_gone: "",
+            exit_status: "",
+            school_id: userObj.school_id,
+        });
+        setSelectedFile(null);
+        setFileNamesString("");
+        setUploadedFileNames([]);
+    };
+
+    const handleModalSubmit = async (e) => {
+        e.preventDefault();
+        if (!form.exit_type || !["A", "T", "Abscond", "Transfer"].includes(form.exit_type)) {
+            toast.error("Please Enter Exit Type");
+            return;
+        }
+
+
+        let uploadedFilePaths = form.document || [];
+
+        if (uploadedFileNames.length > 0) {
+            uploadedFilePaths = [...uploadedFileNames];
+        }
+
+        try {
+            if (selectedFile && selectedFile.length > 0) {
+                const newFilePaths = await uploadLogo();
+                if (newFilePaths) {
+                    uploadedFilePaths = [...uploadedFilePaths, ...newFilePaths];
+                } else if (!uploadedFilePaths.length) {
+                    toast.error("Error uploading files.");
+                    return;
+                }
+            }
+        } catch (error) {
+            console.error("Error in uploadFiles:", error);
+            toast.error("Error uploading files.");
+            return;
+        }
+
+        const fileNamesOnly = (uploadedFilePaths).map(filePath => {
+            return filePath.split(/[\\/]/).pop();
+        });
+        const approveStatus = { 'Abscond': 'A', 'Transfer': 'T' };
+        const selectedStatus = approveStatus[form.exit_type] || form.exit_type;
+
+        const formData = {
+            student_id: form.student_id,
+            date_of_exit: form.date_of_exit || "",
+            exit_type: selectedStatus,
+            document: fileNamesOnly.join(", "),
+            exit_reason: form.exit_reason || "",
+            which_school_student_has_gone: form.which_school_student_has_gone || "",
+            exit_status: form.exit_status || "P",
+            school_id: userObj.school_id,
+            action: "UPDATE"
+        };
+        try {
+            // console.log(formData);
+            const response = await axios.post(baseUrl + "/exitstudent/", formData, {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+            // console.log("API Response", response.data)
+            setExitStudent(response.data || []);
+            toast.success("Sent for Approval");
+            fetchStudents();
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        }
+        resetForm();
+        e.target.reset();
     };
 
     const handleFilterClear = async () => {
@@ -317,6 +826,7 @@ const Students = () => {
             student_class_teacher_id: 0,
             gender: "",
             date_of_join: "",
+            academic_year_id: userObj.academic_year_id,
             action: "FILTER",
         });
         fetchStudents();
@@ -469,7 +979,7 @@ const Students = () => {
                                 />
                             </div>
                             <div className="d-flex align-items-center" style={{ gap: 6 }}>
-                                <div className="fileUploadPart" style={{ gap: 6 }}>
+                                {/* <div className="fileUploadPart" style={{ gap: 6 }}>
                                     <input
                                         type="file"
                                         accept=".xlsx, .xls"
@@ -484,17 +994,19 @@ const Students = () => {
                                             <span>Upload</span>
                                         </Button>
                                     </OverlayTrigger>
-                                </div>
+                                </div> */}
                                 <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Filter</Tooltip>}>
                                     <Button className="secondaryBtn" variant="Secondary" onClick={handleShowFilterModal}>
                                         <span><MdFilterList /></span>
                                     </Button>
                                 </OverlayTrigger>
+                                 {canSubmit && (
                                 <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Add</Tooltip>}>
                                     <Button className="primaryBtn" variant="primary" onClick={() => navigate("/addstudent")}>
                                         <span><MdAddCircle /></span>
                                     </Button>
                                 </OverlayTrigger>
+                                 )}
                             </div>
 
 
@@ -510,7 +1022,7 @@ const Students = () => {
                                 <DataTable
                                     className="custom-table"
                                     columns={columns}
-                                    data={filteredRecords.length > 0 ? filteredRecords : [{ class_name: 'No Records Found'}]}
+                                    data={filteredRecords.length > 0 ? filteredRecords : [{ class_name: 'No Records Found' }]}
                                     pagination={filteredRecords.length > 0}
                                     highlightOnHover
                                     responsive
@@ -525,11 +1037,294 @@ const Students = () => {
                                 />
                             )}
                         </div>
-
-
                     </div>
                 </div>
             </div>
+
+            <style>
+                {`
+                .custom-dialog {
+                    max-width: 95% !important;
+                    width: 95% !important;
+                }
+
+                .custom-dialog .modal-content {
+                    max-height: 90vh;
+                    overflow-y: auto;
+                }
+                `}
+            </style>
+
+
+            <Modal show={showExitForm} onHide={() => setShowExitForm(false)} centered size="xl" style={{ maxWidth: "95%", width: "95%" }} dialogClassName="fixed-modal" >
+                <Modal.Header closeButton>
+                    <Modal.Title>Student Exit</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form id="ModalForm" onSubmit={handleModalSubmit}>
+                        <Row className="px-3 pt-2">
+                            <Col md={6} className="mb-2 d-flex align-items-center">
+                                <strong style={{ width: "160px" }}>Student Name:</strong>
+                                <span>{form.student_last_name} {form.student_first_name}</span>
+                            </Col>
+                            <Col md={6} className="mb-2 d-flex align-items-center">
+                                <strong style={{ width: "190px" }}>Admission Number:</strong>
+                                <span>{form.admission_number}</span>
+                            </Col>
+                            <Col md={6} className="mb-2 d-flex align-items-center">
+                                <strong style={{ width: "160px" }}>Class:</strong>
+                                <span>{form.class_name}</span>
+                            </Col>
+                            <Col md={6} className="mb-2 d-flex align-items-center">
+                                <strong style={{ width: "190px" }}>Section:</strong>
+                                <span>{form.section_name}</span>
+                            </Col>
+
+                            <Col md={6} className="mb-2 d-flex align-items-center">
+                                <strong style={{ width: "160px" }}>Father:</strong>
+                                <span>{form.father_surname} {form.father_firstname}</span>
+                            </Col>
+                            <Col md={6} className="mb-2 d-flex align-items-center">
+                                <strong style={{ width: "190px" }}>Mother:</strong>
+                                <span>{form.mother_surname} {form.mother_firstname}</span>
+                            </Col>
+                            <Col md={6} className="mb-2 d-flex align-items-center">
+                                <strong style={{ width: "160px" }}>Total Fee:</strong>
+                                <span>{grandTotal}</span>
+                            </Col>
+                            <Col md={6} className="mb-2 d-flex align-items-center">
+                                <strong style={{ width: "190px" }}>Total Due:</strong>
+                                <span>{totalDue}</span>
+                            </Col>
+                            <Table striped bordered hover responsive className="mt-3"  >
+                                <thead>
+                                    <tr>
+                                        <th>Term</th>
+                                        <th>Term Fee</th>
+                                        <th>Paid</th>
+                                        <th>Due</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {termSummary.map(item => (
+                                        <tr key={item.term}>
+                                            <td>{item.term}</td>
+                                            <td>{item.total}</td>
+                                            <td>{item.paid}</td>
+                                            <td>{item.due}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </Table>
+                            <Col md={6} className="mb-2 d-flex">
+                                <strong style={{ width: "160px" }}>Exit Type:</strong>
+                                <div className="d-flex gap-4">
+                                    <Form.Check
+                                        type="radio"
+                                        label="Abscond"
+                                        disabled={
+                                            form.exit_status?.toLowerCase() === "approved" ||
+                                            form.exit_status?.toLowerCase() === "pending"
+                                        }
+                                        name="exitType"
+                                        value="A"
+                                        checked={form.exit_type === "A" || form.exit_type === "Abscond"}
+                                        onChange={(e) => setForm({ ...form, exit_type: e.target.value })}
+                                    />
+                                    <Form.Check
+                                        type="radio"
+                                        label="Transfer"
+                                        name="exitType"
+                                        disabled={
+                                            form.exit_status?.toLowerCase() === "approved" ||
+                                            form.exit_status?.toLowerCase() === "pending"
+                                        }
+                                        value="T"
+                                        checked={form.exit_type === "T" || form.exit_type === "Transfer"}
+                                        onChange={(e) => setForm({ ...form, exit_type: e.target.value })}
+                                    />
+                                </div>
+                            </Col>
+                            <Col xs={12} md={6} lg={6}>
+                                <div className="mb-2 d-flex align-items-center">
+                                    <strong style={{ width: "160px" }}>Document:</strong>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                        <input
+                                            type="file"
+                                            id="document"
+                                            multiple
+                                            onChange={handleFileChange1}
+                                            disabled={
+                                                form.exit_status?.toLowerCase() === "approved" ||
+                                                form.exit_status?.toLowerCase() === "pending"
+                                            }
+                                            accept="image/*,application/pdf"
+                                            style={{
+                                                flex: 1,
+                                                padding: "6px",
+                                                fontSize: "14px",
+                                                border: "1px solid #ccc",
+                                                borderRadius: "4px",
+                                            }}
+                                        />
+                                        <Button
+                                            variant="primary"
+                                            disabled={
+                                                form.exit_status?.toLowerCase() === "approved" ||
+                                                form.exit_status?.toLowerCase() === "pending"
+                                            }
+                                            style={{ padding: "6px 12px", fontSize: "14px" }}
+                                            onClick={async () => {
+                                                if (selectedFile && selectedFile.length > 0) {
+                                                    const newFilePaths = await uploadLogo();
+                                                    if (newFilePaths) {
+                                                        setUploadedFileNames((prev) => [...prev, ...newFilePaths]);
+                                                        setSelectedFile(null);
+                                                    }
+                                                } else {
+                                                    toast.error("Please select at least one file");
+                                                }
+                                            }}
+                                        >
+                                            Upload
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                {/* Uploaded Files block */}
+                                <div className="commonInput">
+                                    {uploadedFileNames.length > 0 && (
+                                        <div>
+                                            <p>Uploaded Files:</p>
+                                            <table
+                                                className="table table-bordered"
+                                                style={{ fontSize: "14px", width: "100%", minWidth: "0px" }}
+                                            >
+                                                <thead>
+                                                    <tr>
+                                                        <td style={{ width: "70%" }}>File Name</td>
+                                                        <td style={{ width: "30%" }}>Actions</td>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {uploadedFileNames.map((fileName, index) => {
+                                                        const cleanFileName = fileName.trim().split(/[\\/]/).pop();
+
+                                                        return (
+                                                            <tr key={index}>
+                                                                <td>
+                                                                    <a
+                                                                        href={`${baseUrl}/uploads/get-image/${encodeURIComponent(
+                                                                            cleanFileName
+                                                                        )}`}
+                                                                        download={cleanFileName}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        style={{ fontSize: "12px" }}
+                                                                    >
+                                                                        {cleanFileName}
+                                                                    </a>
+                                                                </td>
+                                                                <td>
+                                                                    {form.exit_status?.toLowerCase() !== "pending" && form.exit_status?.toLowerCase() !== "approved" ? (
+                                                                        <span
+                                                                            style={{ cursor: "pointer", color: "red", fontSize: "16px" }}
+                                                                            onClick={() => handleRemoveFile(fileName)}
+                                                                        >
+                                                                            ✖
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span style={{ color: "#aaa", fontSize: "16px", cursor: "not-allowed" }}>
+                                                                            ✖
+                                                                        </span>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                </div>
+                            </Col>
+
+                            {/* Moved Next School below Uploaded Files and aligned left */}
+                            <Col md={6} className="mb-2 d-flex align-items-center">
+                                <strong style={{ width: "160px" }}>Next School:</strong>
+                                <Form.Control
+                                    type="text"
+                                    id="which_school_student_has_gone"
+                                    disabled={
+                                        form.exit_status?.toLowerCase() === "approved" ||
+                                        form.exit_status?.toLowerCase() === "pending"
+                                    }
+                                    value={form.which_school_student_has_gone}
+                                    placeholder="Enter School Name"
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        if (/^[A-Za-z\s]*$/.test(value)) {
+                                            handleInputChange(e);
+                                        }
+                                    }}
+                                    maxLength={255}
+                                    style={{ flex: 1 }}
+                                />
+                            </Col>
+
+                            <Col md={6} className="mb-2 d-flex">
+                                <strong style={{ width: "160px" }}>Comments:</strong>
+                                <Form.Control
+                                    as="textarea"
+                                    value={form.exit_reason}
+                                    disabled={
+                                        form.exit_status?.toLowerCase() === "approved" ||
+                                        form.exit_status?.toLowerCase() === "pending"
+                                    }
+                                    placeholder="Enter Comments"
+                                    onChange={(e) => setForm({ ...form, exit_reason: e.target.value })}
+                                    maxLength={250}
+                                    style={{ flex: 1 }}
+                                />
+                            </Col>
+                            <Col md={6} className="mb-2 d-flex align-items-center">
+                                <strong style={{ width: "160px" }}>Date of Exit:</strong>
+                                <Form.Control
+                                    type="date"
+                                    id="date_of_exit"
+                                    value={form.date_of_exit}
+                                    disabled={
+                                        form.exit_status?.toLowerCase() === "approved" ||
+                                        form.exit_status?.toLowerCase() === "pending"
+                                    }
+                                    onChange={handleInputChange}
+                                    style={{ maxWidth: "300px" }}
+                                />
+                            </Col>
+                            <Col md={6} className="mb-2 d-flex align-items-center">
+                                <strong style={{ width: "160px" }}>Exit Status:</strong>
+                                <span>{form.exit_status}</span>
+                            </Col>
+                            {form.exit_status === "Rejected" && (
+                                <Col md={6} className="mb-2 d-flex align-items-center">
+                                    <strong style={{ width: "190px" }}>Principal Comments:</strong>
+                                    <span>{form.comments}</span>
+                                </Col>
+                            )}
+                        </Row>
+                    </Form>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowExitForm(false)}>
+                        Cancel
+                    </Button>
+                    {form.exit_status !== "Approved" && form.exit_status !== "Pending" && (
+                        <Button type="submit" variant="primary" form="ModalForm" onClick={handleClosePopupModal}>
+                            Submit
+                        </Button>
+                    )}
+                </Modal.Footer>
+            </Modal>
 
             <Modal show={showFilterModal} onHide={handleCloseFilterModal} className="commonFilterModal">
                 <Modal.Header closeButton className="modalHeaderFixed">
@@ -538,6 +1333,28 @@ const Students = () => {
                 <Modal.Body className="modalBodyScrollable">
                     <Form id="filterForm" onSubmit={handleFilterSubmit}>
                         <Row>
+                            <Col xs={12}>
+                                <div className="commonInput">
+                                    <Form.Group controlId="academic_year_id">
+                                        <Form.Label>Academic Year</Form.Label>
+                                        <Form.Select
+                                            as="select"
+                                            className="custom-select"
+                                            value={filter.academic_year_id}
+                                            onChange={(e) =>
+                                                setFilter({ ...filter, academic_year_id: parseInt(e.target.value) })
+                                            }
+                                        >
+                                            <option value="">Select Academic Year</option>
+                                            {(academicYears || []).map((year) => (
+                                                <option key={year.academic_year_id} value={year.academic_year_id}>
+                                                    {year.academic_year_name}
+                                                </option>
+                                            ))}
+                                        </Form.Select>
+                                    </Form.Group>
+                                </div>
+                            </Col>
                             <Col xs={12}>
                                 <div className='commonInput'>
                                     <Form.Group controlId="firstName">

@@ -33,6 +33,7 @@ function AddStudent() {
     const [editId, setEditId] = useState(null);
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
     const [imagePath, setImagePath] = useState("");
+    const [aadhar, setAadhar] = useState("");
     const [imageSetName, setImageSetName] = useState("");
     const [form, setForm] = useState({
         student_id: "",
@@ -131,6 +132,28 @@ function AddStudent() {
         guardian_aadhar_upload: "",
         guardian_occupation: "",
         previous_school_percentage: "",
+        permanent_education_number: "",
+        date_of_admission: "",
+        mole_1: "",
+        mole_2: "",
+        residential_proof: "",
+        medium: "",
+        class_of_leaving_id: "",
+        class_of_leaving: "",
+        tc_upload: "",
+        reason_of_leaving: "",
+        date_of_tc_issued: "",
+        which_school_student_has_gone: "",
+        primary_language_id: "",
+        primary_language: "",
+        sports_certificate: "",
+        blood_group_certificate: "",
+        record_sheet_date: "",
+        record_sheet_upload: "",
+        record_sheet_submitted: "",
+        remarks: "",
+        apaar_number: "",
+        tc_number: "",
     })
 
     useEffect(() => {
@@ -201,8 +224,14 @@ function AddStudent() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        let uploadedLogoPath = form.passport_size_photo;
+        let uploadedLogoPath = {};
         try {
+            if (form.passport_size_photo) {
+                uploadedLogoPath.passport_size_photo = await uploadLogo(form.passport_size_photo, "passport_size_photo");
+            }
+            if (form.aadhar_card_upload) {
+                uploadedLogoPath.aadhar_card_upload = await uploadLogo(form.aadhar_card_upload, "aadhar_card_upload");
+            }
             if (selectedFile) {
                 uploadedLogoPath = await uploadLogo();
                 if (!uploadedLogoPath) {
@@ -249,6 +278,7 @@ function AddStudent() {
             previous_years_tc: form.previous_years_tc || "",
             roll_no: form.roll_no || 0,
             passport_size_photo: selectedFile ? selectedFile.name : form.passport_size_photo || "",
+            aadhar_card_upload: selectedFile ? selectedFile.name : form.aadhar_card_upload || "",
             academic_year_id: userObj.academic_year_id,
             admission_number: form.admission_number,
             mother_tongue: form.mother_tongue || "",
@@ -288,6 +318,26 @@ function AddStudent() {
             guardian_phone_number: form.guardian_phone_number || "",
             guardian_occupation: form.guardian_occupation || "",
             previous_school_percentage: form.previous_school_percentage || "",
+            permanent_education_number: form.permanent_education_number || "",
+            date_of_admission: form.date_of_admission || "",
+            mole_1: form.mole_1 || "",
+            mole_2: form.mole_2 || "",
+            residential_proof: form.residential_proof || "",
+            medium: form.medium || "",
+            class_of_leaving_id: form.class_of_leaving_id || 0,
+            tc_upload: form.tc_upload || "",
+            reason_of_leaving: form.reason_of_leaving || "",
+            date_of_tc_issued: form.date_of_tc_issued || "",
+            which_school_student_has_gone: form.which_school_student_has_gone || "",
+            primary_language_id: form.primary_language_id || 0,
+            sports_certificate: form.sports_certificate || "",
+            blood_group_certificate: form.blood_group_certificate || "",
+            record_sheet_date: form.record_sheet_date || "",
+            record_sheet_upload: form.record_sheet_upload || "",
+            record_sheet_submitted: form.record_sheet_submitted || "",
+            remarks: form.remarks || "",
+            apaar_number: form.apaar_number || "",
+            tc_number: form.tc_number || "",
             action: editId !== null ? 'UPDATE' : 'CREATE'
         };
         navigate("/students");
@@ -296,11 +346,13 @@ function AddStudent() {
             formData.student_id = editId;
         }
         try {
+            console.log(formData);
             const response = await axios.post(baseUrl + "/students/", formData, {
                 headers: {
                     "Content-Type": "application/json",
                 },
             });
+            console.log("API Response", response.data)
             if (editId !== null) {
                 toast.success("Record Updated Successfully");
                 setEditId(null);
@@ -364,6 +416,7 @@ function AddStudent() {
             previous_years_tc: "",
             roll_no: "",
             passport_size_photo: "",
+            aadhar_card_upload: "",
             academic_year_id: 0,
             academic_year_name: "",
             admission_number: "",
@@ -424,11 +477,32 @@ function AddStudent() {
             guardian_aadhar_upload: "",
             guardian_occupation: "",
             previous_school_percentage: "",
+            permanent_education_number: "",
+            date_of_admission: "",
+            mole_1: "",
+            mole_2: "",
+            residential_proof: "",
+            medium: "",
+            class_of_leaving_id: "",
+            tc_upload: "",
+            reason_of_leaving: "",
+            date_of_tc_issued: "",
+            which_school_student_has_gone: "",
+            primary_language_id: "",
+            sports_certificate: "",
+            blood_group_certificate: "",
+            record_sheet_date: "",
+            record_sheet_upload: "",
+            record_sheet_submitted: "",
+            remarks: "",
+            apaar_number: "",
+            tc_number: "",
         });
         setSelectedFile(null);
         setteacherId("");
         setImagePath("");
         setImageSetName("");
+        setAadhar("");
 
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
@@ -438,7 +512,7 @@ function AddStudent() {
     useEffect(() => {
         fetchStudents();
         fetchReadStudents();
-        fetchDropdownData('/AcademicYear/',setAcademics,userObj.school_id);
+        fetchDropdownData('/AcademicYear/', setAcademics, userObj.school_id);
         fetchDropdownData('/classes/', setClasses, userObj.school_id);
         fetchDropdownData('/Users/', setUsers, userObj.school_id);
         fetchDropdownData('/states/', setStates);
@@ -449,19 +523,24 @@ function AddStudent() {
         fetchDropdownData('/religion/', setReligions);
     }, []);
 
-    const fetchDropdownData = async (endpoint, setter) => {
+    const fetchDropdownData = async (endpoint, setter, school_id) => {
         try {
             let action = 'READ';
             if (endpoint === "/AcademicYear/") {
                 action = 'CURRENTREAD';
             }
-            const response = await axios.post(baseUrl + endpoint, { action });
+            const payload = { action };
+
+            if (school_id) {
+                payload.school_id = school_id;
+            }
+            const response = await axios.post(baseUrl + endpoint, payload);
             setter(response.data);
         } catch (error) {
             console.error(`Error fetching ${endpoint}:`, error);
         }
     };
-    
+
     const fetchStudents = async () => {
         try {
             const response = await axios.post(baseUrl + "/students/", {
@@ -476,7 +555,8 @@ function AddStudent() {
     const fetchReadStudents = async () => {
         try {
             const response = await axios.post(baseUrl + "/readstudents/", {
-                action: "READ"
+                action: "READ",
+                school_id: userObj.school_id
             });
             if (Array.isArray(response.data)) {
                 const options = response.data.map((readstudent) => ({
@@ -547,24 +627,34 @@ function AddStudent() {
         }));
     };
 
+    // const handleInputChange1 = (e) => {
+    //     const { id, value } = e.target;
+    //     setForm((prevForm) => {
+    //         if (id === "admission_to") {
+    //             return {
+    //                 ...prevForm,
+    //                 admission_to: value,
+    //                 class_id: value,
+    //             };
+    //         } else if (id === "class_id") {
+    //             return {
+    //                 ...prevForm,
+    //                 class_id: value,
+    //             };
+    //         }
+    //         return prevForm;
+    //     });
+    // };
+
     const handleInputChange1 = (e) => {
-        const { id, value } = e.target;
-        setForm((prevForm) => {
-            if (id === "admission_to") {
-                return {
-                    ...prevForm,
-                    admission_to: value,
-                    class_id: value,
-                };
-            } else if (id === "class_id") {
-                return {
-                    ...prevForm,
-                    class_id: value,
-                };
-            }
-            return prevForm;
-        });
+        const { value } = e.target;
+        setForm((prevForm) => ({
+            ...prevForm,
+            admission_to: value,
+            class_id: "", // Clear previously selected class_id
+        }));
     };
+
 
     const handleInputChange = (e) => {
         const { id, value, files } = e.target;
@@ -597,7 +687,7 @@ function AddStudent() {
                 caste_upload: file,
             }));
         }
-        else if (id === "mother_tongue" || id === "nationality" || id === "caste" || id === "father_occupation" || id === "mother_occupation" || id === "guardian_occupation") {
+        else if (id === "mother_tongue" || id === "nationality") {
             if (/^[A-Za-z]*$/.test(value)) {
                 setForm((prevForm) => ({
                     ...prevForm,
@@ -610,7 +700,7 @@ function AddStudent() {
             setForm((prevForm) => ({
                 ...prevForm,
                 class_id: value,
-                class_name: selectedClass ? selectedClass.class_name : "", 
+                class_name: selectedClass ? selectedClass.class_name : "",
             }));
         }
         else if (id === "admission_to") {
@@ -618,7 +708,7 @@ function AddStudent() {
             setForm((prevForm) => ({
                 ...prevForm,
                 admission_to: value,
-                next_joining_class_name: selectedClass ? selectedClass.class_name : "",  
+                next_joining_class_name: selectedClass ? selectedClass.class_name : "",
             }));
         }
         else if (id === "class_last_studied") {
@@ -626,7 +716,7 @@ function AddStudent() {
             setForm((prevForm) => ({
                 ...prevForm,
                 class_last_studied: value,
-                class_last_studied_name: selectedClass ? selectedClass.class_name : "",  
+                class_last_studied_name: selectedClass ? selectedClass.class_name : "",
             }));
         }
         else if (id === "academic_year_id") {
@@ -634,7 +724,7 @@ function AddStudent() {
             setForm((prevForm) => ({
                 ...prevForm,
                 academic_year_id: value,
-                academic_year_name: selectedAcademics ? selectedAcademics.academic_year_name : "",  
+                academic_year_name: selectedAcademics ? selectedAcademics.academic_year_name : "",
             }));
         }
         else if (id === "religion_id") {
@@ -642,7 +732,7 @@ function AddStudent() {
             setForm((prevForm) => ({
                 ...prevForm,
                 religion_id: value,
-                religion_name: selectedReligions ? selectedReligions.religion_name : "",  
+                religion_name: selectedReligions ? selectedReligions.religion_name : "",
             }));
         }
         else if (id === "first_language_id") {
@@ -650,7 +740,7 @@ function AddStudent() {
             setForm((prevForm) => ({
                 ...prevForm,
                 first_language_id: value,
-                first_language_name: selectedLanguages ? selectedLanguages.language_name : "",  
+                first_language_name: selectedLanguages ? selectedLanguages.language_name : "",
             }));
         }
         else if (id === "second_language_id") {
@@ -658,7 +748,7 @@ function AddStudent() {
             setForm((prevForm) => ({
                 ...prevForm,
                 second_language_id: value,
-                second_language_name: selectedLanguages ? selectedLanguages.language_name : "",  
+                second_language_name: selectedLanguages ? selectedLanguages.language_name : "",
             }));
         }
         else if (id === "third_language_id") {
@@ -666,7 +756,7 @@ function AddStudent() {
             setForm((prevForm) => ({
                 ...prevForm,
                 third_language_id: value,
-                third_language_name: selectedLanguages ? selectedLanguages.language_name : "",  
+                third_language_name: selectedLanguages ? selectedLanguages.language_name : "",
             }));
         }
         else if (id === "section_id") {
@@ -745,9 +835,35 @@ function AddStudent() {
         }
     };
 
+    const handleFileChange1 = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const validImageTypes = [
+                "image/jpeg",
+                "image/png",
+                "image/gif",
+                "image/webp",
+                "application/pdf"
+            ];
+            if (validImageTypes.includes(file.type)) {
+                setImageSetName(file.name);
+                setAadhar(file.name)
+                setSelectedFile(file);
+                const imageUrl = URL.createObjectURL(file);
+                setImagePath(imageUrl);
+            } else {
+                alert("Please upload a valid image file (jpg, jpeg, png, gif, webp).");
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                }
+            }
+        }
+    };
+
     const handleRemoveFile = () => {
         setSelectedFile(null);
         setImageSetName("");
+        setAadhar("");
         setImagePath("");
 
         if (fileInputRef.current) {
@@ -788,7 +904,7 @@ function AddStudent() {
         }
     };
 
-    const tabs = ["Student Details", "Class Details", "ID Details", "Parent Details", "Previous School", "Sibling Details", "Review&Submit"];
+    const tabs = ["Student Details", "Class Details", "ID Details", "Parent Details", "Previous School", "Sibling Details", "Other Details", "Review&Submit"];
 
     const formRef = useRef(null);
     const handleNext = () => {
@@ -808,13 +924,13 @@ function AddStudent() {
         const guardianSurname = form.querySelector("#guardian_surname")?.value.trim();
         const guardiancontact = form.querySelector("#guardian_phone_number")?.value.trim();
 
-        const isFatherFilled = fatherFirstName !== "" && fatherSurname !== "" && fathercontact !== "" ;
-        const isMotherFilled = motherFirstName !== "" && motherSurname !== "" && mothercontact !== "" ;
+        const isFatherFilled = fatherFirstName !== "" && fatherSurname !== "" && fathercontact !== "";
+        const isMotherFilled = motherFirstName !== "" && motherSurname !== "" && mothercontact !== "";
         const isGuardianFilled = guardianFirstName !== "" && guardianSurname !== "" && guardiancontact !== "";
 
         if (!isFatherFilled && !isMotherFilled && !isGuardianFilled) {
             toast.warning("Please fill atleast Father or Mother or Guardian details to proceed.");
-            return; 
+            return;
         }
         handlePrevNext("next");
     };
@@ -843,7 +959,7 @@ function AddStudent() {
         // Check if the current tab is valid before moving forward
         form.reportValidity();
         if (!form.checkValidity()) {
-            return; 
+            return;
         }
         // Validate all previous required tabs
         for (let i = 0; i < newIndex; i++) {
@@ -866,7 +982,7 @@ function AddStudent() {
             case "Parent Details":
                 return form.mother_firstname && form.mother_surname || form.father_firstname && form.father_surname || form.guardian_firstname && form.guardian_surname;
             default:
-                return true; 
+                return true;
         }
     };
 
@@ -1000,6 +1116,26 @@ function AddStudent() {
                                                     guardian_aadhar_upload: "",
                                                     guardian_occupation: "",
                                                     previous_school_percentage: "",
+                                                    permanent_education_number: "",
+                                                    date_of_admission: "",
+                                                    mole_1: "",
+                                                    mole_2: "",
+                                                    residential_proof: "",
+                                                    medium: "",
+                                                    class_of_leaving_id: "",
+                                                    tc_upload: "",
+                                                    reason_of_leaving: "",
+                                                    date_of_tc_issued: "",
+                                                    which_school_student_has_gone: "",
+                                                    primary_language_id: "",
+                                                    sports_certificate: "",
+                                                    blood_group_certificate: "",
+                                                    record_sheet_date: "",
+                                                    record_sheet_upload: "",
+                                                    record_sheet_submitted: "",
+                                                    remarks: "",
+                                                    apaar_number: "",
+                                                    tc_number: "",
                                                 })}
                                             >
                                                 Reset
@@ -1089,13 +1225,13 @@ function AddStudent() {
                                                 <Col xs={12} md={6} lg={4} xxl={3}>
                                                     <div className='commonInput'>
                                                         <Form.Group>
-                                                            <Form.Label>First Name<span className='requiredStar'>*</span></Form.Label>
+                                                            <Form.Label>Surname<span className='requiredStar'>*</span></Form.Label>
                                                             <Form.Control
                                                                 required
                                                                 type="text"
-                                                                id="student_first_name"
-                                                                value={form.student_first_name}
-                                                                placeholder="Enter First Name"
+                                                                id="student_last_name"
+                                                                value={form.student_last_name}
+                                                                placeholder="Enter Surname"
                                                                 maxLength={30}
                                                                 onChange={(e) => {
                                                                     const value = e.target.value;
@@ -1111,13 +1247,13 @@ function AddStudent() {
                                                 <Col xs={12} md={6} lg={4} xxl={3}>
                                                     <div className='commonInput'>
                                                         <Form.Group>
-                                                            <Form.Label>Surname <span className='requiredStar'>*</span></Form.Label>
+                                                            <Form.Label>First Name<span className='requiredStar'>*</span></Form.Label>
                                                             <Form.Control
                                                                 required
                                                                 type="text"
-                                                                id="student_last_name"
-                                                                value={form.student_last_name}
-                                                                placeholder="Enter Surname"
+                                                                id="student_first_name"
+                                                                value={form.student_first_name}
+                                                                placeholder="Enter First Name"
                                                                 maxLength={30}
                                                                 onChange={(e) => {
                                                                     const value = e.target.value;
@@ -1148,7 +1284,7 @@ function AddStudent() {
                                                 <Col xs={12} md={6} lg={4} xxl={3}>
                                                     <div className='commonInput'>
                                                         <Form.Group>
-                                                            <Form.Label>DOJ<span className='requiredStar'>*</span></Form.Label>
+                                                            <Form.Label>Date of Joining<span className='requiredStar'>*</span></Form.Label>
                                                             <Form.Control
                                                                 required
                                                                 type="date"
@@ -1246,7 +1382,6 @@ function AddStudent() {
                                                     <div className="commonInput">
                                                         <Form.Group>
                                                             <Form.Label>Passport Photo</Form.Label>
-
                                                             {/* File input field */}
                                                             <Form.Control
                                                                 type="file"
@@ -1324,12 +1459,73 @@ function AddStudent() {
                                                         </Form.Group>
                                                     </div>
                                                 </Col>
+                                                <Col xs={12} md={12} lg={8} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
+                                                            <Form.Label>Mole 1</Form.Label>
+                                                            <Form.Control
+                                                                as="textarea"
+                                                                type="text"
+                                                                id="mole_1"
+                                                                value={form.mole_1}
+                                                                placeholder="Enter Mole"
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
+                                                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                                                        handleInputChange(e);
+                                                                    }
+                                                                }}
+                                                                maxLength={500}
+                                                            />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={12} lg={8} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
+                                                            <Form.Label>Mole 2</Form.Label>
+                                                            <Form.Control
+                                                                as="textarea"
+                                                                type="text"
+                                                                id="mole_2"
+                                                                value={form.mole_2}
+                                                                placeholder="Enter Mole"
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
+                                                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                                                        handleInputChange(e);
+                                                                    }
+                                                                }}
+                                                                maxLength={500}
+                                                            />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
                                                 <Col xs={12} md={6} lg={4} xxl={3}>
                                                     <div className='commonInput'>
                                                         <Form.Group>
-                                                            <Form.Label>DOE</Form.Label>
+                                                            <Form.Label>Medium</Form.Label>
                                                             <Form.Control
-
+                                                                type="text"
+                                                                id="medium"
+                                                                value={form.medium}
+                                                                placeholder="Enter Medium"
+                                                                maxLength={30}
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
+                                                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                                                        handleInputChange(e);
+                                                                    }
+                                                                }}
+                                                            />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
+                                                            <Form.Label>Date of Leaving</Form.Label>
+                                                            <Form.Control
                                                                 type="date"
                                                                 id="date_of_exit"
                                                                 value={form.date_of_exit}
@@ -1369,6 +1565,19 @@ function AddStudent() {
                                                 <Col xs={12} md={6} lg={4} xxl={3}>
                                                     <div className='commonInput'>
                                                         <Form.Group>
+                                                            <Form.Label>Date of Admission</Form.Label>
+                                                            <Form.Control
+                                                                type="date"
+                                                                id="date_of_admission"
+                                                                value={form.date_of_admission}
+                                                                onChange={handleInputChange}
+                                                            />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
                                                             <Form.Label>Admission To<span className='requiredStar'>*</span></Form.Label>
                                                             <select
                                                                 className="form-select"
@@ -1379,33 +1588,39 @@ function AddStudent() {
                                                             >
                                                                 <option value="">Select Class</option>
                                                                 {(classes || [])
-                                                                    .filter((classItem) => classItem.is_active === "Active") // Filter to include only active classes
+                                                                    .filter((classItem) => classItem.is_active === "Active")
                                                                     .map((classItem) => (
                                                                         <option key={classItem.class_id} value={classItem.class_id}>
                                                                             {classItem.class_name}
                                                                         </option>
                                                                     ))}
                                                             </select>
-                                                            <Form.Control.Feedback>Required</Form.Control.Feedback>
                                                         </Form.Group>
                                                     </div>
                                                 </Col>
+
                                                 <Col xs={12} md={6} lg={4} xxl={3}>
                                                     <div className="commonInput">
                                                         <Form.Group>
-                                                            <Form.Label>
-                                                                Class<span className="requiredStar">*</span>
-                                                            </Form.Label>
+                                                            <Form.Label>Class<span className="requiredStar">*</span></Form.Label>
                                                             <select
                                                                 className="form-select"
-                                                                required
                                                                 id="class_id"
                                                                 value={form.class_id}
                                                                 onChange={handleInputChange}
+                                                                required
                                                             >
                                                                 <option value="">Select Class</option>
                                                                 {(classes || [])
-                                                                    .filter((classItem) => classItem.is_active === "Active") // Filter to include only active classes
+                                                                    .filter((classItem) => {
+                                                                        if (form.admission_to) {
+                                                                            return (
+                                                                                classItem.is_active === "Active" &&
+                                                                                parseInt(classItem.class_id) >= parseInt(form.admission_to)
+                                                                            );
+                                                                        }
+                                                                        return classItem.is_active === "Active";
+                                                                    })
                                                                     .map((classItem) => (
                                                                         <option key={classItem.class_id} value={classItem.class_id}>
                                                                             {classItem.class_name}
@@ -1415,6 +1630,7 @@ function AddStudent() {
                                                         </Form.Group>
                                                     </div>
                                                 </Col>
+
                                                 <Col xs={12} md={6} lg={4} xxl={3}>
                                                     <div className='commonInput'>
                                                         <Form.Group>
@@ -1467,7 +1683,6 @@ function AddStudent() {
                                                         <Form.Group>
                                                             <Form.Label>Roll Number</Form.Label>
                                                             <Form.Control
-                                                                // required
                                                                 type="text"
                                                                 id="roll_no"
                                                                 value={form.roll_no}
@@ -1475,6 +1690,28 @@ function AddStudent() {
                                                                 onChange={handleInputChange}
                                                                 maxLength={15}
                                                             />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <Form.Group>
+                                                            <Form.Label>Class of Leaving</Form.Label>
+                                                            <select
+                                                                className="form-select"
+                                                                id="class_of_leaving_id"
+                                                                value={form.class_of_leaving_id}
+                                                                onChange={handleInputChange}
+                                                            >
+                                                                <option value="">Select Class</option>
+                                                                {(classes || [])
+                                                                    .filter((classItem) => classItem.is_active === "Active") // Filter to include only active classes
+                                                                    .map((classItem) => (
+                                                                        <option key={classItem.class_id} value={classItem.class_id}>
+                                                                            {classItem.class_name}
+                                                                        </option>
+                                                                    ))}
+                                                            </select>
                                                         </Form.Group>
                                                     </div>
                                                 </Col>
@@ -1503,38 +1740,76 @@ function AddStudent() {
                                                     <div className="commonInput">
                                                         <Form.Group>
                                                             <Form.Label>Aadhar Upload</Form.Label>
+                                                            {/* File input field */}
                                                             <Form.Control
                                                                 type="file"
                                                                 id="aadhar_card_upload"
-                                                                onChange={handleInputChange}
-                                                                ref={fileInputRef} // Attach ref to input
+                                                                ref={fileInputRef}
+                                                                accept="image/*,application/pdf"
+                                                                onChange={handleFileChange1}
                                                             />
-                                                            {form.aadhar_card_upload && (
-                                                                <div className="mt-2 d-flex align-items-center">
-                                                                    <span>{form.aadhar_card_upload.name}</span>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={handleRemoveFile}
+                                                            {aadhar && (
+                                                                <div
+                                                                    style={{
+                                                                        display: "flex",
+                                                                        justifyContent: "space-between",
+                                                                        alignItems: "center",
+                                                                    }}
+                                                                >
+                                                                    <span
                                                                         style={{
-                                                                            marginLeft: "10px",
-                                                                            color: "red",
-                                                                            border: "none",
-                                                                            background: "transparent",
                                                                             cursor: "pointer",
-                                                                            fontSize: "14px",
+                                                                            color: "blue",
+                                                                            textDecoration: "underline",
                                                                         }}
                                                                     >
-                                                                        ✕
-                                                                    </button>
+                                                                        {aadhar}{" "}
+                                                                    </span>
+                                                                    <span
+                                                                        onClick={handleRemoveFile}
+                                                                        style={{
+                                                                            cursor: "pointer",
+                                                                            color: "red",
+                                                                            fontSize: "16px",
+                                                                        }}
+                                                                    >
+                                                                        ✖
+                                                                    </span>
                                                                 </div>
                                                             )}
+
+                                                            <Form.Control.Feedback></Form.Control.Feedback>
                                                         </Form.Group>
                                                     </div>
                                                 </Col>
                                                 <Col xs={12} md={6} lg={4} xxl={3}>
                                                     <div className='commonInput'>
                                                         <Form.Group>
-                                                            <Form.Label>Caste<span className='requiredStar'>*</span></Form.Label>
+                                                            <Form.Label>Religion<span className='requiredStar'>*</span></Form.Label>
+                                                            <select
+                                                                className="form-select"
+                                                                id="religion_id"
+                                                                value={form.religion_id}
+                                                                onChange={handleInputChange}
+                                                                required
+                                                            >
+                                                                <option value="">Select Religion</option>
+                                                                {(religions || []).map((religion) => (
+                                                                    <option key={religion.religion_id} value={religion.religion_id}>
+                                                                        {religion.religion_name}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                            <Form.Control.Feedback>Required</Form.Control.Feedback>
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
+                                                            <Form.Label>
+                                                                Caste<span className='requiredStar'>*</span>
+                                                            </Form.Label>
                                                             <Form.Control
                                                                 required
                                                                 type="text"
@@ -1542,10 +1817,13 @@ function AddStudent() {
                                                                 value={form.caste}
                                                                 placeholder="Enter Caste"
                                                                 onChange={(e) => {
-                                                                    const value = e.target.value;
-                                                                    if (/^[A-Za-z\s]*$/.test(value)) {
-                                                                        handleInputChange(e);
-                                                                    }
+                                                                    const noNumbers = e.target.value.replace(/[0-9]/g, '');
+                                                                    handleInputChange({
+                                                                        target: {
+                                                                            id: 'caste',
+                                                                            value: noNumbers,
+                                                                        },
+                                                                    });
                                                                 }}
                                                                 maxLength={30}
                                                             />
@@ -1594,7 +1872,12 @@ function AddStudent() {
                                                                 id="birth_certificate_no"
                                                                 value={form.birth_certificate_no}
                                                                 placeholder="Enter Birth Certificate"
-                                                                onChange={handleInputChange}
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
+                                                                    if (/^[a-zA-Z0-9]*$/.test(value)) {
+                                                                        handleInputChange(e);
+                                                                    }
+                                                                }}
                                                                 maxLength={20}
                                                             />
                                                             <Form.Control.Feedback>Required</Form.Control.Feedback>
@@ -1632,28 +1915,7 @@ function AddStudent() {
                                                         </Form.Group>
                                                     </div>
                                                 </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className='commonInput'>
-                                                        <Form.Group>
-                                                            <Form.Label>Religion<span className='requiredStar'>*</span></Form.Label>
-                                                            <select
-                                                                className="form-select"
-                                                                id="religion_id"
-                                                                value={form.religion_id}
-                                                                onChange={handleInputChange}
-                                                                required
-                                                            >
-                                                                <option value="">Select Religion</option>
-                                                                {(religions || []).map((religion) => (
-                                                                    <option key={religion.religion_id} value={religion.religion_id}>
-                                                                        {religion.religion_name}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
-                                                            <Form.Control.Feedback>Required</Form.Control.Feedback>
-                                                        </Form.Group>
-                                                    </div>
-                                                </Col>
+                                                
                                                 <Col xs={12} md={6} lg={4} xxl={3}>
                                                     <div className='commonInput'>
                                                         <Form.Group>
@@ -1665,6 +1927,53 @@ function AddStudent() {
                                                                 placeholder="Enter Mother Tongue"
                                                                 onChange={handleInputChange}
                                                                 maxLength={10}
+                                                            />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
+                                                            <Form.Label>TC Number</Form.Label>
+                                                            <Form.Control
+                                                                type="text"
+                                                                id="tc_number"
+                                                                value={form.tc_number}
+                                                                placeholder="Enter Number"
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
+                                                                    if (/^[a-zA-Z0-9]*$/.test(value)) {
+                                                                        handleInputChange(e);
+                                                                    }
+                                                                }}
+                                                                maxLength={20}
+                                                            />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
+                                                            <Form.Label>Transfer Certificate</Form.Label>
+                                                            <Form.Control
+                                                                type="file"
+                                                                id="tc_upload"
+                                                                onChange={handleInputChange}
+                                                            />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
+                                                            <Form.Label>APAAR Number</Form.Label>
+                                                            <Form.Control
+                                                                type="text"
+                                                                id="apaar_number"
+                                                                value={form.apaar_number}
+                                                                placeholder="Enter Number"
+                                                                onChange={handleInputChange}
+                                                                maxLength={20}
                                                             />
                                                         </Form.Group>
                                                     </div>
@@ -2066,7 +2375,12 @@ function AddStudent() {
                                                                 id="city"
                                                                 value={form.city}
                                                                 placeholder="Enter City"
-                                                                onChange={handleInputChange}
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
+                                                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                                                        handleInputChange(e);
+                                                                    }
+                                                                }}
                                                                 maxLength={50}
                                                             />
                                                         </Form.Group>
@@ -2158,7 +2472,7 @@ function AddStudent() {
                                                                 type="text"
                                                                 id="previous_school_name"
                                                                 value={form.previous_school_name}
-                                                                placeholder="Enter Previous School"
+                                                                placeholder="Enter School Name"
                                                                 onChange={handleInputChange}
                                                                 maxLength={255}
                                                             />
@@ -2258,6 +2572,21 @@ function AddStudent() {
                                                                     </option>
                                                                 ))}
                                                             </select>
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
+                                                            <Form.Label>Permanent Education Number</Form.Label>
+                                                            <Form.Control
+                                                                type="text"
+                                                                id="permanent_education_number"
+                                                                value={form.permanent_education_number}
+                                                                placeholder="Enter Permanent Number"
+                                                                onChange={handleInputChange}
+                                                                maxLength={20}
+                                                            />
                                                         </Form.Group>
                                                     </div>
                                                 </Col>
@@ -2476,7 +2805,6 @@ function AddStudent() {
                                                                     id="date_of_join"
                                                                     value={form.sibling3_date}
                                                                     onChange={handleInputChange}
-                                                                    maxLength={30}
                                                                     readOnly
                                                                 />
                                                             </Form.Group>
@@ -2486,6 +2814,145 @@ function AddStudent() {
                                                 </Row>
                                             </form>
                                         )}
+                                        {showParentDetails === "Other Details" && (
+                                            <Row>
+                                                {/* <Col xs={12} md={12} lg={8} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
+                                                            <Form.Label>Reason of Leaving</Form.Label>
+                                                            <Form.Control
+                                                                as="textarea"
+                                                                type="text"
+                                                                id="reason_of_leaving"
+                                                                value={form.reason_of_leaving}
+                                                                placeholder="Enter Reason"
+                                                                onChange={handleInputChange}
+                                                                maxLength={50}
+                                                            />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col> */}
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
+                                                            <Form.Label>Date of TC Issued</Form.Label>
+                                                            <Form.Control
+                                                                type="date"
+                                                                id="date_of_tc_issued"
+                                                                value={form.date_of_tc_issued}
+                                                                onChange={handleInputChange}
+                                                            />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <Form.Group>
+                                                            <Form.Label>Primary Language</Form.Label>
+                                                            <select
+                                                                className="form-select"
+                                                                id="primary_language_id"
+                                                                value={form.primary_language_id}
+                                                                onChange={handleInputChange}
+                                                            >
+                                                                <option value="0">Select Language</option>
+                                                                {languages.map((language) => (
+                                                                    <option key={language.language_id} value={language.language_id}>
+                                                                        {language.language_name}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
+                                                            <Form.Label>Sports Certificate</Form.Label>
+                                                            <Form.Control
+                                                                type="file"
+                                                                id="sports_certificate"
+                                                                onChange={handleInputChange}
+                                                            />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
+                                                            <Form.Label>Blood group Certificate</Form.Label>
+                                                            <Form.Control
+                                                                type="file"
+                                                                id="blood_group_certificate"
+                                                                onChange={handleInputChange}
+                                                            />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
+                                                            <Form.Label>Record Sheet Date</Form.Label>
+                                                            <Form.Control
+                                                                type="date"
+                                                                id="record_sheet_date"
+                                                                value={form.record_sheet_date}
+                                                                onChange={handleInputChange}
+                                                            />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
+                                                            <Form.Label>Record Sheet Upload</Form.Label>
+                                                            <Form.Control
+                                                                type="file"
+                                                                id="record_sheet_upload"
+                                                                onChange={handleInputChange}
+                                                            />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={12} lg={8} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
+                                                            <Form.Label>Remarks</Form.Label>
+                                                            <Form.Control
+                                                                as="textarea"
+                                                                type="text"
+                                                                id="remarks"
+                                                                value={form.remarks}
+                                                                placeholder="Enter Remarks"
+                                                                onChange={handleInputChange}
+                                                                maxLength={250}
+                                                            />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <Form.Group>
+                                                            <Form.Label>
+                                                                Record Sheet Submitted
+                                                            </Form.Label>
+                                                            <Form.Select
+                                                                name="record_sheet_submitted"
+                                                                id="record_sheet_submitted"
+                                                                value={form.record_sheet_submitted}
+                                                                onChange={handleInputChange}
+                                                            >
+                                                                <option value="">Select</option>
+                                                                <option value="Y">Yes</option>
+                                                                <option value="N">No</option>
+                                                            </Form.Select>
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                            </Row>
+                                        )}
                                         {showParentDetails === "Review&Submit" && (
                                             <Row>
                                                 <Row>
@@ -2493,7 +2960,7 @@ function AddStudent() {
                                                 </Row>
                                                 <Col xs={12} md={6} lg={4} xxl={3}  >
                                                     <div className="commonInput">
-                                                        <span className="form-label"> Admission Number:</span>
+                                                        <span className="form-label">Admission Number:</span>
                                                         <span className="">{form.admission_number}</span>
                                                     </div>
                                                 </Col>
@@ -2541,15 +3008,32 @@ function AddStudent() {
                                                 </Col>
                                                 <Col xs={12} md={6} lg={4} xxl={3}>
                                                     <div className="commonInput">
+                                                        <span className="form-label">Mole 1:</span>
+                                                        <span className="">{form.mole_1}</span>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <span className="form-label">Mole 2:</span>
+                                                        <span className="">{form.mole_2}</span>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <span className="form-label">Medium:</span>
+                                                        <span className="">{form.medium}</span>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
                                                         <span className="form-label">Vaccination:</span>
                                                         <span className="">{form.vaccination}</span>
                                                     </div>
                                                 </Col>
-                                                
                                                 <Col xs={12} md={6} lg={4} xxl={3}>
                                                     <div className="commonInput">
                                                         <span className="form-label">DOE:</span>
-                                                        <span className="">{form.date_of_exit}</span>
+                                                        <span className="">{formatDate1(form.date_of_exit)}</span>
                                                     </div>
                                                 </Col>
                                                 <Row>
@@ -2559,6 +3043,12 @@ function AddStudent() {
                                                     <div className="commonInput">
                                                         <span className="form-label">Academic Year:</span>
                                                         <span className="">{userObj.academic_year_name}</span>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <span className="form-label">Date of Admission:</span>
+                                                        <span className="">{formatDate1(form.date_of_admission)}</span>
                                                     </div>
                                                 </Col>
                                                 <Col xs={12} md={6} lg={4} xxl={3}>
@@ -2591,6 +3081,12 @@ function AddStudent() {
                                                         <span className="">{form.roll_no}</span>
                                                     </div>
                                                 </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <span className="form-label">Class of Leaving:</span>
+                                                        <span className="">{form.class_of_leaving}</span>
+                                                    </div>
+                                                </Col>
                                                 <Row>
                                                     <u><b>ID Details</b></u>&nbsp;
                                                 </Row>
@@ -2598,6 +3094,12 @@ function AddStudent() {
                                                     <div className="commonInput">
                                                         <span className="form-label">Aadhar Number:</span>
                                                         <span className=""> {form.aadhar_card_no}</span>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <span className="form-label">Religion:</span>
+                                                        <span className="">{form.religion_name}</span>
                                                     </div>
                                                 </Col>
                                                 <Col xs={12} md={6} lg={4} xxl={3}>
@@ -2618,10 +3120,23 @@ function AddStudent() {
                                                         <span className="">{form.nationality}</span>
                                                     </div>
                                                 </Col>
+                                                
                                                 <Col xs={12} md={6} lg={4} xxl={3}>
                                                     <div className="commonInput">
-                                                        <span className="form-label">Religion:</span>
-                                                        <span className="">{form.religion_name}</span>
+                                                        <span className="form-label">Mother Tongue:</span>
+                                                        <span className="">{form.mother_tongue}</span>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <span className="form-label">TC Number:</span>
+                                                        <span className="">{form.tc_number}</span>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <span className="form-label">APAAR Number:</span>
+                                                        <span className="">{form.apaar_number}</span>
                                                     </div>
                                                 </Col>
                                                 <Row>
@@ -2655,6 +3170,18 @@ function AddStudent() {
                                                     <div className="commonInput">
                                                         <span className="form-label">Third Language:</span>
                                                         <span className="">{form.third_language_name}</span>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <span className="form-label">PEN:</span>
+                                                        <span className="">{form.permanent_education_number}</span>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <span className="form-label">Previous School Percentage:</span>
+                                                        <span className="">{form.previous_school_percentage}</span>
                                                     </div>
                                                 </Col>
                                                 <Row>
@@ -2810,6 +3337,46 @@ function AddStudent() {
                                                         <span className="">{form.sibling3_name}</span>
                                                     </div>
                                                 </Col>
+                                                <Row>
+                                                    <u><b>Other Details</b></u>&nbsp;
+                                                </Row>
+                                                {/* <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <span className="form-label">Reason of Leaving:</span>
+                                                        <span className="">{form.reason_of_leaving}</span>
+                                                    </div>
+                                                </Col> */}
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <span className="form-label">Date of TC Issueed:</span>
+                                                        <span className="">{formatDate1(form.date_of_tc_issued)}</span>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <span className="form-label">Primary Language:</span>
+                                                        <span className="">{form.primary_language}</span>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <span className="form-label">Record Sheet Date:</span>
+                                                        <span className="">{formatDate1(form.record_sheet_date)}</span>
+                                                    </div>
+                                                </Col>
+                                                
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <span className="form-label">Record Sheet Submitted:</span>
+                                                        <span className="">{form.record_sheet_submitted}</span>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <span className="form-label">Remarks:</span>
+                                                        <span className="">{form.remarks}</span>
+                                                    </div>
+                                                </Col>
                                             </Row>
 
                                         )}
@@ -2821,7 +3388,6 @@ function AddStudent() {
                                                     </div>
                                                 </div>
                                             </div>
-
                                         )}
                                     </form>
                                 </Card.Body>

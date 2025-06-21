@@ -2,16 +2,8 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { IoMdAdd } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
-import {
-  Container,
-  Button,
-  Modal,
-  Row,
-  Col,
-  Form,
-  OverlayTrigger,
-} from "react-bootstrap";
-import { MdFilterList, MdAddCircle } from "react-icons/md";
+import { Button, Form, OverlayTrigger, } from "react-bootstrap";
+import { MdAddCircle } from "react-icons/md";
 import DataTable from "react-data-table-component";
 import { ToastContainer, toast } from "react-toastify";
 import Header from "../../components/layout/header/header";
@@ -36,7 +28,8 @@ const ExamSchedule = () => {
   const [isLoading, setIsLoading] = useState(true);
   const userData = sessionStorage.getItem("user");
   const userObj = userData ? JSON.parse(userData) : {};
-
+const readOnlyRoles = ["Class Teacher", "Teacher", "Class Incharge", "School Admin"];
+    const canSubmit = !readOnlyRoles.includes(userObj.role_name?.trim());
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
   const navigate = useNavigate();
 
@@ -53,12 +46,11 @@ const ExamSchedule = () => {
         school_id: userObj.school_id,
         class_id: class_id,
       });
-  
+
       if (response.data && Array.isArray(response.data)) {
         setSubjects(response.data);
-        //console.log("Fetched subjects:", response.data);
       } else {
-        setSubjects([]); // Clear subjects if no data
+        setSubjects([]);
         toast.warning("No subjects found for this class");
       }
     } catch (error) {
@@ -78,12 +70,8 @@ const ExamSchedule = () => {
     }
   };
   useEffect(() => {
-    fetchExamschedule();
-    fetchSubjects();
-  }, []);
-
-  useEffect(() => {
     setIsLoading(true);
+    fetchSubjects();
     fetchExamschedule().finally(() => setIsLoading(false));
   }, []);
 
@@ -101,32 +89,27 @@ const ExamSchedule = () => {
       "Are you sure you want to delete all exams?"
     );
     if (!confirmDelete) return;
-
-    const filteredResults = examschedule.filter(
+    const filteredExams = examschedule.filter(
       (result) =>
         result.academic_year_id === academic_year_id &&
         result.class_id === class_id &&
         result.exam_id === exam_id
     );
-
-    if (filteredResults.length === 0) return;
-
+    if (filteredExams.length === 0) return;
     try {
-      const deletePayload = filteredResults.map((res) => ({
+      const deleteExam = filteredExams.map((res) => ({
         exam_schedule_id: res.exam_schedule_id,
         action: "DELETE",
       }));
-
       const response = await axios.post(
         `${baseUrl}/examschedule/bulk/`,
-        deletePayload,
+        deleteExam,
         {
           headers: { "Content-Type": "application/json" },
         }
       );
-
       if (response.status === 200 || response.status === 201) {
-        toast.success("All results deleted successfully");
+        toast.success("All Exams Deleted Successfully");
         fetchDataRead("/examschedule", setExamschedule, userObj.school_id);
       } else {
         toast.error("Unexpected response while deleting records.");
@@ -144,12 +127,12 @@ const ExamSchedule = () => {
       if (!grouped[key]) {
         grouped[key] = {
           academic_year_name: item.academic_year_name,
-          academic_year_id: item.academic_year_id, // ADD
+          academic_year_id: item.academic_year_id,
           exam_name: item.exam_name,
-          exam_id: item.exam_id, // ADD
+          exam_id: item.exam_id,
           class_name: item.class_name,
-          class_id: item.class_id, // ADD
-          start_date: item.start_date, // Ensure start_date is included here
+          class_id: item.class_id,
+          start_date: item.start_date,
           end_date: item.end_date,
           subjects: [],
         };
@@ -163,20 +146,20 @@ const ExamSchedule = () => {
     return Object.values(grouped);
   };
 
-  const globaledit = ({ academic_year_id, class_id, exam_id, section_id}) => {
-    const filteredResults = examschedule.filter(
+  const globaledit = ({ academic_year_id, class_id, exam_id, section_id }) => {
+    const filteredExams = examschedule.filter(
       (result) =>
         result.academic_year_id === academic_year_id &&
         result.class_id === class_id &&
         result.exam_id === exam_id &&
-        result.section_id === section_id 
+        result.section_id === section_id
     );
 
-    if (filteredResults.length === 0) return;
+    if (filteredExams.length === 0) return;
 
     const flatPayload = {};
 
-    filteredResults.forEach((res, index) => {
+    filteredExams.forEach((res, index) => {
       flatPayload[`subject_${index}`] = {
         exam_schedule_id: res.exam_schedule_id,
         subject_id: res.subject_id,
@@ -194,174 +177,154 @@ const ExamSchedule = () => {
 
   const groupedRecords = groupData(examschedule);
 
-  const columns = [
-    {
-      name: "Exam Name ",
-      selector: (row) => row.exam_name,
-      cell: (row) => (
-        <Tooltip title={row.exam_name}>
-          <span>{row.exam_name}</span>
-        </Tooltip>
-      ),
-      sortable: true,
-    },
-    {
-      name: "Class  ",
-      selector: (row) => row.class_name,
-      cell: (row) => (
-        <Tooltip title={row.class_name}>
-          <span>{row.class_name}</span>
-        </Tooltip>
-      ),
-      sortable: true,
-    },
-    // { 
-    //   name: "Section ",
-    //   selector: (row) => row.section_name,
-    //   cell: (row) => (
-    //     <Tooltip title={row.section_name}>
-    //       <span>{row.section_name}</span>
-    //     </Tooltip>
-    //   ),
-    //   sortable: true,
-    // },
-    {
-      name: "Start Date",
-      selector: (row) => formatDate1(row.start_date),
-      cell: (row) => (
+ const baseColumns = [
+  {
+    name: "Exam Name ",
+    selector: (row) => row.exam_name,
+    cell: (row) => (
+      <Tooltip title={row.exam_name}>
+        <span>{row.exam_name}</span>
+      </Tooltip>
+    ),
+    sortable: true,
+  },
+  {
+    name: "Class  ",
+    selector: (row) => row.class_name,
+    cell: (row) => (
+      <Tooltip title={row.class_name}>
+        <span>{row.class_name}</span>
+      </Tooltip>
+    ),
+    sortable: true,
+  },
+  {
+    name: "Start Date",
+    selector: (row) => formatDate1(row.start_date),
+    cell: (row) =>
+      row.exam_schedule_id !== "No Records Found" ? (
         <Tooltip title={formatDate1(row.start_date)}>
           <span>{formatDate1(row.start_date)}</span>
         </Tooltip>
+      ) : (
+        ""
       ),
-      sortable: true,
-    },
-    {
-      name: "End Date",
-      selector: (row) => formatDate1(row.end_date),
-      cell: (row) => (
-        <Tooltip title={formatDate1(row.end_date)}>
-          <span>{formatDate1(row.end_date)}</span>
-        </Tooltip>
-      ),
-      sortable: true,
-    },
+    sortable: true,
+  },
+  {
+    name: "End Date",
+    selector: (row) => formatDate1(row.end_date),
+    cell: (row) => (
+      <Tooltip title={formatDate1(row.end_date)}>
+        <span>{formatDate1(row.end_date)}</span>
+      </Tooltip>
+    ),
+    sortable: true,
+  },
+];
 
-    {
-      name: "Actions",
-      cell: (row) =>
-        row.exam_schedule_id !== "No records found" ? (
-          <div className="tableActions">
-            <Tooltip title="Edit" arrow>
-              <a
-                className="commonActionIcons"
-                onClick={() =>
-                  globaledit({
-                    academic_year_id: row.academic_year_id,
-                    class_id: row.class_id,
-                    exam_id: row.exam_id,
-                  })
-                }
-              >
-                <span>
+// Conditionally add Actions column if canSubmit is true
+const columns = canSubmit
+  ? [
+      ...baseColumns,
+      {
+        name: "Actions",
+        cell: (row) =>
+          row.exam_schedule_id !== "No records found" ? (
+            <div className="tableActions">
+              <Tooltip title="Edit" arrow>
+                <span
+                  className="commonActionIcons"
+                  onClick={() =>
+                    globaledit({
+                      academic_year_id: row.academic_year_id,
+                      class_id: row.class_id,
+                      exam_id: row.exam_id,
+                    })
+                  }
+                >
                   <MdEdit />
                 </span>
-              </a>
-            </Tooltip>
+              </Tooltip>
+              <Tooltip title="Delete" arrow>
+                <span
+                  className="commonActionIcons"
+                  onClick={() =>
+                    globaldelete({
+                      academic_year_id: row.academic_year_id,
+                      class_id: row.class_id,
+                      exam_id: row.exam_id,
+                    })
+                  }
+                >
+                  <MdDelete />
+                </span>
+              </Tooltip>
+            </div>
+          ) : null,
+      },
+    ]
+  : baseColumns;
 
-            <Tooltip title="Delete" arrow>
-              <span
-                className="commonActionIcons"
-                onClick={() =>
-                  globaldelete({
-                    academic_year_id: row.academic_year_id,
-                    class_id: row.class_id,
-                    exam_id: row.exam_id,
-                  })
-                }
-              >
-                <MdDelete />
-              </span>
-            </Tooltip>
-          </div>
-        ) : null,
-    },
-  ];
 
-  const ExpandedComponent = ({ data }) => (
-    <div
-      style={{
-        padding: "12px",
-        marginLeft: "100px",
-        border: "1px solid rgb(204, 204, 204)",
-        borderRadius: "8px",
-        background:
-          "linear-gradient(135deg, rgb(249, 249, 249) 0%, rgb(230, 230, 230) 100%)",
-        boxShadow: "rgba(0, 0, 0, 0.1) 2px 4px 10px",
-      }}
-    >
-      <table className="table">
-        <thead>
-        <tr className="border-blue" style={{ borderBottom: "2px solid #0d6efd" }}>
+  const ExpandedComponent = ({ data }) => {
+    const formatDate = (dateString) => {
+      if (!dateString) return "Not Assigned";
+      const date = new Date(dateString);
+      if (isNaN(date)) return "Invalid Date";
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+    };
 
-            <th>Subject Name</th>
-            <th>Exam Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {(data.subjects || []).map((subject, index) => (
-            <tr key={index}>
-              <td>{subject.subject_name}</td>
-              <td>{subject.exam_date ? subject.exam_date : "Not Assigned"}</td>
+    return (
+      <div
+        style={{
+          padding: "12px",
+          marginLeft: "100px",
+          border: "1px solid rgb(204, 204, 204)",
+          borderRadius: "8px",
+          background:
+            "linear-gradient(135deg, rgb(249, 249, 249) 0%, rgb(230, 230, 230) 100%)",
+          boxShadow: "rgba(0, 0, 0, 0.1) 2px 4px 10px",
+        }}
+      >
+        <table className="table">
+          <thead>
+            <tr className="border-blue">
+              <th>Subject Name</th>
+              <th>Exam Date</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-  const customStyles = {
-    headCells: {
-      style: {
-        backgroundColor: "#EAE4E4",
-        color: "#757575",
-        fontSize: "16px",
-        textAlign: "center",
-      },
-      className: "commonTH",
-    },
-    cells: {
-      style: {
-        fontSize: "16px",
-      },
-      className: "commonTD",
-    },
+          </thead>
+          <tbody>
+            {(data.subjects || []).map((subject, index) => (
+              <tr key={index}>
+                <td>{subject.subject_name}</td>
+                <td>{formatDate(subject.exam_date)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
   };
 
   const searchableColumns = [
     (row) => row.exam_name,
     (row) => row.class_name,
     (row) => row.subject_name,
-    (row) => row.exam_date,
-    (row) => row.academic_year_name,
+    (row) => row.start_date,
+    (row) => row.end_date,
   ];
-
-  const filteredRecords = (examschedule || []).filter((examschedule) =>
-    searchableColumns.some((selector) => {
-      const value = selector(examschedule);
-      return String(value || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-    })
-  );
   const filteredGroupedRecords = groupedRecords.filter((group) =>
     searchableColumns.some((selector) => {
-      // Check if any of the columns in a grouped row matches the search query
-      const values = [group.exam_name, group.class_name, group.academic_year_name,  group.section_name]; // Add or adjust columns as necessary
+      const values = [group.exam_name, group.class_name, group.academic_year_name, group.end_date, group.start_date];
       return values.some(value =>
         String(value || "").trim().toLowerCase().includes(searchQuery.trim().toLowerCase())
       );
     })
   );
-
   const [filter, setFilter] = useState({
     exam_id: "",
     class_id: "",
@@ -370,7 +333,6 @@ const ExamSchedule = () => {
     academic_year_id: "",
     action: "FILTER",
   });
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -380,11 +342,12 @@ const ExamSchedule = () => {
       subject_id: filter.subject_id || 0,
       academic_year_id: filter.academic_year_id || 0,
       exam_date: filter.exam_date || "",
-      action: "GET",
+      school_id: userObj.school_id,
+      action: "FILTER",
     };
 
     try {
-      const response = await axios.post(baseUrl + "/getexamschedule/", formData, {
+      const response = await axios.post(baseUrl + "/examschedule/", formData, {
         headers: {
           "Content-Type": "application/json",
         },
@@ -400,28 +363,16 @@ const ExamSchedule = () => {
   const handleReset = async (e) => {
     e.preventDefault();
     setFilter({
-      exam_id: "",  
+      exam_id: "",
       class_id: "",
       action: "FILTER",
     });
     setShowFilterModal(false);
     fetchExamschedule();
   };
-  
+
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value);
-  };
-
-  const handleFilterClear = async () => {
-    setFilter({
-      exam_name: "",
-      class_name: "",
-      subject_name: "",
-      exam_date: "",
-      academic_year_name: "",
-      action: "FILTER",
-    });
-    fetchExamschedule();
   };
 
   const handleFilterChange = (e) => {
@@ -479,7 +430,6 @@ const ExamSchedule = () => {
                         </option>
                       ))}
                   </Form.Select>
-
                   <Form.Select
                     name="class_id"
                     value={filter.class_id}
@@ -510,11 +460,11 @@ const ExamSchedule = () => {
                   className="btn-danger secondaryBtn me-2"
                   onClick={handleReset}
                 >
-                  Cancel
+                  Clear
                 </Button>
               </div>
-
               <div className="d-flex align-items-center" style={{ gap: 6 }}>
+                 {canSubmit && (
                 <OverlayTrigger
                   placement="top"
                   overlay={<Tooltip id="tooltip-top">Add</Tooltip>}
@@ -522,11 +472,12 @@ const ExamSchedule = () => {
                   <Button
                     className="primaryBtn"
                     variant="primary"
+                     disabled={!canSubmit}
                     onClick={() => navigate("/addexamschedule")}
                   >
                     <MdAddCircle />
                   </Button>
-                </OverlayTrigger>
+                </OverlayTrigger>)}
               </div>
             </div>
           </div>
@@ -538,33 +489,33 @@ const ExamSchedule = () => {
                 </div>
               ) : (
                 <DataTable
-                className="custom-table"
-                columns={columns}
-                data={
-                  filteredGroupedRecords.length > 0
-                    ? filteredGroupedRecords
-                    : [{ exam_schedule_id: "No records found", exam_name: "No records found", subjects: [] }]
-                }
-                pagination
-                expandableRows={filteredGroupedRecords.length > 0}
-                expandableRowsComponent={ExpandedComponent}
-                highlightOnHover
-                responsive
-                fixedHeader
-                fixedHeaderScrollHeight="calc(100vh - 170px)"
-                conditionalRowStyles={[
-                  {
-                    when: (row) => row.exam_schedule_id === "No records found",
-                    style: {
-                      textAlign: "center",
-                      fontSize: "16px",
-                      color: "red",
-                      backgroundColor: "#f9f9f9",
+                  className="custom-table"
+                  columns={columns}
+                  data={
+                    filteredGroupedRecords.length > 0
+                      ? filteredGroupedRecords
+                      : [{ exam_schedule_id: "No records found", start_date: "No Records Found", subjects: [] }]
+                  }
+                  pagination
+                  expandableRows={filteredGroupedRecords.length > 0}
+                  expandableRowsComponent={ExpandedComponent}
+                  highlightOnHover
+                  responsive
+                  fixedHeader
+                  fixedHeaderScrollHeight="calc(100vh - 170px)"
+                  conditionalRowStyles={[
+                    {
+                      when: (row) => row.exam_schedule_id === "No records found",
+                      style: {
+                        textAlign: "center",
+                        fontSize: "16px",
+                        color: "red",
+                        backgroundColor: "#f9f9f9",
+                      },
                     },
-                  },
-                ]}
-              />
-              
+                  ]}
+                />
+
               )}
             </div>
           </div>

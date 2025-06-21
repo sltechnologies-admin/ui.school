@@ -1,0 +1,97 @@
+trigger:
+  branches:
+    include:
+      - staging                   # Trigger on commit to staging
+pr:
+  branches:
+    include:
+      - staging                   # Trigger on PRs targeting staging
+      
+pool:
+  vmImage: 'ubuntu-22.04'
+
+variables:
+  - group: ScolasUI-SWA-Secrets-Staging  # Secret variable group
+  - name: build_dir
+    value: 'build'
+  - name: my_deployment_token
+    value: $(deployment_token)
+  - name: envFileName
+    value: '.env.staging'  # Name of the secure .env file
+
+stages:
+  - stage: Build
+    displayName: 'Build Stage'
+    jobs:
+      - job: BuildApp
+        displayName: 'Build React App'
+        steps:
+          # Use Node.js 20.x
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '20.x'
+            displayName: 'Use Node.js 20.x'
+
+          # ✅ Cache node_modules to speed up installs
+          - task: Cache@2
+            inputs:
+              key: 'npm | "$(Agent.OS)" | package-lock.json'
+              restoreKeys: |
+                npm | "$(Agent.OS)"
+              path: $(Build.SourcesDirectory)/node_modules
+            displayName: 'Cache node_modules'
+
+          # ✅ Download secure .env file
+          - task: DownloadSecureFile@1
+            name: downloadEnv
+            inputs:
+              secureFile: $(envFileName)
+
+          # ✅ Copy to root folder
+          - task: CopyFiles@2
+            inputs:
+              SourceFolder: $(Agent.TempDirectory)
+              Contents: $(downloadEnv.secureFilePath)
+              TargetFolder: $(Build.SourcesDirectory)
+
+          # ✅ Rename to `.env`
+          - script: |
+              mv $(Build.SourcesDirectory)/$(envFileName) $(Build.SourcesDirectory)/.env
+              echo "✅ .env file ready."
+            displayName: 'Move .env file to root'
+
+          # ✅ Install dependencies (silent, no audit/fund)
+          - script: |
+              npm ci --silent --no-audit --no-fund
+            displayName: 'Install Dependencies'
+            env:
+              npm_config_cache: $(Pipeline.Workspace)/.npm
+
+          # ✅ Optional: Check outdated packages (can be removed if not needed)
+          - script: |
+              echo "🔍 Checking for outdated npm packages..."
+              npm outdated --silent || true
+            displayName: 'Check for Outdated NPM Packages'
+            continueOnError: true
+
+          # ✅ Build React app (with source maps disabled via .env)
+          - script: |
+              npm run build --silent
+            displayName: 'Build React App'
+
+  - stage: Deploy
+    displayName: 'Deploy Stage'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: DeployToAzure
+        displayName: 'Deploy to Azure Static Web App'
+        steps:
+          - task: AzureStaticWebApp@0
+            inputs:
+              azure_static_web_apps_connection: 'Azure-ScolasUI-Staging'
+              app_location: '/'
+              output_location: '$(build_dir)'
+              azure_static_web_apps_api_token: $(my_deployment_token)
+            condition: eq(variables['Build.SourceBranch'], 'refs/heads/staging')
+            displayName: 'Deploy to Azure Static Web App'

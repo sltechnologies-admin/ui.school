@@ -11,6 +11,7 @@ import { MdFilterList } from "react-icons/md";
 import Header from "../../components/layout/header/header";
 import LeftNav from "../../components/layout/leftNav/leftNav";
 import loading from "../../assets/images/common/loading.gif";
+import { useFeeModuleAccess } from "../hooks/useFeeModuleAccess";
 
 const Feesstudentsschedule = () => {
     const userData = sessionStorage.getItem("user");
@@ -26,9 +27,14 @@ const Feesstudentsschedule = () => {
     const navigate = useNavigate();
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
     const [feesTerms, setFeesTerms] = useState([]);
+    const [filteredStudents, setFilteredStudents] = useState([]);
+
     const [feesTermsChild, setFeesTermsChild] = useState([]);
     const [baseFeesTerms, setBaseFeesTerms] = useState([]);
     const [students, setStudents] = useState([]);
+
+    const currentUserRole = userObj.role_name?.trim();
+    const { canWrite } = useFeeModuleAccess(currentUserRole);
 
     useEffect(() => {
         document.title = "SCHOLAS";
@@ -61,7 +67,7 @@ const Feesstudentsschedule = () => {
                 p_school_id: userObj.school_id,
                 p_academic_year_id: userObj.academic_year_id,
             });
-           
+
             const filterData = Array.isArray(response.data) ? response.data : [];
 
             const filteredParent = filterData.filter(
@@ -144,7 +150,7 @@ const Feesstudentsschedule = () => {
     };
 
     const searchableColumns1 = [
-        (row) => row.academic_year_name,
+        (row) => row.admission_number,
         (row) => row.class_name,
         (row) => row.fees_item,
         (row) => row.total_amount,
@@ -155,7 +161,7 @@ const Feesstudentsschedule = () => {
         const termKeys = new Set();
         data.forEach((item) => {
             Object.keys(item).forEach((key) => {
-                if (key.startsWith("Term")) {
+                if (key.toLowerCase().includes("term") || key.toLowerCase().includes("others")) {
                     termKeys.add(key);
                 }
             });
@@ -191,12 +197,12 @@ const Feesstudentsschedule = () => {
 
     const columnsFeesItem = [
         {
-            name: "Academic Year",
-            selector: (row) => userObj.academic_year_name,
+            name: "Admission Number",
+            selector: (row) => row.admission_number,
             sortable: true,
             cell: (row) =>
                 filteredRecords1.length > 0 ? (
-                    <Tooltip title={userObj.academic_year_name}> {userObj.academic_year_name}</Tooltip>
+                    <Tooltip title={row.admission_number}> {row.admission_number}</Tooltip>
                 ) : (
                     <div className="noDataMessage">No Records Found</div>
                 ),
@@ -242,6 +248,7 @@ const Feesstudentsschedule = () => {
         },
         {
             name: "Actions",
+            omit: !canWrite,
             cell: (row) =>
                 filteredRecords1.length > 0 ? (
                     <div className="tableActions">
@@ -330,13 +337,13 @@ const Feesstudentsschedule = () => {
         const columns = [
             {
                 name: "Fees Item",
-                selector: (row) => row.category,
+                // selector: (row) => row.category,
                 cell: (row) => (
                     <Tooltip title={row.category}>
                         <span>{row.category}</span>
                     </Tooltip>
                 ),
-                sortable: true,
+                // sortable: true,
                 width: "150px"
             },
             ...dynamicColumns,
@@ -448,7 +455,10 @@ const Feesstudentsschedule = () => {
                     <div className="commonDataTableHead">
                         <div className="d-flex justify-content-between align-items-center w-100">
                             <div className="d-flex align-items-center" style={{ gap: "10px" }}>
-                                <h6 className="commonTableTitle">Fees Discount</h6>
+                                <h6 className="commonTableTitle">
+                                    Fees Discount ({userObj.academic_year_name})
+                                </h6>
+
                             </div>
                             <div className="">
                                 <input
@@ -520,15 +530,24 @@ const Feesstudentsschedule = () => {
                                     <Form.Group>
                                         <Form.Label>Class</Form.Label>
                                         <select
-                                            type="number"
                                             className="form-select"
                                             id="class_id"
                                             value={filter.class_id}
-                                            onChange={(e) =>
-                                                setFilter({ ...filter, class_id: e.target.value })
-                                            }
+                                            onChange={(e) => {
+                                                const selectedClassId = e.target.value;
+                                                setFilter({ ...filter, class_id: selectedClassId });
+
+                                                if (selectedClassId) {
+                                                    const filtered = students.filter(
+                                                        (stu) => String(stu.class_id) === String(selectedClassId)
+                                                    );
+                                                    setFilteredStudents(filtered);
+                                                } else {
+                                                    setFilteredStudents(students);
+                                                }
+                                            }}
                                         >
-                                            <option value="">Class</option>
+                                            <option value="">Select Class</option>
                                             {(classes || []).map((classe) => (
                                                 <option key={classe.class_id} value={classe.class_id}>
                                                     {classe.class_name}
@@ -541,9 +560,8 @@ const Feesstudentsschedule = () => {
                             <Col xs={12}>
                                 <div className="commonInput">
                                     <Form.Group>
-                                        <Form.Label>Student  Name</Form.Label>
+                                        <Form.Label>Student Name</Form.Label>
                                         <select
-                                            type="number"
                                             className="form-select"
                                             id="student_id"
                                             value={filter.student_id}
@@ -554,8 +572,8 @@ const Feesstudentsschedule = () => {
                                                 })
                                             }
                                         >
-                                            <option value="0">Select Student  Name</option>
-                                            {(students || []).map((student) => (
+                                            <option value="0">Select Student Name</option>
+                                            {(filteredStudents || []).map((student) => (
                                                 <option
                                                     key={student.student_id}
                                                     value={student.student_id}

@@ -10,6 +10,7 @@ import DataTable from "react-data-table-component";
 import { Tooltip } from '@mui/material';
 import loading from "../../assets/images/common/loading.gif";
 
+
 const Roles = () => {
     const [Roles, setRoles] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
@@ -19,6 +20,10 @@ const Roles = () => {
     const handleShowFilterModal = () => setShowFilterModal(true);
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
     const [isLoading, setIsLoading] = useState(true);
+    const userData = sessionStorage.getItem('user');
+    const userObj = userData ? JSON.parse(userData) : {};
+    const readOnlyRoles = ["Class Teacher", "Teacher", "Class Incharge","School Admin"];
+    const canSubmit = !readOnlyRoles.includes(userObj.role_name?.trim());
     const [filter, setFilter] = useState({
         role_name: "",
         action: "FILTER"
@@ -35,14 +40,15 @@ const Roles = () => {
     };
     useEffect(() => {
         setIsLoading(true);
-        fetchRoles("/Roles/", setRoles).finally(() => setIsLoading(false));
+        fetchRoles().finally(() => setIsLoading(false));
     }, []);
 
 
     const fetchRoles = async () => {
         try {
             const response = await axios.post(baseUrl + "/role/", {
-                action: "READ"
+                action: "READ",
+                school_id:userObj.school_id
             });
             setRoles(response.data);
         } catch (error) {
@@ -60,29 +66,30 @@ const Roles = () => {
           },
           
           {
-            name: 'Is Active',
+            name: 'Status',
             selector: (row) => row.is_active,
             cell: (row) => <Tooltip title={row.is_active}><span>{row.is_active}</span></Tooltip>,
             sortable: true,
           },
-        {
-                    name: "Actions",
-                    cell: (row) =>
-                        filteredRecords.length > 0 ? (
-                            <div className='tableActions'>
-                                <Tooltip title="Edit" arrow>
-                                    <a className='commonActionIcons' onClick={() => handleEditClick(row.role_id)}>
-                                        <span><MdEdit /></span>
-                                    </a>
-                                </Tooltip>
-                                <Tooltip title="Delete" arrow>
-                                    <a className='commonActionIcons' onClick={() => handleDeleteClick(row.role_id)}>
-                                        <span><MdDelete /></span>
-                                    </a>
-                                </Tooltip>
-                            </div>
-                        ) : null, 
-                },
+        ...(canSubmit ? [{
+    name: "Actions",
+    cell: (row) => 
+        row.role_id !== "No records found" ? (
+            <div className='tableActions'>
+                <Tooltip title="Edit" arrow>
+                    <span className='commonActionIcons' onClick={() => handleEditClick(row.role_id)}>
+                        <MdEdit />
+                    </span>
+                </Tooltip>
+                <Tooltip title="Delete" arrow>
+                    <span className='commonActionIcons' onClick={() => handleDeleteClick(row.role_id)}>
+                        <MdDelete />
+                    </span>
+                </Tooltip>
+            </div>
+        ) : null,
+}] : [])
+                
     ];
 
     const handleDeleteClick = async (role_id) => {
@@ -246,7 +253,7 @@ const Roles = () => {
                                         type="text"
                                         id="role_name"
                                         name="role_name"
-                                        placeholder="Role "
+                                        placeholder="Enter Role "
                                         maxLength={30}
                             
                                         value={filter.role_name}

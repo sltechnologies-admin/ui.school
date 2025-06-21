@@ -1,15 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-
 import { MdAddCircle, MdFilterList } from "react-icons/md";
-import { IoMdAdd } from "react-icons/io";
 import { ToastContainer, toast } from 'react-toastify';
-import { Container, Button, Modal, Row, Col, Form, OverlayTrigger } from "react-bootstrap";
+import { Button, Modal, Row, Col, Form, OverlayTrigger } from "react-bootstrap";
 //Icons 
 import { MdEdit } from "react-icons/md";
 import { MdDelete } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
-
-
 //Components
 import Header from '../../components/layout/header/header';
 import LeftNav from '../../components/layout/leftNav/leftNav';
@@ -17,14 +13,13 @@ import axios from "axios";
 import DataTable from "react-data-table-component";
 import { Tooltip } from '@mui/material';
 import loading from "../../assets/images/common/loading.gif";
+import { useFeeModuleAccess } from "../hooks/useFeeModuleAccess";
 
 const Feeitems = () => {
     const [feesitems, setFeesitems] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
-    const [academicyears, setAcademicyears] = useState([]);
     const [classes, setClasses] = useState([]);
-    const [feeitemlists, setFeeitemlists] = useState([]);
     const [showFilterModal, setShowFilterModal] = useState(false);
     const handleCloseFilterModal = () => setShowFilterModal(false);
     const handleShowFilterModal = () => setShowFilterModal(true);
@@ -34,17 +29,14 @@ const Feeitems = () => {
     const userObj = userData ? JSON.parse(userData) : {};
     const [feesItemsAmount, setFeesItemsAmount] = useState([]);
 
+    const currentUserRole = userObj.role_name?.trim();
+    const { canWrite } = useFeeModuleAccess(currentUserRole);
+
     useEffect(() => {
         document.title = "SCHOLAS";
         fetchData();
-        fetchacademicyear();
         fetchclasses();
-        fetchfeeitemlist();
-    }, []);
-
-    useEffect(() => {
         setIsLoading(true);
-        //fetchData("/feeitemsamount/", setFeesitems).finally(() => setIsLoading(false));
         fetchFeesItemsAmount().finally(() => setIsLoading(false));
     }, []);
 
@@ -54,7 +46,7 @@ const Feeitems = () => {
         if (employeemasterToEdit) {
             navigate("/addfeeitems", { state: { feesitemsData: employeemasterToEdit } });
         } else {
-            // console.error(`User with ID ${fees_item_id} not found.`);
+            console.error(`Fees Items Amount with ID ${fees_items_amount_id} not found.`);
         }
     };
 
@@ -62,11 +54,8 @@ const Feeitems = () => {
         try {
             const response = await axios.post(baseUrl + "/feeitemsamount/", { action: "READ", school_id: userObj.school_id, academic_year_id: userObj.academic_year_id });
             setFeesitems(response.data);
-
-            // console.log(response.data);
         } catch (error) {
             console.log("Error fetching data:", error);
-
         }
     };
 
@@ -74,18 +63,6 @@ const Feeitems = () => {
         try {
             const response = await axios.post(baseUrl + "/feeitemsamount/", { action: "TOTALREAD", school_id: userObj.school_id, academic_year_id: userObj.academic_year_id });
             setFeesItemsAmount(response.data);
-
-        } catch (error) {
-            console.log("Error fetching data:", error);
-        }
-    };
-
-    const fetchacademicyear = async () => {
-        try {
-            const response = await axios.post(baseUrl + "/AcademicYear/", { action: "READ", school_id: userObj.school_id });
-            setAcademicyears(response.data);
-
-            // console.log(response.data);
         } catch (error) {
             console.log("Error fetching data:", error);
         }
@@ -100,34 +77,20 @@ const Feeitems = () => {
                 item => item.is_active?.toLowerCase() === 'active'
             );
             setClasses(filteredClasses);
-            // console.log(response.data);
-        } catch (error) {
-            console.log("Error fetching data:", error);
-        }
-    };
-
-    const fetchfeeitemlist = async () => {
-        try {
-            const response = await axios.post(baseUrl + "/Feeitemslist/", { action: "READ", school_id: userObj.school_id });
-            setFeeitemlists(response.data);
-
-            //console.log("Fee:",response.data);
         } catch (error) {
             console.log("Error fetching data:", error);
         }
     };
 
     const handleDeleteClick = async (fees_items_amount_id) => {
-
         const confirmDelete = window.confirm('Are you sure you want to change the status');
-        //alert(fees_item_id);
+
         if (!confirmDelete) {
             return;
         }
         const requestBody = {
             fees_items_amount_id: fees_items_amount_id,
             action: "DELETE"
-
         };
 
         try {
@@ -140,11 +103,9 @@ const Feeitems = () => {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
             toast.success("Record Set To  Inactive ");
-            //fetchData();
-            //fetchFeesItemsAmount();
         }
         catch (error) {
-            // console.error('Error:', error);
+            console.error('Error:', error);
         }
     };
 
@@ -154,23 +115,29 @@ const Feeitems = () => {
             selector: (row) => row.class_name || "No Records Found",
             sortable: true,
             cell: (row) =>
-                filteredRecords.length > 0 ? (
-                   <Tooltip title={row.class_name}> {row.class_name}</Tooltip>
-                ) : (
-                    <div className="noDataMessage">No Records Found</div>
-                ),
+
+                <Tooltip title={row.class_name}> {row.class_name}</Tooltip>
+
         },
         {
             name: "Total Amount",
-            selector: (row) => {
-                const amount = Number(row.total_amount);
-                const formattedAmount = isNaN(amount) 
-                    ? "0.00" 
-                    : new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
-    
-                return <Tooltip title={formattedAmount}>{formattedAmount}</Tooltip>;
-            },
+            selector: (row) => Number(row.total_amount), // Needed for sorting
             sortable: true,
+            cell: (row) => {
+                const amount = Number(row.total_amount);
+                const formattedAmount = isNaN(amount)
+                    ? ""
+                    : new Intl.NumberFormat('en-IN', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }).format(amount);
+
+                return filteredRecords.length > 0 ? (
+                    <Tooltip title={formattedAmount}>{formattedAmount}</Tooltip>
+                ) : (
+                    <div className="noDataMessage">No Records Found</div>
+                );
+            }
         }
 
     ];
@@ -197,6 +164,8 @@ const Feeitems = () => {
     const searchableColumns = [
         (row) => row.class_name,
         (row) => row.total_amount,
+        
+
     ];
 
     const trimmedQuery = searchQuery.trim().toLowerCase();
@@ -212,7 +181,6 @@ const Feeitems = () => {
             )
             : feesItemsAmount || [];
 
-
     const [form, setForm] = useState({
         fees_item_id: "",
         academic_year_id: "",
@@ -227,14 +195,13 @@ const Feeitems = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        const trimmedValue = value.trim(); 
+        const trimmedValue = value.trim();
 
         setForm((prevForm) => ({
             ...prevForm,
             [name]: trimmedValue
         }));
     };
-
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -256,7 +223,7 @@ const Feeitems = () => {
                 },
             });
             const filterData = response.data || [];
-            // console.log("API Response:", filterData);
+
             setFeesItemsAmount(filterData);
             setShowFilterModal(false);
         } catch (error) {
@@ -278,18 +245,6 @@ const Feeitems = () => {
         }
     };
 
-    const getFormData = () => {
-        return {
-            //academic_year_id: form.academic_year_id || null,
-            academic_year_id: userObj.academic_year_id || null,
-            class_id: form.class_id || null,
-            fees_item_id: form.fees_item_id || null,
-            fees_item_amount: form.fees_item_amount || null,
-            school_id: userObj.school_id || null,
-            action: 'FILTER',
-        };
-    };
-
     const handleReset = async (e) => {
         e.preventDefault();
         setForm({
@@ -299,7 +254,7 @@ const Feeitems = () => {
             fees_item: "",
             fees_item_amount: "",
         });
-        //fetchData();
+
         fetchFeesItemsAmount();
         setShowFilterModal(true);
     };
@@ -314,50 +269,68 @@ const Feeitems = () => {
             fees_item: "",
             fees_item_amount: "",
         });
-        //fetchData();
+
         fetchFeesItemsAmount();
         setSearchQuery(event.target.value);
     };
-    const handleFilterClear = async () => {
-        setForm({
-            fees_item_id: "",
-            academic_year_id: "",
-            academic_year_name: "",
-            class_id: "",
-            class_name: "",
-            fees_item: "",
-            fees_item_amount: "",
-            action: "FILTER",
-        });
 
-        fetchData();
+    // const expandableColumns = [
+    //     {
+    //         name: "Fees Item",
+    //         selector: (row) => <Tooltip title={row.fees_item}> {row.fees_item}</Tooltip>,
+    //         sortable: true,
+    //     },
+    //     {
+    //         name: "Fees Item Amount",
+    //         selector: (row) => {
+    //             const amount = Number(row.fees_item_amount);
+    //             const formattedAmount = isNaN(amount)
+    //                 ? ""
+    //                 : new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
 
-        // fetchData("/schoolmaster", setSchools);
-    };
-
+    //             return <Tooltip title={formattedAmount}>{formattedAmount}</Tooltip>;
+    //         },
+    //         sortable: true,
+    //         cell: (row) =>
+    //             filteredRecords.length > 0 ? (
+    //                 <Tooltip title={row.fees_item_amount}> {row.fees_item_amount}</Tooltip>
+    //             ) : (
+    //                 <div className="noDataMessage">No Records Found</div>
+    //             ),
+    //     }
+    // ];
     const expandableColumns = [
         {
             name: "Fees Item",
-            selector: (row) => <Tooltip title={row.fees_item}> {row.fees_item}</Tooltip>,
+            selector: (row) => row.fees_item,
             sortable: true,
+            cell: (row) => <Tooltip title={row.fees_item}>{row.fees_item}</Tooltip>,
         },
         {
             name: "Fees Item Amount",
             selector: (row) => {
                 const amount = Number(row.fees_item_amount);
-                const formattedAmount = isNaN(amount) 
-                    ? "0.00" 
-                    : new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
-    
-                return <Tooltip title={formattedAmount}>{formattedAmount}</Tooltip>;
+                return isNaN(amount) ? 0 : amount;
             },
             sortable: true,
+            cell: (row) => {
+                if (filteredRecords.length > 0) {
+                    const formattedAmount = new Intl.NumberFormat('en-IN', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }).format(Number(row.fees_item_amount));
+
+                    return <Tooltip title={formattedAmount}>{formattedAmount}</Tooltip>;
+                } else {
+                    return <div className="noDataMessage">No Records Found</div>;
+                }
+            },
         }
     ];
 
+
     const getFeesItems = (academic_year_id, class_id) => {
         return {
-            //academic_year_id: form.academic_year_id || null,
             academic_year_id: academic_year_id || null,
             class_id: class_id || null,
             school_id: userObj.school_id || null,
@@ -366,22 +339,23 @@ const Feeitems = () => {
     };
 
     const ExpandableRowComponent = ({ data }) => {
-        const [feesItems1, setFeesItems1] = useState([]);
-        const [isLoading1, setIsLoading1] = useState(false);
+        const [feesItemsChild, setFeesItemsChild] = useState([]);
+        const [isLoadingChild, setIsLoadingChild] = useState(false);
 
         const fetchData = useCallback(async () => {
-            setIsLoading1(true);
+            setIsLoadingChild(true);
             try {
                 const formData = getFeesItems(userObj.academic_year_id, data.class_id);
 
                 const fetchedData = await fetchFeeItemsDetails(formData);
-                setFeesItems1(fetchedData);
+
+                setFeesItemsChild(fetchedData);
 
                 if (Array.isArray(fetchedData) && fetchedData.length === 0) {
                     fetchFeesItemsAmount();
                 }
             } finally {
-                setIsLoading1(false);
+                setIsLoadingChild(false);
             }
         }, [data.class_id]);
 
@@ -411,17 +385,17 @@ const Feeitems = () => {
                 background: "linear-gradient(135deg, #f9f9f9 0%, #e6e6e6 100%)",
                 boxShadow: "2px 4px 10px rgba(0, 0, 0, 0.1)"
             }}>
-                {isLoading1 ? (
+                {isLoadingChild ? (
                     <div className="loadingContainer">
                         <img src={loading} alt="Loading..." className="loadingGif" />
                     </div>
                 ) : (
                     <DataTable
-                        //columns={expandableColumns}
                         columns={[
                             ...expandableColumns,
                             {
                                 name: "Actions",
+                                omit: !canWrite,
                                 cell: (row) =>
                                     filteredRecords.length > 0 ? (
                                         <div className='tableActions'>
@@ -439,13 +413,12 @@ const Feeitems = () => {
                                     ) : null,
                             },
                         ]}
-                        //data={feesItems1} 
                         data={
-                            feesItems1.length > 0
-                                ? feesItems1
+                            feesItemsChild.length > 0
+                                ? feesItemsChild
                                 : [{ fees_item: "" }]
                         }
-                        noHeader dense
+                        // noHeader dense
                         customStyles={customStyles}
                     />
                 )}
@@ -464,13 +437,9 @@ const Feeitems = () => {
                 <div className="pageBody">
                     <div className="commonDataTableHead">
                         <div className="d-flex justify-content-between align-items-center w-100">
-
-                            {/* Title */}
                             <div className="d-flex align-items-center" style={{ gap: "10px" }}>
                                 <h6 className="commonTableTitle">Fees Items Amount</h6>
                             </div>
-
-                            {/* Search Input */}
                             <div className="">
                                 <input
                                     type="text"
@@ -480,22 +449,20 @@ const Feeitems = () => {
                                     onChange={handleSearchChange}
                                 />
                             </div>
-
-                            {/* Buttons: Add & Filter */}
                             <div className="d-flex align-items-center" style={{ gap: "6px" }}>
                                 <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Filter</Tooltip>}>
                                     <Button className="secondaryBtn" variant="secondary" onClick={handleShowFilterModal}>
                                         <MdFilterList />
                                     </Button>
                                 </OverlayTrigger>
-
-                                <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Add</Tooltip>}>
-                                    <Button className="primaryBtn" variant="primary" onClick={() => navigate("/addfeeitems")}>
-                                        <MdAddCircle />
-                                    </Button>
-                                </OverlayTrigger>
+                                {canWrite && (
+                                    <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Add</Tooltip>}>
+                                        <Button className="primaryBtn" variant="primary" onClick={() => navigate("/addfeeitems")}>
+                                            <MdAddCircle />
+                                        </Button>
+                                    </OverlayTrigger>
+                                )}
                             </div>
-
                         </div>
                     </div>
                     <div className="commonTable height100">
@@ -511,7 +478,7 @@ const Feeitems = () => {
                                     data={
                                         filteredRecords.length > 0
                                             ? filteredRecords
-                                            : [{ academic_year_id: "No Records Found" }] // Add a fake row if no data
+                                            : [{ total_amount: "No Records Found" }]
                                     }
                                     pagination={filteredRecords.length > 0}
                                     highlightOnHover
@@ -520,15 +487,17 @@ const Feeitems = () => {
                                     fixedHeaderScrollHeight="calc(100vh - 170px)"
                                     expandableRows
                                     expandableRowsComponent={ExpandableRowComponent}
-                                // customStyles={customStyles}
+                                    expandableRowDisabled={(row) => {
+                                       
+                                        return !row.class_id || row.total_amount === "No Records Found";
+                                    }}
                                 />
+
                             )}
                         </div>
                     </div>
                 </div>
             </div>
-
-            {/* Filter Modal Starts Here */}
             <Modal show={showFilterModal} onHide={handleCloseFilterModal} className="commonFilterModal">
                 <Modal.Header closeButton className="modalHeaderFixed">
                     <Modal.Title>Filter</Modal.Title>
@@ -539,7 +508,7 @@ const Feeitems = () => {
                             <div className="commonInput">
                                 <Form.Group>
                                     <Form.Label>
-                                        Class<span className="requiredStar">*</span>
+                                        Class
                                     </Form.Label>
                                     <select
                                         required
@@ -568,7 +537,6 @@ const Feeitems = () => {
                     >
                         Reset
                     </Button>
-
                     <div>
                         <Button
                             variant="secondary"
@@ -577,7 +545,6 @@ const Feeitems = () => {
                         >
                             Cancel
                         </Button>
-
                         <Button
                             variant="primary"
                             className="btn-success primaryBtn"

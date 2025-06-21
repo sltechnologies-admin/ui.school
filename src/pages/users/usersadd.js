@@ -17,6 +17,9 @@ function UsersAdd() {
   const userData = sessionStorage.getItem('user');
   const userObj = userData ? JSON.parse(userData) : {};
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
+  const readOnlyRoles = ["Class Teacher", "Teacher", "Class Incharge","School Admin"];
+  const canSubmit = !readOnlyRoles.includes(userObj.role_name?.trim());
+
 
   const [form, setForm] = useState({
     userid: "",
@@ -41,10 +44,10 @@ function UsersAdd() {
     school_id: 0
   })
   useEffect(() => {
-    fetchDataRead("/country", setCountrys, userObj.school_id);
-    fetchDataRead("/states", setStates, userObj.school_id);
-    fetchDataRead("/role", setRoles, userObj.school_id)
-    fetchDataRead("/department", setDepartments, userObj.school_id)
+    fetchDataRead("/country/", setCountrys, userObj.school_id);
+    fetchDataRead("/states/", setStates, userObj.school_id);
+    fetchDataRead("/role/", setRoles, userObj.school_id)
+    fetchDataRead("/department/", setDepartments, userObj.school_id)
   }, []);
   useEffect(() => {
     if (routeLocation.state?.userData) {
@@ -76,22 +79,22 @@ function UsersAdd() {
     e.preventDefault();
     const password = editId !== null ? form.password : generatePassword();
     const formData = {
-      username: form.username,
+      username: form.username || "",
       password,
       firstname: form.firstname,
       surname: form.surname,
       address: form.address,
       city: form.city,
-      state: form.state,
-      country: form.country,
+      state: form.state || 0,
+      country: form.country || 0,
       phonenumber: form.phonenumber,
       email: form.email,
-      doj: form.doj,
-      dor: form.dor,
-      lastlogindate: form.lastlogindate,
+      doj: form.doj || null,
+      dor: form.dor || null,
+      lastlogindate: form.lastlogindate || null,
       status: "A",
-      roleid: form.roleid,
-      deptid: form.deptid,
+      roleid: form.roleid || 0,
+      deptid: form.deptid || 0,
       createdby: form.createdby,
       lastmodifiedby: form.lastmodifiedby,
       school_id: userObj.school_id,
@@ -183,8 +186,8 @@ function UsersAdd() {
                         <div className='commonInput'>
                           <Form.Group>
                             <Form.Label>First Name <span className='requiredStar'>*</span></Form.Label>
-                            <Form.Control required 
-                              type="text" id="firstname" value={form.firstname} placeholder="First Name" maxLength={30}
+                            <Form.Control required
+                              type="text" id="firstname" value={form.firstname} placeholder=" Enter First Name" maxLength={30}
                               onChange={(e) => {
                                 const value = e.target.value;
                                 if (/^[A-Za-z\s]*$/.test(value)) {
@@ -199,12 +202,12 @@ function UsersAdd() {
                         <div className='commonInput'>
                           <Form.Group>
                             <Form.Label> Surname <span className='requiredStar'>*</span></Form.Label>
-                            <Form.Control  required id="surname"  value={form.surname}  placeholder="Surname"  maxLength={30}  onChange={(e) => {
-                                const value = e.target.value;
-                                if (/^[A-Za-z\s]*$/.test(value)) {
-                                  handleInputChange(e);
-                                }
-                              }}
+                            <Form.Control required id="surname" value={form.surname} placeholder="Enter Surname" maxLength={30} onChange={(e) => {
+                              const value = e.target.value;
+                              if (/^[A-Za-z\s]*$/.test(value)) {
+                                handleInputChange(e);
+                              }
+                            }}
                             />
                             <Form.Control.Feedback>Required</Form.Control.Feedback>
                           </Form.Group>
@@ -214,11 +217,12 @@ function UsersAdd() {
                         <div className='commonInput'>
                           <Form.Group>
                             <Form.Label>Phone Number <span className='requiredStar'>*</span></Form.Label>
-                            <Form.Control required type="text" id="phonenumber" value={form.phonenumber} placeholder="Phone Number"
-                              maxLength={10} onChange={(e) => {   const value = e.target.value;   if (/^\d*$/.test(value)) {
+                            <Form.Control required type="text" id="phonenumber" value={form.phonenumber} placeholder="Enter Phone Number"
+                              maxLength={10} onChange={(e) => {
+                                const value = e.target.value; if (/^\d*$/.test(value)) {
                                   handleInputChange(e);
                                 }
-                              }}isInvalid={form.phonenumber.length > 10}
+                              }} isInvalid={form.phonenumber.length > 10}
                             />
                           </Form.Group>
                         </div>
@@ -230,75 +234,6 @@ function UsersAdd() {
                             <Form.Control required
                               type="email" id="email" value={form.email} maxLength={150} placeholder="Enter Email" onChange={handleInputChange}
                             />
-                            <Form.Control.Feedback>Required</Form.Control.Feedback>
-                          </Form.Group>
-                        </div>
-                      </Col>
-                      <Col xs={12} md={6} lg={4} xxl={3}>
-                        <div className='commonInput'>
-                          <Form.Group>
-                            <Form.Label>City <span className='requiredStar'>*</span></Form.Label>
-                            <Form.Control
-                              required
-                              type="text" id="city" value={form.city} maxLength={30} placeholder="Enter City"
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                if (/^[A-Za-z\s]*$/.test(value)) {
-                                  handleInputChange(e);
-                                }
-                              }}
-                            />
-                            <Form.Control.Feedback>City</Form.Control.Feedback>
-                          </Form.Group>
-                        </div>
-                      </Col>
-                      <Col xs={12} md={6} lg={4} xxl={3}>
-                        <div className='commonInput'>
-                          <Form.Group>
-                            <Form.Label>
-                              <Form.Label>State<span className='requiredStar'>*</span></Form.Label>
-                            </Form.Label>
-                            <Form.Select required className="form-select" id="state" value={form.state} onChange={handleInputChange}>
-                              <option value="">Select State</option>
-                              {(states || []).map((state) => (
-                                <option key={state.state_id} value={state.state_id}> {state.state_name}  </option>
-                              ))}
-                            </Form.Select>
-                          </Form.Group>
-                        </div>
-                      </Col>
-                      <Col xs={12} md={6} lg={4} xxl={3}>
-                        <div className='commonInput'>
-                          <Form.Group>
-                            <Form.Label>
-                              <Form.Label>Country<span className='requiredStar'>*</span></Form.Label>
-                            </Form.Label>
-
-                            <Form.Select
-                              required id="country" value={form.country} onChange={handleInputChange}
-                            >
-                              <option value="">Select Country</option>
-                              {(countrys || []).map((country) => (
-                                <option key={country.country_id} value={country.country_id}>{country.country_name} </option>
-                              ))}
-                            </Form.Select>
-                          </Form.Group>
-                        </div>
-                      </Col>
-                      <Col xs={12} md={6} lg={4} xxl={3}>
-                        <div className="commonInput">
-                          <Form.Group>
-                            <Form.Label>
-                              Department<span className="requiredStar">*</span>
-                            </Form.Label>
-                            <Form.Select required id="deptid" value={form.deptid} onChange={handleInputChange}>
-                              <option value="">Select Department</option>
-                              {(departments || [])
-                                .filter((dept) => dept.is_active === "Active") // Filter active departments
-                                .map((dept) => (
-                                  <option key={dept.dept_id} value={dept.dept_id}> {dept.dept_name}  </option>
-                                ))}
-                            </Form.Select>
                             <Form.Control.Feedback>Required</Form.Control.Feedback>
                           </Form.Group>
                         </div>
@@ -322,11 +257,81 @@ function UsersAdd() {
                         </div>
                       </Col>
                       <Col xs={12} md={6} lg={4} xxl={3}>
+                        <div className="commonInput">
+                          <Form.Group>
+                            <Form.Label>
+                              Department
+                            </Form.Label>
+                            <Form.Select id="deptid" value={form.deptid} onChange={handleInputChange}>
+                              <option value="">Select Department</option>
+                              {(departments || [])
+                                .filter((dept) => dept.is_active === "Active") // Filter active departments
+                                .map((dept) => (
+                                  <option key={dept.dept_id} value={dept.dept_id}> {dept.dept_name}  </option>
+                                ))}
+                            </Form.Select>
+                            <Form.Control.Feedback>Required</Form.Control.Feedback>
+                          </Form.Group>
+                        </div>
+                      </Col>
+                      <Col xs={12} md={6} lg={4} xxl={3}>
                         <div className='commonInput'>
                           <Form.Group>
-                            <Form.Label>Date of Joining <span className='requiredStar'>*</span></Form.Label>
+                            <Form.Label>City </Form.Label>
                             <Form.Control
-                              required
+                              type="text" id="city" value={form.city} maxLength={30} placeholder="Enter City"
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (/^[A-Za-z\s]*$/.test(value)) {
+                                  handleInputChange(e);
+                                }
+                              }}
+                            />
+                            <Form.Control.Feedback>City</Form.Control.Feedback>
+                          </Form.Group>
+                        </div>
+                      </Col>
+                      <Col xs={12} md={6} lg={4} xxl={3}>
+                        <div className='commonInput'>
+                          <Form.Group>
+                            <Form.Label>
+                              <Form.Label>State</Form.Label>
+                            </Form.Label>
+                            <Form.Select className="form-select" id="state" value={form.state} onChange={handleInputChange}>
+                              <option value="">Select State</option>
+                              {(states || []).map((state) => (
+                                <option key={state.state_id} value={state.state_id}> {state.state_name}  </option>
+                              ))}
+                            </Form.Select>
+                          </Form.Group>
+                        </div>
+                      </Col>
+                      <Col xs={12} md={6} lg={4} xxl={3}>
+                        <div className='commonInput'>
+                          <Form.Group>
+                            <Form.Label>
+                              <Form.Label>Country</Form.Label>
+                            </Form.Label>
+
+                            <Form.Select
+                              id="country" value={form.country} onChange={handleInputChange}
+                            >
+                              <option value="">Select Country</option>
+                              {(countrys || []).map((country) => (
+                                <option key={country.country_id} value={country.country_id}>{country.country_name} </option>
+                              ))}
+                            </Form.Select>
+                          </Form.Group>
+                        </div>
+                      </Col>
+
+
+                      <Col xs={12} md={6} lg={4} xxl={3}>
+                        <div className='commonInput'>
+                          <Form.Group>
+                            <Form.Label>Date of Joining</Form.Label>
+                            <Form.Control
+
                               type="date" placeholder="Date of Joining" id="doj" value={form.doj} onChange={(e) => {
                                 const selectedDate = e.target.value;
                                 const year = selectedDate.split("-")[0];
@@ -400,7 +405,11 @@ function UsersAdd() {
                       >
                         Cancel
                       </Button>
-                      <Button type="submit" className='btn btn-success primaryBtn'>
+                      <Button
+                        type="submit"
+                        className='btn btn-success primaryBtn'
+                        disabled={!canSubmit}
+                      >
                         Submit
                       </Button>
                     </div>

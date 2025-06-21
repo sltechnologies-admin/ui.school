@@ -28,13 +28,13 @@ const Studentattendancereport = () => {
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
     const [form, setForm] = useState({
         class_id: "",
-        section_id:"",
+        section_id: "",
         is_present: "",
         period_id: "",
     });
     const [fromDate, setFromDate] = useState(null);
     const [toDate, setToDate] = useState(null);
- 
+
     const [searchQuery, setSearchQuery] = useState('');
     const searchableColumns = [
         "admission_number",
@@ -49,16 +49,16 @@ const Studentattendancereport = () => {
         "primary_contact",
         "attendance_count"
     ];
- 
+
     const exportToExcel = () => {
         if (studentsData.length === 0) {
             toast.error("No data available to export.");
             return;
         }
-   
+
         // Create worksheet
         const worksheet = XLSX.utils.json_to_sheet(studentsData);
-   
+
         // Calculate maximum width for each column
         const columnWidths = studentsData.length > 0
             ? Object.keys(studentsData[0]).map(key => {
@@ -69,27 +69,27 @@ const Studentattendancereport = () => {
                 return { wch: maxLength + 2 }; // Add some padding
             })
             : [];
-   
+
         // Set the column widths in the worksheet
         worksheet['!cols'] = columnWidths;
-   
+
         // Create workbook and append the worksheet
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Student Attendance Type Report");
-   
+
         // Write the file
         XLSX.writeFile(workbook, `student_attendance_type_report_${new Date().toISOString()}.xlsx`);
     };
-   
- 
+
+
     const handleSearchChange = (event) => {
         setSearchQuery(event.target.value);
     };
- 
+
     const filteredRecords = (studentsData || []).filter((student) => {
         return searchableColumns.some((column) => {
             const value = student[column];
-    
+
             if (value) {
                 // Handle "DOB" by manually formatting it to "DD-MM-YYYY"
                 if (column === "dob" && student.dob) {
@@ -133,7 +133,7 @@ const Studentattendancereport = () => {
                 formattedDOB,
                 row.gender || "",
                 row.father_name || "",
-                row.primary_contact || ""
+                row.father_phone_number || ""
             ]);
         });
 
@@ -145,34 +145,36 @@ const Studentattendancereport = () => {
 
         doc.save(`student_attendance_type_report_${new Date().toISOString()}.pdf`);
     };
- 
+
     const fetchClasses = async () => {
         try {
             const response = await axios.post(baseUrl + "/classes/", {
-                action: "READ"
+                action: "READ",
+                school_id: userObj.school_id
             });
             setClasses(response.data)
         } catch (error) {
             console.log("Error fetching class name:", error);
         }
     };
- 
+
     useEffect(() => {
         fetchSections(form.class_id || 0);
     }, [form.class_id]);
- 
+
     const fetchSections = async (class_id) => {
         try {
             const response = await axios.post(baseUrl + "/Sections/", {
                 action: "DROPDOWNREAD",
-                class_id: class_id
+                class_id: class_id,
+                school_id: userObj.school_id
             });
             setSection(response.data);
         } catch (error) {
             console.log("Error fetching section name:", error);
         }
     };
- 
+
     const formatDate = (date) => {
         if (!date) return null;
         const d = new Date(date);
@@ -180,7 +182,7 @@ const Studentattendancereport = () => {
         const day = d.getDate().toString().padStart(2, '0');
         return `${d.getFullYear()}-${month}-${day}`;
     };
- 
+
     const formatToDDMMYYYY = (dateString) => {
         if (!dateString) return "";
         const date = new Date(dateString);
@@ -189,7 +191,7 @@ const Studentattendancereport = () => {
         const year = date.getFullYear();
         return `${day}/${month}/${year}`;
     };
- 
+
     const getStartAndEndOfWeek = () => {
         const currentDate = new Date();
         const currentDayOfWeek = currentDate.getDay();
@@ -197,19 +199,19 @@ const Studentattendancereport = () => {
         const startOfWeek = new Date(currentDate);
         startOfWeek.setDate(currentDate.getDate() - daysToSubtract);
         startOfWeek.setHours(0, 0, 0, 0);
- 
+
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(startOfWeek.getDate() + 6);
         endOfWeek.setHours(23, 59, 59, 999);
- 
+
         return { startOfWeek, endOfWeek };
     };
- 
+
     const fetchStudentsData = async () => {
         if (form.period_id) {
             let formattedFromDate = null;
             let formattedToDate = null;
- 
+
             if (form.period_id === "Date Range") {
                 formattedFromDate = formatDate(fromDate);
                 formattedToDate = formatDate(toDate);
@@ -218,7 +220,7 @@ const Studentattendancereport = () => {
                 formattedFromDate = formatDate(startOfWeek);
                 formattedToDate = formatDate(endOfWeek);
             }
- 
+
             try {
                 const response = await axios.post(baseUrl + "/Studentattdencetypereport/", {
                     action: "FILTER",
@@ -230,7 +232,7 @@ const Studentattendancereport = () => {
                     from_date: formattedFromDate,
                     to_date: formattedToDate
                 });
- 
+
                 if (response.data && Array.isArray(response.data) && response.data.length > 0) {
                     setStudentsData(response.data);
                 } else {
@@ -243,11 +245,11 @@ const Studentattendancereport = () => {
             }
         }
     };
- 
+
     useEffect(() => {
         fetchClasses();
     }, []);
- 
+
     const handleInputChange = (event) => {
         const { id, value } = event.target;
         setForm((prevForm) => ({
@@ -255,7 +257,7 @@ const Studentattendancereport = () => {
             [id]: value,
         }));
     };
- 
+
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!form.class_id && !form.period_id) {
@@ -264,121 +266,92 @@ const Studentattendancereport = () => {
         }
         fetchStudentsData();
     };
- 
+
     const columns = [
+
         {
-          name: "Admission Number",
-          selector: (row) => (
-            <Tooltip title={row.admission_number}>
-              <span>{row.admission_number}</span>
-            </Tooltip>
-          ),
-          sortable: true,
-          width: "160px",
-        },
-        {
-            name: "Admission Date",
-            selector: (row) => row.date_of_join ? row.date_of_join.split(" ")[0].split("-").reverse().join("-") : "",
-            cell: (row) => (
-                <Tooltip title={row.date_of_join ? row.date_of_join.split(" ")[0].split("-").reverse().join("-") : ""}>
-                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block", width: "100%" }}>
-                        {row.date_of_join ? row.date_of_join.split(" ")[0].split("-").reverse().join("-") : ""}
-                    </span>
+            name: "Student Name",
+            selector: (row) => (
+                <Tooltip title={row.student_name}>
+                    <span>{row.student_name}</span>
                 </Tooltip>
             ),
             sortable: true,
-            width: "140px"
-        }
-        ,
-        {
-          name: "Student Name",
-          selector: (row) => (
-            <Tooltip title={row.student_name}>
-              <span>{row.student_name}</span>
-            </Tooltip>
-          ),
-          sortable: true,
-          width: "140px",
+
         },
         {
-          name: "Class",
-          selector: (row) => (
-            <Tooltip title={row.class_name}>
-              <span>{row.class_name}</span>
-            </Tooltip>
-          ),
-          sortable: true,
-          width: "70px",
-        },
-        {
-          name: "Section",
-          selector: (row) => (
-            <Tooltip title={row.section_name}>
-              <span>{row.section_name}</span>
-            </Tooltip>
-          ),
-          sortable: true,
-          width: "140px",
-        },
-        {
-            name: "DOB",
-            selector: (row) => row.dob ? row.dob.split(" ")[0].split("-").reverse().join("-") : "",
-            cell: (row) => (
-                <Tooltip title={row.dob ? row.dob.split(" ")[0].split("-").reverse().join("-") : ""}>
-                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block", width: "100%" }}>
-                        {row.dob ? row.dob.split(" ")[0].split("-").reverse().join("-") : ""}
-                    </span>
+            name: "Class",
+            selector: (row) => (
+                <Tooltip title={row.class_name}>
+                    <span>{row.class_name}</span>
                 </Tooltip>
             ),
             sortable: true,
-            width: "100px"
+
         },
         {
-          name: "Gender",
-          selector: (row) => (
-            <Tooltip title={row.gender}>
-              <span>{row.gender}</span>
-            </Tooltip>
-          ),
-          sortable: true,
-          width: "80px",
+            name: "Section",
+            selector: (row) => (
+                <Tooltip title={row.section_name}>
+                    <span>{row.section_name}</span>
+                </Tooltip>
+            ),
+            sortable: true,
+
         },
         {
-          name: "Father Name",
-          selector: (row) => (
-            <Tooltip title={row.father_name || ""}>
-              <span>{row.father_name || ""}</span>
-            </Tooltip>
-          ),
-          sortable: true,
-          width: "120px",
+            name: "Father Name",
+            selector: (row) => (
+                <Tooltip title={row.father_name || ""}>
+                    <span>{row.father_name || ""}</span>
+                </Tooltip>
+            ),
+            sortable: true,
+
         },
         {
-          name: "Mobile Number",
-          selector: (row) => (
-            <Tooltip title={row.primary_contact}>
-              <span>{row.primary_contact}</span>
-            </Tooltip>
-          ),
-          sortable: true,
-          width: "140px",
+            name: "Mobile Number",
+            selector: (row) => (
+                <Tooltip title={row.father_phone_number}>
+                    <span>{row.father_phone_number}</span>
+                </Tooltip>
+            ),
+            sortable: true,
+
         },
         {
-          name: "Attendance Count",
-          selector: (row) => (
-            <Tooltip title={row.attendance_count}>
-              <span>{row.attendance_count}</span>
-            </Tooltip>
-          ),
-          sortable: true,
-          width: "150px",
+            name: "Working Days",
+            selector: (row) => (
+                <Tooltip title={row.total_working_days}>
+                    <span>{row.total_working_days}</span>
+                </Tooltip>
+            ),
+            sortable: true,
         },
-      ];
- 
-   return (
-    
+        {
+            name: "Present",
+            selector: (row) => (
+                <Tooltip title={row.total_present}>
+                    <span>{row.total_present}</span>
+                </Tooltip>
+            ),
+            sortable: true,
+        },
+        {
+            name: "Absent",
+            selector: (row) => (
+                <Tooltip title={row.total_absent}>
+                    <span>{row.total_absent}</span>
+                </Tooltip>
+            ),
+            sortable: true,
+        },
+    ];
+
+    return (
+
         <div className='pageMain'>
-             <ToastContainer />
+            <ToastContainer />
             <LeftNav />
             <div className='pageRight'>
                 <div className='pageHead'>
@@ -391,11 +364,11 @@ const Studentattendancereport = () => {
                                 <form onSubmit={handleSubmit}>
                                     <Row>
                                         <Col xs={12}>
-                                            <h6 className='commonSectionTitle'>Student Attendance Type Report</h6>
+                                            <h6 className='commonSectionTitle'>Attendance Report</h6>
                                         </Col>
                                     </Row>
                                     <Row>
-                                        
+
                                         <Col xs={12} md={6} lg={3} xxl={3}>
                                             <div className="commonInput">
                                                 <Form.Group>
@@ -412,24 +385,6 @@ const Studentattendancereport = () => {
                                                         <option value="This Month">This Month</option>
                                                         <option value="This Year">This Year</option>
                                                         <option value="Last Six Months">Last Six Months</option>
-                                                    </select>
-                                                </Form.Group>
-                                            </div>
-                                        </Col>
-                                        <Col xs={12} md={6} lg={3} xxl={3}>
-                                            <div className="commonInput">
-                                                <Form.Group>
-                                                    <Form.Label>Attendance Type</Form.Label>
-                                                    <select
-                                                        className="form-select"
-                                                        id="is_present"
-                                                        value={form.is_present}
-                                                        onChange={handleInputChange}
-                                                        required
-                                                    >
-                                                        <option value="">Select Attendance Type</option>
-                                                        <option value="true">Present</option>
-                                                        <option value="false">Absent</option>
                                                     </select>
                                                 </Form.Group>
                                             </div>
@@ -476,21 +431,22 @@ const Studentattendancereport = () => {
                                                 </Form.Group>
                                             </div>
                                         </Col>
-                                       
-                                        
+
+
                                     </Row>
- 
+
                                     <Row>
                                         <Col>
-                                            <div className="d-flex justify-content-between mt-4">
+                                            <div className="d-flex justify-content-end mt-4">
                                                 <Button
                                                     type="button"
                                                     variant="primary"
-                                                    className="btn-info clearBtn"
+                                                    className="btn-info clearBtn me-3" // adds space between buttons
                                                     onClick={() => {
                                                         setForm({
                                                             class_id: "",
                                                             period_id: "",
+                                                            section_id: "",
                                                         });
                                                         setFromDate(null);
                                                         setToDate(null);
@@ -504,15 +460,16 @@ const Studentattendancereport = () => {
                                                     variant="primary"
                                                     className="btn-success primaryBtn"
                                                 >
-                                                    Submit
+                                                    Search
                                                 </Button>
                                             </div>
                                         </Col>
                                     </Row>
+
                                 </form>
                             </Card.Body>
                         </Card>
- 
+
                         <div className="d-flex justify-content-between align-items-center mt-3">
                             {/* Search Input on the left */}
                             <input
@@ -522,57 +479,51 @@ const Studentattendancereport = () => {
                                 className="form-control form-control-sm w-25"
                                 onChange={handleSearchChange}
                             /><div>
-                            <Button className='btnMain' variant="success" onClick={exportToExcel} style={{ marginRight: "10px" }}>
-                                <img
-                                    src={excelIcon}
-                                    alt="Download Excel"
-                                    style={{ width: "20px", marginRight: "5px" }}
-                                />
-                               
-                            </Button>
-                            <Button className="btnMain" variant="danger" onClick={exportToPDF}>
-    <FaFilePdf style={{ marginRight: "5px" }} /> PDF
-</Button>
-                                    </div>
+                                <Button className='btnMain' variant="success" onClick={exportToExcel} style={{ marginRight: "10px" }}>
+                                    <img
+                                        src={excelIcon}
+                                        alt="Download Excel"
+                                        style={{ width: "20px", marginRight: "5px" }}
+                                    />
+
+                                </Button>
+                                <Button className="btnMain" variant="danger" onClick={exportToPDF}>
+                                    <FaFilePdf style={{ marginRight: "5px" }} />
+                                </Button>
+                            </div>
                         </div>
- 
-                       
-                           
-                            <div className="commonTable height100 mt-2">
+                        <div className="commonTable height100 mt-2">
                             <div className="tableBody">
-                                    {isLoading ? (
-                                        <div className="text-center">
-                                            <img src={loading} alt="loading..." />
-                                        </div>
-                                    ) : (
-                                        <DataTable
-                                            className="custom-table"
-                                            columns={columns}
-                                            data={filteredRecords.length > 0 ? filteredRecords : [{ section_name: "No Records Found" }]}
-                                            pagination={filteredRecords.length > 0 && filteredRecords[0].section_name !== "No Records Found"}
-                                            highlightOnHover
-                                            responsive
-                                            paginationPerPage={5}
-                                            paginationRowsPerPageOptions={[5, 10, 15]}
-                                            noDataComponent={<div>No Data Available</div>}
-                                            style={{
-                                                tableLayout: "fixed",  // Ensures even column width distribution
-                                                width: "100%"          // Makes sure the table occupies full width
-                                            }}
-                                        />
-                                    )}
-                                </div>
-                                </div>
-                           
-                        </Container>
-                   
+                                {isLoading ? (
+                                    <div className="text-center">
+                                        <img src={loading} alt="loading..." />
+                                    </div>
+                                ) : (
+                                    <DataTable
+                                        className="custom-table"
+                                        columns={columns}
+                                        data={filteredRecords.length > 0 ? filteredRecords : [{ father_name: "No Records Found" }]}
+                                        pagination={filteredRecords.length > 0 && filteredRecords[0].section_name !== "No Records Found"}
+                                        highlightOnHover
+                                        responsive
+                                        paginationPerPage={5}
+                                        paginationRowsPerPageOptions={[5, 10, 15]}
+                                        noDataComponent={<div>No Data Available</div>}
+                                        style={{
+                                            tableLayout: "fixed",  // Ensures even column width distribution
+                                            width: "100%"          // Makes sure the table occupies full width
+                                        }}
+                                    />
+                                )}
+                            </div>
+                        </div>
+
+                    </Container>
+
                 </div>
             </div>
         </div>
-    
-);
-   
-   
+    );
 }
- 
+
 export default Studentattendancereport;

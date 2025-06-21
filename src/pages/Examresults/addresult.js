@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import Select from 'react-select';
 import { ToastContainer, toast } from "react-toastify";
 import { useLocation } from "react-router-dom";
 import { Container, Row, Col, Card, Button, Form } from "react-bootstrap";
@@ -39,10 +40,10 @@ function AddExamResult() {
   });
 
   const init = async () => {
-    await fetchDataRead("/classes", setClasses, userObj.school_id);
-    await fetchDataRead("/exammaster", setExams, userObj.school_id);
-    await fetchDataRead("/AcademicYear", setAcademicYears, userObj.school_id);
-    await fetchDataRead("/grades", setGrades, userObj.school_id);
+    await fetchDataRead("/classes/", setClasses, userObj.school_id);
+    await fetchDataRead("/exammaster/", setExams, userObj.school_id);
+    await fetchDataRead("/AcademicYear/", setAcademicYears, userObj.school_id);
+    await fetchDataRead("/grades/", setGrades, userObj.school_id);
 
     if (routeLocation.state) {
       const subjectEntries = Object.values(routeLocation.state).filter((entry) => entry.subject_id);
@@ -128,7 +129,12 @@ function AddExamResult() {
       console.error("Error fetching subjects", err);
     }
   };
-
+  const studentOptions = (filteredStudents || [])
+    .filter((student) => student.status === "Active")
+    .map((student) => ({
+      value: student.student_id,
+      label: `${student.student_first_name} ${student.student_last_name}`,
+    }));
   const fetchStudentMarks = async (exam_id, student_id) => {
     try {
       const res = await axios.post(`${baseUrl}/examresults/`, {
@@ -191,33 +197,56 @@ function AddExamResult() {
   };
 
   const handleMarksChange = (e, studentId, subjectId) => {
-    let value = e.target.value;
-    value = value === "" ? "" : parseInt(value, 10);
+    let raw = e.target.value;
 
+    // ✅ Allow empty string for editing
+    if (raw === "") {
+      updateMarkEntry("", studentId, subjectId);
+      return;
+    }
+
+    // ❌ Block if not a valid positive integer
+    if (!/^\d+$/.test(raw)) return;
+
+    let value = parseInt(raw, 10);
+
+    // ❌ Block values over 100
+    if (value > 100) value = 100;
+
+    updateMarkEntry(value, studentId, subjectId);
+  };
+
+  const updateMarkEntry = (value, studentId, subjectId) => {
     setStudentMarks((prevMarks) => {
       const updated = [...prevMarks];
-      const index = updated.findIndex((mark) =>
-        mark.student_id === studentId && mark.subject_id === subjectId
+      const index = updated.findIndex(
+        (mark) => mark.student_id === studentId && mark.subject_id === subjectId
       );
       const existing = updated[index];
-      const grade = grades.find((g) =>
-        value > 100
-          ? 100 >= g.min_marks && 100 <= g.max_marks
-          : value >= g.min_marks && value <= g.max_marks
+
+      const grade = grades.find(
+        (g) =>
+          value >= g.min_marks &&
+          value <= g.max_marks &&
+          g.subject_id === subjectId
       );
+
       const newEntry = {
         student_id: studentId,
         subject_id: subjectId,
-        marks: value > 100 ? 100 : value,
+        marks: value,
         grade_id: grade?.grade_id || 0,
         remarks: existing?.remarks || "",
         exam_results_id: existing?.exam_results_id || 0,
       };
+
       if (index >= 0) updated[index] = newEntry;
       else updated.push(newEntry);
+
       return updated;
     });
   };
+
 
   const handleRemarksChange = (e, studentId, subjectId) => {
     const value = e.target.value;
@@ -318,7 +347,7 @@ function AddExamResult() {
                 <form onSubmit={handleSubmit}>
                   <Row>
                     <Col xs={12}>
-                      <h6 className="commonSectionTitle">Results Details</h6>
+                      <h6 className="commonSectionTitle">Exam Results Details</h6>
                     </Col>
                   </Row>
                   <Row>
@@ -380,24 +409,34 @@ function AddExamResult() {
                     </Col>
                     <Row className="align-items-start">
                       {/* Student Dropdown */}
+
+
                       <Col xs={12} md={4} lg={3}>
                         <div className="commonInput">
                           <Form.Group>
                             <Form.Label>
                               Student <span className="requiredStar">*</span>
                             </Form.Label>
-                            <Form.Select id="student_id" value={form.student_id} onChange={handleInputChange} required
-                            >
-                              <option value="">Select Student</option>
-                              {filteredStudents.map((student) => (
-                                <option key={student.student_id} value={student.student_id}>
-                                  {student.student_first_name} {student.student_last_name}
-                                </option>
-                              ))}
-                            </Form.Select>
+                            <Select
+                              id="student_id"
+                              options={studentOptions}
+                              required
+                              value={studentOptions.find((option) => option.value === form.student_id) || null}
+                              onChange={(selectedOption) =>
+                                handleInputChange({
+                                  target: {
+                                    id: 'student_id',
+                                    value: selectedOption ? selectedOption.value : '',
+                                  },
+                                })
+                              }
+                              isClearable
+                              placeholder="Select Student"
+                            />
                           </Form.Group>
                         </div>
                       </Col>
+
                       <br />
                       {filteredSubjects.length > 0 && (
                         <Col xs={12} md={8} lg={9}>
@@ -434,15 +473,22 @@ function AddExamResult() {
                                     </div>
 
                                     <div style={{ width: "80px" }}>
-                                      <Form.Control size="sm" type="number" min="0" max="100" value={mark?.marks ?? 0} onChange={(e) =>
-                                        handleMarksChange(e, parseInt(form.student_id), subject.subject_id)
-                                      }
+                                      <Form.Control size="sm" type="number" min="0" max="100" value={mark?.marks ?? 0}
+                                        onKeyDown={(e) => {
+                                          if (["e", "E", "-"].includes(e.key)) {
+                                            e.preventDefault();
+                                          }
+                                        }}
+                                        onChange={(e) =>
+                                          handleMarksChange(e, parseInt(form.student_id), subject.subject_id)
+                                        }
                                       />
+
                                     </div>
                                     <input type="hidden" value={mark?.exam_results_id ?? ""} name={`exam_result_id_${subject.subject_id}`} />
                                     <div style={{ width: "80px" }} className="text-center">  {grade?.grade_name ?? "-"} </div>
                                     <div style={{ width: "300px" }}>
-                                      <Form.Control size="sm" type="text" value={mark?.remarks ?? ""}
+                                      <Form.Control size="sm" type="text" maxLength={150} value={mark?.remarks ?? ""}
                                         onChange={(e) =>
                                           handleRemarksChange(e, parseInt(form.student_id), subject.subject_id)
                                         }
@@ -460,7 +506,7 @@ function AddExamResult() {
                     <Button
                       type="button"
                       className="btn btn-info clearBtn"
-                      onClick={() =>
+                      onClick={() => {
                         setForm({
                           exam_id: 0,
                           school_id: userObj.school_id || 0,
@@ -471,11 +517,14 @@ function AddExamResult() {
                           academic_year_id: 0,
                           marks: "",
                           remarks: "",
-                        }) || setStudentMarks([])
-                      }
+                        });
+                        setStudentMarks([]);
+                        setFilteredSubjects([]); // ✅ Clear filteredSubjects
+                      }}
                     >
                       Reset
                     </Button>
+
                     <div>
                       <Button type="button" variant="danger" className="btn-danger secondaryBtn" onClick={() => window.history.back()}>   Cancel  </Button>
                       <Button type="submit" variant="success" className="btn btn-success primaryBtn">   Submit   </Button>

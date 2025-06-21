@@ -8,11 +8,9 @@ import LeftNav from "../../components/layout/leftNav/leftNav";
 import { fetchDataRead } from "../../Utility";
 import DataTable from "react-data-table-component";
 
-
 function AddExamschedule() {
   const routeLocation = useLocation();
   const [editId, setEditId] = useState(null);
-  const [filteredStudents, setFilteredStudents] = useState([]);
   const [classes, setClasses] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [exams, setExams] = useState([]);
@@ -94,9 +92,8 @@ function AddExamschedule() {
         exam_id: exam_id,
         academic_year_id: userObj.academic_year_id,
       });
-      console.log(response.data);
-      
-      if (response.data && Array.isArray(response.data)) {   
+
+      if (response.data && Array.isArray(response.data)) {
         setSubjects(response.data);
       } else {
         setSubjects([]);
@@ -122,11 +119,35 @@ function AddExamschedule() {
   };
 
   const handleDateChange = (subject_id, date) => {
-    setExamDates((prevDates) => ({
-      ...prevDates,
+    const updatedDates = {
+      ...examDates,
       [subject_id]: date,
-    }));
+    };
+
+    setExamDates(updatedDates);
+
+    // Filter valid (non-empty) dates and sort them
+    const validDates = Object.values(updatedDates).filter(d => d).sort();
+
+    if (validDates.length > 0) {
+      const earliest = validDates[0];
+      const latest = validDates[validDates.length - 1];
+
+      setForm((prevForm) => ({
+        ...prevForm,
+        start_date: earliest,
+        end_date: latest,
+      }));
+    } else {
+      // Reset start/end if no valid dates
+      setForm((prevForm) => ({
+        ...prevForm,
+        start_date: "",
+        end_date: "",
+      }));
+    }
   };
+
 
   useEffect(() => {
     if (form.exam_id && form.class_id && form.academic_year_id) {
@@ -134,38 +155,57 @@ function AddExamschedule() {
     }
   }, [form.exam_id, form.class_id, form.academic_year_id]);
 
-  const fetchExistingSchedule = async (exam_id, class_id, academic_year_id) => {
-    try {
-      const response = await axios.post(`${baseUrl}/examschedule/`, {
-        exam_id,
-        class_id,
-        academic_year_id: userObj.academic_year_id,
-        school_id: userObj.school_id,
-        action: "FILTER",
+ const fetchExistingSchedule = async (exam_id, class_id, academic_year_id) => {
+  try {
+    const response = await axios.post(`${baseUrl}/examschedule/`, {
+      exam_id,
+      class_id,
+      academic_year_id: userObj.academic_year_id,
+      school_id: userObj.school_id,
+      action: "FILTER",
+    });
+
+    if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+      const dates = {};
+      const dateList = [];
+
+      response.data.forEach((item) => {
+        dates[item.subject_id] = item.exam_date;
+        if (item.exam_date) {
+          dateList.push(item.exam_date);
+        }
       });
 
-      if (response.data && Array.isArray(response.data)) {
-        const dates = {};
-        response.data.forEach((item) => {
-          dates[item.subject_id] = item.exam_date;
-        });
+      // Sort and find min/max
+      const sortedDates = dateList.sort((a, b) => new Date(a) - new Date(b));
+      const startDate = sortedDates[0] || "";
+      const endDate = sortedDates[sortedDates.length - 1] || "";
 
-        setExamDates(dates);
-        setEditId(response.data[0]?.exam_schedule_id || null);
+      setExamDates(dates);
+      setEditId(response.data[0]?.exam_schedule_id || null);
 
-      } else {
-        setExamDates({});
-        setEditId(null);
-      }
-    } catch (error) {
-      console.error("Error fetching schedule:", error);
-      toast.error("Failed to load exam schedule");
+      // ✅ Update form with calculated start & end dates
+      setForm((prevForm) => ({
+        ...prevForm,
+        start_date: startDate,
+        end_date: endDate,
+      }));
+    } else {
+      setExamDates({});
+      setEditId(null);
     }
-  };
+  } catch (error) {
+    console.error("Error fetching schedule:", error);
+    toast.error("Failed to load exam schedule");
+  }
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    if (form.start_date && form.end_date && form.end_date < form.start_date) {
+      toast.warning("End Date cannot be earlier than Start Date");
+      return;
+    }
     const examData = subjects
       .map((subject) => {
         const matched = originalScheduleData.find(
@@ -238,9 +278,7 @@ function AddExamschedule() {
       }
     }
   };
-
   const isTableVisible = form.exam_id && form.class_id && subjects.length > 0;
-
   const columns = [
     {
       name: "Subject Name",
@@ -254,14 +292,18 @@ function AddExamschedule() {
           type="date"
           value={examDates[row.subject_id] || ""}
           onChange={(e) => handleDateChange(row.subject_id, e.target.value)}
+          min={form.start_date || ""}
+          max={form.end_date || ""}
+          disabled={!subjects.length}
         />
       ),
       sortable: false,
-    },
+    }
+
   ];
   const data = subjects;
   return (
-   
+    <Container fluid>
       <div className="pageMain">
         <ToastContainer />
         <LeftNav />
@@ -272,7 +314,7 @@ function AddExamschedule() {
           <div className="pageBody">
             <Container fluid>
               <Card>
-                <Card.Body>
+                <Card.Body ><div className="">
                   <form onSubmit={handleSubmit}>
                     <Row>
                       <Col xs={12}>
@@ -305,7 +347,7 @@ function AddExamschedule() {
                         <div className="commonInput">
                           <Form.Group>
                             <Form.Label>
-                              Exam Name<span className="requiredStar">*</span>
+                              Exam<span className="requiredStar">*</span>
                             </Form.Label>
                             <Form.Select
                               required
@@ -329,7 +371,7 @@ function AddExamschedule() {
                         <div className="commonInput">
                           <Form.Group>
                             <Form.Label>
-                              Select Class
+                              Class
                               <span className="requiredStar">*</span>
                             </Form.Label>
                             <Form.Select
@@ -380,59 +422,50 @@ function AddExamschedule() {
                               value={form.end_date || ""}
                               placeholder="Select End Date"
                               onChange={handleInputChange}
+                              min={form.start_date || ""}
                             />
                           </Form.Group>
                         </div>
                       </Col>
                     </Row>
-                    {isTableVisible && (
-                      <Row>
-                        <Col md={2}></Col>
-                        <Col md={8}>
-                          <div style={{
-                            maxHeight: "500px",
-                            overflowY: "auto",
-                            overflowX: "auto",
-                            border: "1px solid #ddd",
-                            borderRadius: "8px",
-                            boxShadow: "0 4px 8px rgba(0,0,0,0.1)"
-                          }}>
-                            <DataTable
-                              className="custom-table"
-                              columns={columns}
-                              data={data.length > 0 ? data : [{ subject_name: "No records found", exam_date: "" }]}
-                              pagination
-                              paginationPerPage={5}
-                              paginationRowsPerPageOptions={[5, 10, 15]}
-                              highlightOnHover
-                              responsive
-                              fixedHeader
-                              fixedHeaderScrollHeight="calc(100vh - 170px)"
-                              noDataComponent="No subjects found"
-                              conditionalRowStyles={[
-                                {
-                                  when: (row) => row.subject_name === "No records found",
-                                  style: {
-                                    textAlign: "center",
-                                    fontSize: "16px",
-                                    color: "red",
-                                    backgroundColor: "#f9f9f9",
-                                  },
-                                },
-                              ]}
-                            />
-                          </div>
-                        </Col>
-                        <Col md={2}></Col>
-                      </Row>
-                    )}
-
+                    <div style={{
+                      maxHeight: "400px",
+                      border: "1px solid #ddd",
+                      borderRadius: "8px",
+                      boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                      backgroundColor: "#fff",
+                      padding: "10px",
+                      marginLeft: "232px",
+                      marginRight: "232px"
+                    }}>
+                      <DataTable
+                        className="custom-table table-height-300px"
+                        columns={columns}
+                        data={data.length > 0 ? data : [{ subject_name: "No records found", exam_date: "" }]}
+                        highlightOnHover
+                        responsive
+                        fixedHeader
+                        fixedHeaderScrollHeight="300px"
+                        noDataComponent="No subjects found"
+                        conditionalRowStyles={[
+                          {
+                            when: (row) => row.subject_name === "No records found",
+                            style: {
+                              textAlign: "center",
+                              fontSize: "16px",
+                              color: "red",
+                              backgroundColor: "#f9f9f9",
+                            },
+                          },
+                        ]}
+                      />
+                    </div>
                     <div className="d-flex justify-content-between mt-3">
                       <div>
                         <Button
                           type="button"
                           className="btn btn-info clearBtn"
-                          onClick={() =>
+                          onClick={() => {
                             setForm({
                               exam_id: "",
                               subject_id: "",
@@ -442,11 +475,16 @@ function AddExamschedule() {
                               school_id: "",
                               start_date: "",
                               end_date: "",
-                            })
-                          }
+                            });
+                            setSubjects([]);       // 🔹 Clear subjects list
+                            setExamDates({});      // 🔹 Clear exam dates
+                            setOriginalScheduleData([]);
+                            setEditId(null);
+                          }}
                         >
                           Reset
                         </Button>
+
                       </div>
                       <div>
                         <Button
@@ -467,14 +505,14 @@ function AddExamschedule() {
                       </div>
                     </div>
                   </form>
+                </div>
                 </Card.Body>
               </Card>
             </Container>
           </div>
         </div>
       </div>
-   
+    </Container>
   );
 }
-
 export default AddExamschedule;

@@ -12,6 +12,7 @@ import Header from '../../components/layout/header/header';
 import LeftNav from '../../components/layout/leftNav/leftNav';
 import axios from "axios";
 import FeesScheduleStudent from './FeesScheduleStudent';
+import { useFeeModuleAccess } from "../hooks/useFeeModuleAccess";
 
 const Addfeesstudentsschedule = () => {
   const userData = sessionStorage.getItem('user');
@@ -33,6 +34,9 @@ const Addfeesstudentsschedule = () => {
     academic_year_id: userObj.academic_year_id || 0,
     student_id: ""
   });
+
+  const currentUserRole = userObj.role_name?.trim();
+  const { canWrite } = useFeeModuleAccess(currentUserRole);
 
   useEffect(() => {
     document.title = "SCHOLAS";
@@ -124,9 +128,10 @@ const Addfeesstudentsschedule = () => {
           class_id: "",
           student_id: ""
         });
-      } else {
-        toast.error("Failed to save data.");
       }
+      // else {
+      //   toast.error("Failed to save data.");
+      // }
     }
   };
 
@@ -145,7 +150,7 @@ const Addfeesstudentsschedule = () => {
                 <form>
                   <Row>
                     <Col xs={12}>
-                      <h6 className='commonSectionTitle'>Fees Discount</h6>
+                      <h6 className='commonSectionTitle'>Fees Discount Details</h6>
                     </Col>
                   </Row>
                   <Row>
@@ -237,14 +242,16 @@ const Addfeesstudentsschedule = () => {
                       >
                         Cancel
                       </Button>
-                      <Button
-                        type="submit"
-                        variant="primary"
-                        className="btn-success primaryBtn"
-                        onClick={handleSaveAll}
-                      >
-                        Submit
-                      </Button>
+                      {canWrite && (
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          className="btn-success primaryBtn"
+                          onClick={handleSaveAll}
+                        >
+                          Submit
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </form>

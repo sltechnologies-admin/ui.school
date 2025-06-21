@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
+import Select from "react-select";
 import { IoMdAdd } from "react-icons/io";
 import { Button, Modal, Row, Col, Form, OverlayTrigger, Table } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { MdEdit, MdDelete, MdFilterList, MdFileDownload, MdCloudUpload } from "react-icons/md";
+import { MdEdit, MdDelete, MdFilterList, MdFileDownload, MdCloudUpload, MdAddCircle } from "react-icons/md";
 import DataTable from "react-data-table-component";
 import { ToastContainer, toast } from 'react-toastify';
 import loading from "../../assets/images/common/loading.gif";
@@ -17,13 +18,14 @@ import * as XLSX from "xlsx";
 function ExamResult() {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const handleCloseFilterModal = () => setShowFilterModal(false);
- 
+
   const [classes, setClasses] = useState([]);
   const [students, setStudents] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [errorRows, setErrorRows] = useState([]);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [exams, setExams] = useState([]);
+  const [academicYears, setAcademicYears] = useState([]);
   const [grades, setGrades] = useState([]);
   const fileInputRef = useRef(null);
   const [file, setFile] = useState(null);
@@ -34,32 +36,62 @@ function ExamResult() {
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
   const userData = sessionStorage.getItem('user');
   const userObj = userData ? JSON.parse(userData) : {};
+const canSubmit = userObj.role_name?.trim() !== "School Admin";
+
   useEffect(() => {
     setIsLoading(true);
     fetchDataRead("/examresults/", setExamsDeatails, userObj.school_id)
       .finally(() => {
         setIsLoading(false);
-        
+
       });
   }, []);
   const handleShowFilterModal = () => {
     if (classes.length === 0) {
-        fetchDataRead("/classes", setClasses, userObj.school_id);
+      fetchDataRead("/classes/", setClasses, userObj.school_id);
     }
     if (students.length === 0) {
-        fetchDataRead("/students", setStudents, userObj.school_id);
+      fetchDataRead("/students/", setStudents, userObj.school_id);
     }
     if (subjects.length === 0) {
-        fetchDataRead("/subjectmaster", setSubjects, userObj.school_id);
+      fetchDataRead("/subjectmaster/", setSubjects, userObj.school_id);
     }
     if (exams.length === 0) {
-        fetchDataRead("/exammaster", setExams, userObj.school_id);
+      fetchDataRead("/exammaster/", setExams, userObj.school_id);
     }
     if (grades.length === 0) {
-        fetchDataRead("/grades", setGrades, userObj.school_id);
+      fetchDataRead("/grades/", setGrades, userObj.school_id);
+    }
+    if (academicYears.length === 0) {
+      fetchAcademicYears();
     }
     setShowFilterModal(true);
-};
+  };
+
+
+  const fetchAcademicYears = async () => {
+    try {
+      const response = await axios.post(baseUrl + "/AcademicYear/", {
+        action: "READ",
+        school_id: userObj.school_id,
+      });
+
+      const years = response.data || [];
+
+      setAcademicYears(years);
+
+      // Set default academic year from user object if exists
+      const defaultYearId = userObj.academic_year_id;
+      if (defaultYearId && !filter.academic_year_id) {
+        setFilter((prev) => ({
+          ...prev,
+          academic_year_id: defaultYearId,
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+    }
+  };
 
 
   const groupByExam = (data) => {
@@ -67,7 +99,7 @@ function ExamResult() {
     data.forEach((item) => {
       const key = `${item.student_id}-${item.class_id}-${item.academic_year_id}-${item.exam_id}`;
       console.log(key);
-      
+
       if (!grouped[key]) {
         grouped[key] = {
           student_id: item.student_id,
@@ -121,7 +153,25 @@ function ExamResult() {
       </table>
     </div>
   );
-  
+
+  // const searchableColumns = [
+  //   row => row.exam_name,
+  //   row => row.subject_name,
+  //   row => row.grade_name,
+  //   row => row.student_name,
+  //   row => row.class_name,
+  //   row => row.remarks,
+  //   row=>row.academic_year_name,
+  //   row => row.is_active,
+  //   row=>row.grade_points,
+  //   row => row.marks
+  // ];
+  // const filteredRecords = (examsdetails || []).filter((user) =>
+  //   searchableColumns.some((selector) => {
+  //     const value = selector(user);
+  //     return String(value || '').toLowerCase().includes(searchQuery.toLowerCase().replace(/[-\s]+/g, ''));
+  //   })
+  // );
   const searchableColumns = [
     row => row.exam_name,
     row => row.subject_name,
@@ -129,31 +179,47 @@ function ExamResult() {
     row => row.student_name,
     row => row.class_name,
     row => row.remarks,
+    row => row.academic_year_name,
     row => row.is_active,
-    row => row.marks
+    row => row.grade_points ?? '',
+    row => row.marks ?? ''
   ];
+
+  const normalizedSearch = searchQuery.toLowerCase().replace(/[-\s]+/g, '');
+
   const filteredRecords = (examsdetails || []).filter((user) =>
     searchableColumns.some((selector) => {
-      const value = selector(user);
-      return String(value || '').toLowerCase().includes(searchQuery.toLowerCase());
+      const rawValue = selector(user);
+      const normalizedValue = String(rawValue ?? '').toLowerCase().replace(/[-\s]+/g, '');
+      return normalizedValue.includes(normalizedSearch);
     })
   );
+
+
   const groupedData = groupByExam(filteredRecords);
   const [filter, setFilter] = useState({
     exam_name: "",
     school_id: userObj.school_id,
     action: "FILTER",
   });
+  const studentOptions = (students || [])
+    .filter((student) => student.status === "Active")
+    .map((student) => ({
+      value: student.student_id,
+      label: `${student.student_first_name} ${student.student_last_name}`,
+    }));
 
   const handleFilterSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
+
     const formData = {
       exam_id: filter.exam_id || 0,
       student_id: filter.student_id || 0,
       subject_id: filter.subject_id || 0,
       grade_id: filter.grade_id || 0,
       marks: filter.marks || 0,
+      class_id: filter.class_id,
+      academic_year_id: filter.academic_year_id || userObj.academic_year_id || 0,
       school_id: userObj.school_id,
       action: "FILTER",
     };
@@ -179,8 +245,6 @@ function ExamResult() {
       } else {
         toast.error("Network error. Please check your connection.");
       }
-    } finally {
-      setIsLoading(false);
     }
   };
   const handleFilterClear = () => {
@@ -189,13 +253,15 @@ function ExamResult() {
       student_id: "",
       subject_id: "",
       grade_id: "",
+      class_id:"",
       marks: "",
-      school_id: ""
+      school_id: "",
+      academic_year_id: userObj.academic_year_id || "",
     });
-    fetchDataRead("/examresults", setExamsDeatails, userObj.school_id);
+    fetchDataRead("/examresults/", setExamsDeatails, userObj.school_id);
   };
   const handleSearchChange = (event) => {
-    fetchDataRead("/examresults", setExamsDeatails, userObj.school_id);
+    fetchDataRead("/examresults/", setExamsDeatails, userObj.school_id);
     setSearchQuery(event.target.value);
   };
   const globaledit = ({ student_id, class_id, exam_id }) => {
@@ -226,7 +292,7 @@ function ExamResult() {
     );
     if (!confirmDelete) return;
     const filteredResults = examsdetails.filter(
-      (result) =>result.student_id === student_id &&result.class_id === class_id &&result.exam_id === exam_id
+      (result) => result.student_id === student_id && result.class_id === class_id && result.exam_id === exam_id
     );
     if (filteredResults.length === 0) return;
     try {
@@ -239,7 +305,7 @@ function ExamResult() {
       });
       if (response.status === 200 || response.status === 201) {
         toast.success("All results deleted successfully");
-        fetchDataRead("/examresults", setExamsDeatails, userObj.school_id);
+        fetchDataRead("/examresults/", setExamsDeatails, userObj.school_id);
       } else {
         toast.error("Unexpected response while deleting records.");
       }
@@ -314,7 +380,7 @@ function ExamResult() {
           } else {
             toast.success("All exam results uploaded successfully.");
           }
-          fetchDataRead("/examresults", setExamsDeatails, userObj.school_id);
+          fetchDataRead("/examresults/", setExamsDeatails, userObj.school_id);
         } else {
           throw new Error(result.detail || "Upload failed.");
         }
@@ -373,18 +439,28 @@ function ExamResult() {
                     <Button className="btn primaryBtn" onClick={handleUpload}>  <span> Upload</span>  </Button>
                   </OverlayTrigger>
                 </div>
-                <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Bulk Update</Tooltip>}>
-                  <Button className="primaryBtn" variant="primary" onClick={() => navigate("/bulkaddresult")}>
-                    <MdCloudUpload size={18} />
-                  </Button>
-                </OverlayTrigger>
+             
+                  <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Bulk Update</Tooltip>}>
+                    <Button className="primaryBtn" variant="primary" onClick={() => navigate("/bulkaddresult")}>
+                      <MdCloudUpload size={18} />
+                    </Button>
+                  </OverlayTrigger>
+             
                 &nbsp;
                 <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Filter</Tooltip>}>
                   <Button className="secondaryBtn" variant="secondary" onClick={handleShowFilterModal}><MdFilterList /> </Button>
                 </OverlayTrigger>
-                <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Add</Tooltip>}>
-                  <Button className="primaryBtn" variant="primary" onClick={() => navigate("/addresult")}>  <IoMdAdd /></Button>
-                </OverlayTrigger>
+               
+                 {canSubmit && (
+  <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Add</Tooltip>}>
+    <Button className="primaryBtn" variant="primary" onClick={() => navigate("/addresult")}>
+      <MdAddCircle />
+    </Button>
+  </OverlayTrigger>
+)}
+
+                
+
               </div>
             </div>
           </div>
@@ -402,62 +478,93 @@ function ExamResult() {
                       name: "Academic Year",
                       selector: row => row.academic_year_name,
                       sortable: true,
-                      cell: row => (<Tooltip title={row.academic_year_name}>     <span>{row.academic_year_name}</span>   </Tooltip>)
+                      cell: row => (
+                        <Tooltip title={row.academic_year_name}>
+                          <span>{row.academic_year_name}</span>
+                        </Tooltip>
+                      ),
+                      minWidth: "140px" // ✅ Set min width
                     },
                     {
                       name: "Student",
                       selector: row => row.student_name,
                       sortable: true,
-                      cell: row => (<Tooltip title={row.student_name}>     <span>{row.student_name}</span>   </Tooltip>)
+                      cell: row => (
+                        <Tooltip title={row.student_name}>
+                          <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>
+                            {row.student_name}
+                          </span>
+                        </Tooltip>
+                      ),
+                      minWidth: "160px" // ✅ Adjust width to avoid overlap
                     },
                     {
                       name: "Class",
                       selector: row => row.class_name,
                       sortable: true,
-                      cell: row => (<Tooltip title={row.class_name}>   <span>{row.class_name}</span> </Tooltip>)
+                      cell: row => (
+                        <Tooltip title={row.class_name}>
+                          <span>{row.class_name}</span>
+                        </Tooltip>
+                      ),
+                      minWidth: "120px"
                     },
                     {
                       name: "Exam",
                       selector: row => row.exam_name,
                       sortable: true,
-                      cell: row => (<Tooltip title={row.exam_name}><span>{row.exam_name}</span></Tooltip>)
-                    }
-                    , {
-                      name: "Actions",
-                      cell: row =>
-                        row.exam_results_id !== "No Records Found" ? (
-                          <div className="tableActions">
-                            <Tooltip title="Edit" arrow>
-                              <span className="commonActionIcons" onClick={() =>
-                                globaledit({ student_id: row.student_id, class_id: row.class_id, exam_id: row.exam_id })}
-                              >
-                                <MdEdit />
-                              </span>
-                            </Tooltip>
-                            <Tooltip title="Delete" arrow>
-                              <span
-                                className="commonActionIcons"
-                                onClick={() =>
-                                  globaldelete({student_id: row.student_id,class_id: row.class_id,exam_id: row.exam_id
-                                  })
-                                }>
-                                <MdDelete />
-                              </span>
-                            </Tooltip>
-                          </div>
-                        ) : null
-                    }
+                      cell: row => (
+                        <Tooltip title={row.exam_name}>
+                          <span>{row.exam_name}</span>
+                        </Tooltip>
+                      ),
+                      minWidth: "140px"
+                    },
+                    ...(canSubmit ? [
+                      {
+                        name: "Actions",
+                        cell: row =>
+                          row.exam_results_id !== "No Records Found" ? (
+                            <div className="tableActions">
+                              <Tooltip title="Edit" arrow>
+                                <span
+                                  className="commonActionIcons"
+                                  onClick={() =>
+                                    globaledit({ student_id: row.student_id, class_id: row.class_id, exam_id: row.exam_id })
+                                  }
+                                >
+                                  <MdEdit />
+                                </span>
+                              </Tooltip>
+                              <Tooltip title="Delete" arrow>
+                                <span
+                                  className="commonActionIcons"
+                                  onClick={() =>
+                                    globaldelete({ student_id: row.student_id, class_id: row.class_id, exam_id: row.exam_id })
+                                  }
+                                >
+                                  <MdDelete />
+                                </span>
+                              </Tooltip>
+                            </div>
+                          ) : null,
+                        minWidth: "100px",
+                        center: true
+                      }
+                    ] : [])
+
                   ]}
+
                   data={(Array.isArray(groupedData) && groupedData.length > 0)
                     ? groupedData
-                    : [{    exam_results_id: "No Records Found", class_name: "No Records Found", subjects: []  }]}
+                    : [{ exam_results_id: "No Records Found", class_name: "No Records Found", subjects: [] }]}
                   expandableRows={Array.isArray(groupedData) && groupedData.length > 0}
                   expandableRowsComponent={ExpandedComponent}
                   pagination={Array.isArray(groupedData) && groupedData.length > 0}
                   highlightOnHover
                   responsive
                   fixedHeader
-                  fixedHeaderScrollHeight="calc(100vh - 170px)"
+                  fixedHeaderScrollHeight="calc(100vh - 250px)"
                   conditionalRowStyles={[
                     {
                       when: (row) => row.exam_results_id === "No Records Found", style: { textAlign: "center", fontSize: "16px", color: "red", backgroundColor: "#f9f9f9" },
@@ -478,6 +585,29 @@ function ExamResult() {
             <Row>
               <Col xs={12}>
                 <div className="commonInput">
+                  <Form.Group controlId="academic_year_id">
+                    <Form.Label>Academic Year</Form.Label>
+                    <Form.Select
+                      as="select"
+                      className="custom-select"
+                      value={filter.academic_year_id}
+                      onChange={(e) =>
+                        setFilter({ ...filter, academic_year_id: parseInt(e.target.value) })
+                      }
+                    >
+                      <option value="">Select Academic Year</option>
+                      {(academicYears || []).map((year) => (
+                        <option key={year.academic_year_id} value={year.academic_year_id}>
+                          {year.academic_year_name}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </div>
+              </Col>
+
+              <Col xs={12}>
+                <div className="commonInput">
                   <Form.Group controlId="exam_id">
                     <Form.Label>Exam</Form.Label>
                     <Form.Select as="select" className="custom-select" value={filter.exam_id}
@@ -494,16 +624,20 @@ function ExamResult() {
                 <div className="commonInput">
                   <Form.Group controlId="student_id">
                     <Form.Label>Student</Form.Label>
-                    <Form.Select as="select" className="custom-select" value={filter.student_id}
-                      onChange={(e) => setFilter({ ...filter, student_id: e.target.value })}    >
-                      <option value="">Select Student</option>
-                      {(students || []).filter((student) => student.status === "Active").map((student) => (
-                        <option key={student.student_id} value={student.student_id}> {student.student_first_name} {student.student_last_name} </option>
-                      ))}
-                    </Form.Select>
+                    <Select
+                      options={studentOptions}
+                      value={studentOptions.find((option) => option.value === filter.student_id) || null}
+                      onChange={(selectedOption) =>
+                        setFilter({ ...filter, student_id: selectedOption ? selectedOption.value : "" })
+                      }
+                      placeholder="Select Student"
+                      isClearable
+                    />
                   </Form.Group>
                 </div>
               </Col>
+
+
               <Col xs={12}>
                 <div className="commonInput">
                   <Form.Group controlId="subject_id">
@@ -513,6 +647,19 @@ function ExamResult() {
                       <option value="">Select Subject</option>
                       {(subjects || []).filter((sub) => sub.is_active === "Active").map((sub) => (
                         <option key={sub.subject_id} value={sub.subject_id}> {sub.subject_name}  </option>))}
+                    </Form.Select>
+                  </Form.Group>
+                </div>
+              </Col>
+              <Col xs={12}>
+                <div className="commonInput">
+                  <Form.Group controlId="subject_id">
+                    <Form.Label>Class</Form.Label>
+                    <Form.Select as="select" value={filter.class_id}
+                      onChange={(e) => setFilter({ ...filter, class_id: e.target.value })} >
+                      <option value="">Select Class</option>
+                      {(classes || []).filter((sub) => sub.is_active === "Active").map((sub) => (
+                        <option key={sub.class_id} value={sub.class_id}> {sub.class_name}  </option>))}
                     </Form.Select>
                   </Form.Group>
                 </div>
@@ -534,8 +681,29 @@ function ExamResult() {
                 <div className="commonInput">
                   <Form.Group controlId="marks">
                     <Form.Label>Marks</Form.Label>
-                    <Form.Control type="number" placeholder="Enter Marks" value={filter.marks}
-                      onChange={(e) => setFilter({ ...filter, marks: e.target.value })} />
+                    <Form.Control
+                      type="number"
+                      min="0"
+                      max="100"
+                      placeholder="Enter Marks"
+                      value={filter.marks}
+                      onKeyDown={(e) => {
+                        if (e.key === '-' || e.key === 'e') {
+                          e.preventDefault(); // ❌ prevent hyphen and scientific notation
+                        }
+                      }}
+                      onChange={(e) => {
+                        const value = e.target.value;
+
+                        // Allow only numbers between 0 and 100 or empty
+                        if (value === "" || (Number(value) >= 0 && Number(value) <= 100)) {
+                          setFilter({ ...filter, marks: value });
+                        }
+                      }}
+                    />
+
+
+
                   </Form.Group>
                 </div>
               </Col>
@@ -547,7 +715,7 @@ function ExamResult() {
             <Button variant="secondary" className="btn-info clearBtn" onClick={handleFilterClear}>   Reset</Button>
           </div>
           <div className="">
-            <Button variant="secondary" className="btn-danger secondaryBtn" onClick={handleCloseFilterModal} > Close </Button>
+            <Button variant="secondary" className="btn-danger secondaryBtn" onClick={handleCloseFilterModal} > Cancel </Button>
             <Button variant="primary" className="btn-success primaryBtn" type="submit" form="filterForm" onClick={handleCloseFilterModal}>  Search </Button>
           </div>
         </Modal.Footer>
@@ -578,7 +746,7 @@ function ExamResult() {
             </thead>
             <tbody>
               {errorRows.map((row, idx) => (
-                <tr key={idx} style={row.is_processed !== "Y"  ? { backgroundColor: "#fef2f2", color: "#b91c1c" }  : {}}>
+                <tr key={idx} style={row.is_processed !== "Y" ? { backgroundColor: "#fef2f2", color: "#b91c1c" } : {}}>
                   <td>{row.excel_row}</td>
                   <td>{row.exam_name}</td>
                   <td>{row.class_name}</td>

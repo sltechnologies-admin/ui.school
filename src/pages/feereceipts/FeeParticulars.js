@@ -8,6 +8,7 @@ const FeeParticulars = ({ amountDetails, grandTotal, onAmountChange }) => {
             onAmountChange(index, value);
         }
     };
+    
 
     return (
         <div>
@@ -23,7 +24,7 @@ const FeeParticulars = ({ amountDetails, grandTotal, onAmountChange }) => {
                     {amountDetails.map((item, index) => (
                         <tr key={item.s_no}>
                             <td>{item.s_no}</td>
-                            <td>{item.fees_item}</td>
+                            <td>{item.fees_item}({item.fees_item_amount})</td>
                             <td style={{ textAlign: 'right' }}>
                                 <input
                                     type="text"
@@ -31,6 +32,7 @@ const FeeParticulars = ({ amountDetails, grandTotal, onAmountChange }) => {
                                     onChange={(e) => handleInputChange(e, index)}
                                     style={{ width: '100px', textAlign: 'right' }}
                                     required
+                                    maxLength={7}
                                 />
                             </td>
                         </tr>

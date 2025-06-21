@@ -4,7 +4,7 @@ import axios from "axios";
 import Tooltip from "@mui/material/Tooltip";
 import { MdFilterList, MdAddCircle } from "react-icons/md";
 import loading from "../../assets/images/common/loading.gif";
-import {  Modal, Row, Col, Form, Button, OverlayTrigger } from "react-bootstrap";
+import { Modal, Row, Col, Form, Button, OverlayTrigger } from "react-bootstrap";
 import { ToastContainer, toast } from "react-toastify";
 import { MdEdit, MdDelete } from "react-icons/md";
 import Header from "../../components/layout/header/header";
@@ -94,14 +94,13 @@ const SchoolMaster = () => {
     const formData = {
       school_name: filter.school_name || "",
       branch: filter.branch || "",
-      city: filter.city || "",  
+      city: filter.city || "",
       mobile_number: filter.mobile_number || "",
       email: filter.email || "",
       action: "FILTER",
     };
     const isAnyFieldFilled = Object.values(formData).some(val => val !== "" && val !== "FILTER");
-    if (isAnyFieldFilled)
-    {
+    if (isAnyFieldFilled) {
       try {
         const response = await axios.post(baseUrl + "/schoolmaster/", formData, {
           headers: {
@@ -111,7 +110,7 @@ const SchoolMaster = () => {
         const filterData = response.data || [];
         setSchools(filterData.length ? filterData : []);
         setShowFilterModal(false);
-      } 
+      }
       catch (error) {
         console.error("Error fetching data:", error);
 
@@ -120,11 +119,11 @@ const SchoolMaster = () => {
         } else {
           toast.error("Failed to fetch filtered data");
         }
-      }     
+      }
     }
-    else{  
+    else {
       handleCloseFilterModal();
-       fetchData("/schoolmaster", setSchools);
+      fetchData("/schoolmaster", setSchools);
     }
   };
   const handleFilterClear = async () => {
@@ -138,18 +137,22 @@ const SchoolMaster = () => {
     });
     setForm({ ...form, email: "" });
     fetchData("/schoolmaster", setSchools);
-  };      
+  };
   const columns = [
     {
       name: "School Name",
-      selector: (row) => row.school_name,
-      cell: (row) => (
-        <Tooltip title={row.school_name}>
-          <span>{row.school_name}</span>
-        </Tooltip>
-      ),
+      selector: (row) => row.school_name || "-", // fallback for sorting
+      cell: (row) => {
+        const name = row.school_name || "-";
+        return (
+          <Tooltip title={name}>
+            <span>{name.slice(0, 15)}</span>
+          </Tooltip>
+        );
+      },
       sortable: true,
-    },
+    }
+    ,
     {
       name: "Branch",
       selector: (row) => row.branch,

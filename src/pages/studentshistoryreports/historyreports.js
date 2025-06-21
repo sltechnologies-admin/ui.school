@@ -8,6 +8,7 @@ import Tooltip from "@mui/material/Tooltip";
 import axios from "axios";
 import loading from "../../assets/images/common/loading.gif";
 import DataTable from "react-data-table-component";
+
 const StudenthistoryReports = () => {
     const userData = sessionStorage.getItem('user');
     const userObj = userData ? JSON.parse(userData) : {};
@@ -34,20 +35,19 @@ const StudenthistoryReports = () => {
     }, [studenthistorysmaps]);
 
     const [form, setForm] = useState({
-        student_id: "",
-        class_id: "",
-        subject_id: "",
-        subject_name: "",
-        userid: "",
+        class_id: 0,
+        section_id: 0,
+        roll_no: "",
+        userid: 0,
         username: "",
-        academic_year_id: userObj.academic_year_id,
-        academic_year_name: "",
+        mobile_number: "",
         school_id: userObj.school_id,
-
     });
+
     const fetchDropdownData = async (endpoint, setter) => {
         try {
-            const response = await axios.post(baseUrl + endpoint, { action: 'READ' });
+
+            const response = await axios.post(baseUrl + endpoint, { action: 'READ', school_id: userObj.school_id });
             setter(response.data);
         } catch (error) {
             console.error(`Error fetching ${endpoint}:`, error);
@@ -70,7 +70,7 @@ const StudenthistoryReports = () => {
             });
             setSection(response.data);
         } catch (error) {
-            console.error("Error fetching section:", error);
+            console.error("Error fetching section: ", error);
         }
     };
 
@@ -93,15 +93,26 @@ const StudenthistoryReports = () => {
 
     const handleInputChange = (e) => {
         const { id, value } = e.target;
-        setForm((prevForm) => ({
-            ...prevForm,
-            [id]: value,
-        }));
+        if (id === "roll_no" || id === "mobile_number") {
+            if (/^\d*$/.test(value)) {
+                const cleanedValue = value.replace(/^0+/, "");
+                setForm((prevForm) => ({
+                    ...prevForm,
+                    [id]: cleanedValue,
+                }));
+            }
+        } else {
+            setForm((prevForm) => ({
+                ...prevForm,
+                [id]: value,
+            }));
+        }
     };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        if (!form.class_id && !form.section_id && !form.firstname && !form.surname && !form.roll_no && !form.phonenumber) {
+        if (!form.class_id && !form.section_id && !form.firstname && !form.surname && !form.roll_no && !form.mobile_number) {
             toast.warning("Please select at least one to proceed.");
             return;
         }
@@ -110,9 +121,10 @@ const StudenthistoryReports = () => {
             section_id: form.section_id,
             fname: form.firstname,
             lname: form.surname,
-            roll_no: form.roll_no,
-            mobile_number: form.phonenumber,
+            roll_no: (form.roll_no && parseInt(form.roll_no) > 0) ? parseInt(form.roll_no) : undefined,
+            mobile_number: form.mobile_number,
             school_id: userObj.school_id,
+            academic_year_id: userObj.academic_year_id,
             action: 'FILTER'
         };
         try {
@@ -123,15 +135,6 @@ const StudenthistoryReports = () => {
             });
             if (response.data && response.data.length > 0) {
                 setStudenthistorymap(response.data);
-                setForm({
-                    class_id: "",
-                    section_id: "",
-                    firstname: "",
-                    surname: "",
-                    rollnumber: "",
-                    phonenumber: "",
-                    userid: "",
-                });
                 toast.success("Data fetched successfully!", { position: "top-right" });
             } else {
                 toast.warning("No records found matching your search criteria.", { position: "top-right" });
@@ -164,21 +167,23 @@ const StudenthistoryReports = () => {
             name: <h6 style={{ fontWeight: 'normal' }}>Student Name</h6>,
             selector: row => `${row.student_first_name} ${row.student_last_name}`,
             cell: row =>
-              row.student_id !== "No Records Found" ? (
-                <Tooltip title={`${row.student_first_name} ${row.student_last_name}`}>
-                  <Link
-                    to={`/StudentDetails/${row.student_id}`}
-                    style={{ color: 'blue', textDecoration: 'none' }}
-                  >
-                    <span>{`${row.student_first_name} ${row.student_last_name}`}</span>
-                  </Link>
-                </Tooltip>
-              ) : (
-                <span></span>
-              ),
+                row.student_id !== "No Records Found" ? (
+                    <Tooltip title={`${row.student_first_name} ${row.student_last_name}`}>
+                        <Link
+                            to={`/StudentDetails/${row.student_id}`}
+                            style={{ color: 'blue', textDecoration: 'none' }}
+                            onClick={() => setIsLoading(true)}
+
+                        >
+                            <span>{`${row.student_first_name} ${row.student_last_name}`}</span>
+                        </Link>
+                    </Tooltip>
+                ) : (
+                    <span></span>
+                ),
             sortable: true
-          },
-          
+        },
+
         {
             name: <h6 style={{ fontWeight: 'normal', textAlign: 'center', width: '100%' }}>Roll No</h6>,
             selector: (row) => row.roll_no,
@@ -222,28 +227,28 @@ const StudenthistoryReports = () => {
             sortable: true,
         },
         {
-            name: <h6 style={{ fontWeight: 'normal' }}>Contact No</h6>,
-            selector: (row) => row.primary_contact,
-            cell: row => <Tooltip title={row.primary_contact}><span>{row.primary_contact}</span></Tooltip>,
+            name: <h6 style={{ fontWeight: 'normal' }}>Mobile Number</h6>,
+            selector: (row) => row.father_phone_number,
+            cell: row => <Tooltip title={row.father_phone_number}><span>{row.father_phone_number}</span></Tooltip>,
             sortable: true,
         },
         {
             name: <h6 style={{ fontWeight: 'normal' }}>Father Name</h6>,
             selector: row => `${row.father_firstname} ${row.father_surname}`,
             cell: row => {
-              const hasFatherName = row.father_firstname || row.father_surname;
-              return hasFatherName ? (
-                `${row.father_firstname ?? ''} ${row.father_surname ?? ''}`.trim()
-              ) : (
-                <></>
-              );
+                const hasFatherName = row.father_firstname || row.father_surname;
+                return hasFatherName ? (
+                    `${row.father_firstname ?? ''} ${row.father_surname ?? ''}`.trim()
+                ) : (
+                    <></>
+                );
             },
             sortable: true,
         },
         {
             name: <h6 style={{ fontWeight: 'normal' }}>Mother Name</h6>,
             selector: (row) => `${row.mother_firstname} ${row.mother_surname}`,
-            cell: row => <Tooltip title={row.subject_name}><span>{row.subject_name}</span></Tooltip>,
+            cell: row => <Tooltip title={row.mother_firstname}><span>{row.mother_firstname}</span></Tooltip>,
             sortable: true,
         },
     ];
@@ -359,18 +364,9 @@ const StudenthistoryReports = () => {
                                                                 id="roll_no"
                                                                 value={form.roll_no}
                                                                 placeholder="Enter Roll Number"
+                                                                onChange={handleInputChange}
                                                                 maxLength={15}
-                                                                onKeyDown={(e) => {
-                                                                    if (
-                                                                        !/[0-9]/.test(e.key) &&
-                                                                        !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)
-                                                                    ) {
-                                                                        e.preventDefault();
-                                                                    }
-                                                                }}
-                                                                onChange={(e) => {
-                                                                    handleInputChange(e);
-                                                                }} />
+                                                            />
                                                         </Form.Group>
                                                     </div>
                                                 </Col>
@@ -380,22 +376,12 @@ const StudenthistoryReports = () => {
                                                             <Form.Label>Mobile Number</Form.Label>
                                                             <Form.Control
                                                                 type="text"
-                                                                id="phonenumber"
-                                                                value={form.phonenumber}
+                                                                id="mobile_number"
+                                                                value={form.mobile_number}
                                                                 placeholder="Enter Contact No"
                                                                 maxLength={10}
-                                                                inputMode="numeric"
-                                                                onKeyDown={(e) => {
-                                                                    if (
-                                                                        !/[0-9]/.test(e.key) &&
-                                                                        !['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)
-                                                                    ) {
-                                                                        e.preventDefault();
-                                                                    }
-                                                                }}
-                                                                onChange={(e) => {
-                                                                    handleInputChange(e);
-                                                                }} />
+                                                                onChange={handleInputChange}
+                                                            />
                                                         </Form.Group>
                                                     </div>
                                                 </Col>
@@ -403,7 +389,20 @@ const StudenthistoryReports = () => {
                                                     <div className="d-flex justify-content-between mt-3">
                                                         <div> </div>
                                                         <div>
-                                                            <Button type="submit" variant="primary" className="btn-success primaryBtn"> Submit </Button>
+                                                            <Button
+                                                                type="button"
+                                                                variant="primary"
+                                                                className="btn-info clearBtn me-3"
+                                                                onClick={() => {
+                                                                    setForm({
+                                                                        class_id: "",
+                                                                        period_id: "",
+                                                                    });
+                                                                }}
+                                                            >
+                                                                Reset
+                                                            </Button>
+                                                            <Button type="submit" variant="primary" className="btn-success primaryBtn"> Search </Button>
                                                         </div>
                                                     </div>
                                                 </Col>
@@ -424,8 +423,9 @@ const StudenthistoryReports = () => {
                                                     data={
                                                         Array.isArray(records) && records.length > 0
                                                             ? records
-                                                            : [{ student_id: 'No Records Found' ,
-                                                                admission_to:'No Records Found',
+                                                            : [{
+                                                                student_id: 'No Records Found',
+                                                                admission_to: 'No Records Found',
                                                             }]
 
                                                     }

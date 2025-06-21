@@ -5,7 +5,9 @@ import Header from "../../components/layout/header/header";
 import { ToastContainer, toast } from 'react-toastify';
 import Select from "react-select";
 import LeftNav from "../../components/layout/leftNav/leftNav";
+import { useReactToPrint } from 'react-to-print';
 import FeeParticulars from "./FeeParticulars";
+import { useFeeModuleAccess } from "../hooks/useFeeModuleAccess";
 
 const AddFeeReceipts = () => {
   const userData = sessionStorage.getItem('user');
@@ -15,11 +17,21 @@ const AddFeeReceipts = () => {
   const [sections, setSections] = useState([]);
   const [students, setStudents] = useState([]);
   const [filterdStudents, setFilterdStudents] = useState([]);
+  const [selectedFeeCategory, setSelectedFeeCategory] = useState("");
   const [feeschedule, setFeeschedule] = useState([]);
+
+  const currentUserRole = userObj.role_name?.trim();
+  const { canWrite } = useFeeModuleAccess(currentUserRole);
+
   const [receiptData, setReceiptData] = useState({
     amountDetails: [],
     grandTotal: "",
   });
+  const printRef = useRef();
+
+ const handlePrint = useReactToPrint({
+  content: () => printRef.current,
+});
 
   const [form, setForm] = useState({
     class_id: "",
@@ -180,14 +192,14 @@ const AddFeeReceipts = () => {
         school_id: userObj.school_id
       });
       const filterData = Array.isArray(response.data) ? response.data : [];
-
+      console.log("class_id:,section_id:", class_id, section_id);
       const filteredStudents = filterData.filter(
         item => item.status?.toLowerCase() === 'active'
           && String(item.class_id) === class_id
           && String(item.section_id) === section_id
           && String(item.academic_year_id) === userObj.academic_year_id
       );
-
+      console.log("filteredStudents:", filteredStudents);
       setFilterdStudents(filteredStudents);
 
       const options = filteredStudents.map((readstudent) => ({
@@ -216,6 +228,22 @@ const AddFeeReceipts = () => {
         father_name: `${filteredStudents[0]?.father_firstname || ""} ${filteredStudents[0]?.father_surname || ""}`.trim(),
         class_name: filteredStudents[0].class_name || "",
         section_name: `${filteredStudents[0]?.class_name || ""} & ${filteredStudents[0]?.section_name || ""}`,
+        contact_no: filteredStudents[0].father_phone_number || "",
+      }));
+    } else {
+      setForm(prevForm => ({
+        ...prevForm,
+        admission_number: "",
+        student_name: "",
+        father_name: "",
+        class_name: "",
+        section_name: "",
+        contact_no: "",
+      }));
+      setReceiptData((prevData) => ({
+        ...prevData,
+        amountDetails: [],
+        grandTotal: 0,
       }));
     }
 
@@ -224,6 +252,13 @@ const AddFeeReceipts = () => {
     }
 
   }, [form.student_id, filterdStudents]);
+  useEffect(() => {
+    if (form.student_id && form.fee_schedule_id && form.schedule_name) {
+      fetchFeesItems();
+    }
+  }, [form.student_id, form.fee_schedule_id, form.schedule_name]);
+
+
 
   const fetchFeesItems = async () => {
     try {
@@ -234,38 +269,62 @@ const AddFeeReceipts = () => {
         class_id: form.class_id
       });
 
-      const data = response.data;
+      let data = Array.isArray(response.data) ? response.data : [];
 
-      if (Array.isArray(data) && data.length > 0) {
-        setReceiptData((prevData) => ({
-          ...prevData,
-          amountDetails: data,
-          grandTotal: data.reduce((sum, item) => sum + (Number(item.amount) || 0), 0),
-        }));
-      } else {
-        setReceiptData((prevData) => ({
-          ...prevData,
-          amountDetails: [],
-          grandTotal: 0,
-        }));
-      }
+      // Fallback: inject dummy fee_category_name if not returned from backend
+      data = data.map(item => ({
+        ...item,
+        fee_category_name: item.fee_category_name || "Onetime Fee"
+      }));
+
+      const isOnetimeSchedule =
+        form.schedule_name &&
+        form.schedule_name.toLowerCase().includes("others");
+
+
+      data = data.filter(item =>
+        isOnetimeSchedule
+          ? item.fee_category_name.toLowerCase().includes("others")
+          : !item.fee_category_name.toLowerCase().includes("others")
+      );
+
+      setReceiptData({
+        amountDetails: data,
+        grandTotal: data.reduce((sum, item) => sum + (Number(item.amount) || 0), 0),
+      });
     } catch (error) {
       console.error("Error fetching amount details:", error);
-      setReceiptData((prevData) => ({
-        ...prevData,
+      setReceiptData({
         amountDetails: [],
         grandTotal: 0,
+      });
+    }
+  };
+
+
+
+  const handleInputChange = (e) => {
+    const { id, value } = e.target;
+
+    if (id === "fee_schedule_id") {
+      const selectedSchedule = feeschedule.find(
+        (item) => String(item.fee_schedule_id) === value
+      );
+
+      setForm((prevForm) => ({
+        ...prevForm,
+        fee_schedule_id: value,
+        schedule_name: selectedSchedule?.schedule_name || ""
+      }));
+    } else {
+      setForm((prevForm) => ({
+        ...prevForm,
+        [id]: value,
       }));
     }
   };
 
-  const handleInputChange = (e) => {
-    const { id, value } = e.target;
-    setForm((prevForm) => ({
-      ...prevForm,
-      [id]: value
-    }));
-  };
+
 
   const handleAmountChange = (index, newValue) => {
     const updatedAmountDetails = [...receiptData.amountDetails];
@@ -282,7 +341,7 @@ const AddFeeReceipts = () => {
     }));
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event, shouldPrint = false) => {
     event.preventDefault();
 
     const submissionData = receiptData.amountDetails.map(item => ({
@@ -309,7 +368,9 @@ const AddFeeReceipts = () => {
       });
 
       toast.success("Records Added Successfully");
-
+      if (shouldPrint) {
+        setTimeout(() => handlePrint(), 500); // ⏱️ wait for UI to update
+      }
       setReceiptData((prevData) => ({
         ...prevData,
         amountDetails: [],
@@ -356,7 +417,7 @@ const AddFeeReceipts = () => {
                 <form onSubmit={handleSubmit}>
                   <Row>
                     <Col xs={12}>
-                      <h6 className='commonSectionTitle'>Fees Discount</h6>
+                      <h6 className='commonSectionTitle'>Fee Receipts Details</h6>
                     </Col>
                   </Row>
                   <Row>
@@ -439,7 +500,7 @@ const AddFeeReceipts = () => {
                     </Col>
                   </Row>
                   <Row>
-                    <div>
+                    <div ref={printRef}>
                       <table className="receipt-table">
                         <thead>
                           <tr>
@@ -502,6 +563,7 @@ const AddFeeReceipts = () => {
                                 value={form.section_name}
                                 placeholder="Enter Class Name"
                                 onChange={handleInputChange}
+                                readOnly
                               />
                             </td>
                           </tr>
@@ -525,6 +587,7 @@ const AddFeeReceipts = () => {
                                 value={form.contact_no}
                                 placeholder="Enter Contact No"
                                 onChange={handleInputChange}
+                                readOnly
                               />
                             </td>
                           </tr>
@@ -609,13 +672,16 @@ const AddFeeReceipts = () => {
                       >
                         Cancel
                       </Button>
-                      <Button
-                        type="submit"
-                        variant="primary"
-                        className="btn-success primaryBtn"
-                      >
-                        Submit
-                      </Button>
+                      {canWrite && (
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          className="btn-success primaryBtn"
+                          onClick={(e) => handleSubmit(e, true)}
+                        >
+                          Submit
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </form>

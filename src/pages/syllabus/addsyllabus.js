@@ -41,55 +41,29 @@ const AddSyllabus = () => {
     });
     const fetchDropdownData = async (endpoint, setter) => {
         try {
-            // console.log(setter)
-            console.log(endpoint)
-            const response = await axios.post(baseUrl + endpoint, { action:endpoint==='/AcademicYear/'?'CURRENTREAD':'READ' });
-            
-            console.log(response.data)
-            
+            const response = await axios.post(baseUrl + endpoint, { action: endpoint === '/AcademicYear/' ? 'CURRENTREAD' : 'READ', school_id: userObj.school_id });
             setter(response.data);
-            console.log(academic);
-            // if(endpoint==='/AcademicYear/') {
-            //     console.log("err")
-                
-            // }
         } catch (error) {
             console.error(`Error fetching ${endpoint}:`, error);
         }
     };
 
     useEffect(() => {
-        if (Number(form.class_id) > 0 && Number(form.section_id) > 0) {
-            fetchSubjects(form.academic_year_id, form.class_id, form.section_id);
+        if (form.class_id != 0) {
+            fetchSections(form.class_id || 0);
         }
-    }, [form.academic_year_id, form.class_id, form.section_id]);
-
-    const fetchSubjects = async () => {
-        try {
-            const response = await axios.post(baseUrl + "/teacherssubjectsmap/", {
-                action: "FILTER",
-                school_id: userObj?.school_id || 0,
-                academic_year_id: userObj.academic_year_id,
-                class_id: form.class_id,
-                section_id: form.section_id,
-            });
-            setSubjects(response?.data || []);
-        } catch (error) {
-            console.error("Error fetching Subjects!", error);
-        }
-    };
-
-    
-    useEffect(() => {
-        if( form.class_id !=undefined && form.class_id>0)
-        {
-        fetchSections(form.class_id || 0);
-        }
-        else 
-        {
+        else {
             setSection([]);
         }
+    }, [form.class_id]);
 
+    useEffect(() => {
+        if (Number(form.class_id) > 0) {
+            fetchSubjects(form.class_id, form.section_id);
+        }
+        else {
+            setSection([]);
+        }
     }, [form.class_id]);
 
     const fetchSections = async (class_id) => {
@@ -104,14 +78,23 @@ const AddSyllabus = () => {
             console.error("Error fetching section:", error);
         }
     };
-   
-    
-    useEffect(() => {    
-        fetchDropdownData('/AcademicYear/',setAcademic);   
+    const fetchSubjects = async (class_id, section_id) => {
+        try {
+            const response = await axios.post(baseUrl + "/teacherssubjectsmap/", {
+                action: "SFILTER",
+                school_id: userObj?.school_id || 0,
+                class_id: class_id, section_id: section_id, academic_year_id: userObj.academic_year_id
+            });
+            setSubjects(response?.data || []);
+        } catch (error) {
+            console.error("Error fetching Subjects!", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchDropdownData('/AcademicYear/', setAcademic);
         fetchDropdownData('/classes/', setClasses);
         fetchDropdownData('/months/', setMonths);
-       
-        
     }, []);
 
     useEffect(() => {
@@ -127,6 +110,7 @@ const AddSyllabus = () => {
                     subject_id: form.subject_id,
                     class_id: form.class_id,
                     section_id: form.section_id,
+                    school_id: userObj.school_id
                 });
                 if (response.data.length > 0) {
                     const teacher = response.data[0];
@@ -135,13 +119,6 @@ const AddSyllabus = () => {
                         ...prevForm,
                         userid: teacher.userid,
                         username: teacher.user_name,
-                    }));
-                } else {
-
-                    setForm((prevForm) => ({
-                        ...prevForm,
-                        userid: "",
-                        username: "",
                     }));
                 }
             } catch (error) {
@@ -191,7 +168,7 @@ const AddSyllabus = () => {
             });
 
             if (editId !== null) {
-                toast.success("Record updated successfully", { position: "top-right" });
+                toast.success("Record updated successfullyyyy", { position: "top-right" });
                 setEditId(null);
 
             } else {
@@ -230,178 +207,180 @@ const AddSyllabus = () => {
         });
     }
     return (
-        <Container fluid>
-            <ToastContainer />
-            <div className='pageMain'>
-                <LeftNav></LeftNav>
-                <div className='pageRight'>
-                    <div className='pageHead'>
-                        <Header></Header>
-                    </div>
-                    <div className='pageBody'>
-                        <Container fluid>
-                            <div className=''>
-                                <Card>
-                                    <Card.Body className="hide-scrollbar">
-                                        <form className="" onSubmit={handleSubmit}>
-                                            <div className=''>
-                                                <Row>
-                                                    <Col xs={12}>
-                                                        <h6 className='commonSectionTitle'>Syllabus Plan</h6>
-                                                    </Col>
-                                                </Row>
-                                                 <Row>
-                                                    <Col xs={12} md={6} lg={4} xxl={3}>
-                                                         <div className="commonInput">
-                                                            <Form.Group>
-                                                                <Form.Label>
-                                                                    AcademicYear
-                                                                </Form.Label>
-                                                                <div>
-                                                                    <Form.Control
-                                                                        type="text"
-                                                                        value={academic[0]?.academic_year_name || ''}
-                                                                        readOnly
-                                                                    />
-                                                                </div>
-                                                            </Form.Group>
-                                                        </div>
-                                                    </Col>
-                                                    <Col xs={12} md={6} lg={4} xxl={3}>
-                                                        <div className="commonInput">
-                                                            <Form.Group>
-                                                                <Form.Label>
-                                                                    Class<span className="requiredStar">*</span>
-                                                                </Form.Label>
-                                                                <select
-                                                                    className="form-select"
-                                                                    required
-                                                                    id="class_id"
-                                                                    value={form.class_id}
-                                                                    onChange={handleInputChange}
-                                                                >
-                                                                    <option value="">Select Class</option>
-                                                                    {(classes || [])
-                                                                        .filter((classItem) => classItem.is_active === "Active") 
-                                                                        .map((classItem) => (
-                                                                            <option key={classItem.class_id} value={classItem.class_id}>
-                                                                                {classItem.class_name}
-                                                                            </option>
-                                                                        ))}
-                                                                </select>
-                                                            </Form.Group>
-                                                        </div>
-                                                    </Col>
-                                                    <Col xs={12} md={6} lg={4} xxl={3}>
-                                                        <div className="commonInput">
-                                                            <Form.Group>
-                                                                <Form.Label>
-                                                                    Section<span className="requiredStar">*</span>
-                                                                </Form.Label>
-                                                                <select
-                                                                    className="form-select"
-                                                                    required
-                                                                    id="section_id"
-                                                                    value={form.section_id}
-                                                                    onChange={handleInputChange}
-                                                                >
-                                                                    <option value="0">Select Section</option>
-                                                                    {(sections || []).map((sections) => (
-                                                                        <option key={sections.section_id} value={sections.section_id}>
-                                                                            {sections.section_name}
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
-                                                            </Form.Group>
-                                                        </div>
-                                                    </Col>
-                                                    <Col xs={12} md={6} lg={4} xxl={3}>
-                                                        <div className="commonInput">
-                                                            <Form.Group>
-                                                                <Form.Label> Subject<span className="requiredStar">*</span></Form.Label>
-                                                                <Form.Select
-                                                                    id="subject_id"
-                                                                    value={form.subject_id}
-                                                                    onChange={handleInputChange}
-                                                                    style={{ maxHeight: "150px", overflowY: "auto" }}
-                                                                    required
-                                                                >
-                                                                    <option value="">Select Subject</option>
-                                                                    {(subjects || [])
-                                                                        .filter((subject) => subject.is_active === "Active")
-                                                                        .map((subject) => (
-                                                                            <option key={subject.subject_id} value={subject.subject_id}>
-                                                                                {subject.subject_name}
-                                                                            </option>
-                                                                        ))}
-                                                                </Form.Select>
-                                                            </Form.Group>
-                                                        </div>
-                                                    </Col>
 
-                                                    <Col xs={12} md={6} lg={4} xxl={3}>
-                                                        <div className="commonInput">
-                                                            <Form.Group>
-                                                                <Form.Label>
-                                                                    Teacher
-                                                                </Form.Label>
-                                                                <div>
-                                                                    <Form.Control
-                                                                        type="text"
-                                                                        value={form.username || ''}
-                                                                        readOnly
-                                                                    />
-                                                                </div>
-                                                            </Form.Group>
-                                                        </div>
-                                                    </Col>
-                                                    <Col xs={12} md={6} lg={4} xxl={3}>
-                                                        <div className="commonInput">
-                                                            <Form.Group>
-                                                                <Form.Label>
-                                                                    Month<span className="requiredStar">*</span>
-                                                                </Form.Label>
-                                                                <select
-                                                                    className="form-select"
-                                                                    id="month_id"
-                                                                    required
-                                                                    value={form.month_id}
-                                                                    onChange={handleInputChange}>
-                                                                    <option value="">Select Month</option>
-                                                                    {(months || []).map((months) => (
-                                                                        <option key={months.month_id} value={months.month_id}>
-                                                                            {months.month_name}
+
+        <div className='pageMain'>
+            <ToastContainer />
+            <LeftNav></LeftNav>
+            <div className='pageRight'>
+                <div className='pageHead'>
+                    <Header></Header>
+                </div>
+                <div className='pageBody'>
+                    <Container fluid>
+                        <div className=''>
+                            <Card>
+                                <Card.Body className="hide-scrollbar">
+                                    <form className="" onSubmit={handleSubmit}>
+                                        <div className=''>
+                                            <Row>
+                                                <Col xs={12}>
+                                                    <h6 className='commonSectionTitle'>Syllabus Plan</h6>
+                                                </Col>
+                                            </Row>
+                                            <Row>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <Form.Group>
+                                                            <Form.Label>
+                                                                AcademicYear
+                                                            </Form.Label>
+                                                            <div>
+                                                                <Form.Control
+                                                                    type="text"
+                                                                    value={academic[0]?.academic_year_name || ''}
+                                                                    readOnly
+                                                                />
+                                                            </div>
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <Form.Group>
+                                                            <Form.Label>
+                                                                Class<span className="requiredStar">*</span>
+                                                            </Form.Label>
+                                                            <select
+                                                                className="form-select"
+                                                                required
+                                                                id="class_id"
+                                                                value={form.class_id}
+                                                                onChange={handleInputChange}
+                                                            >
+                                                                <option value="">Select Class</option>
+                                                                {(classes || [])
+                                                                    .filter((classItem) => classItem.is_active === "Active")
+                                                                    .map((classItem) => (
+                                                                        <option key={classItem.class_id} value={classItem.class_id}>
+                                                                            {classItem.class_name}
                                                                         </option>
                                                                     ))}
-                                                                </select>
-                                                            </Form.Group>
-                                                        </div>
-                                                    </Col>
-                                                    <Col xs={12} md={6} lg={6} xxl={6}>
-                                                        <div className="commonInput">
-                                                            <Form.Group>
-                                                                <Form.Label>Portion Alloted <span className="requiredStar">*</span></Form.Label>
+                                                            </select>
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <Form.Group>
+                                                            <Form.Label>
+                                                                Section<span className="requiredStar">*</span>
+                                                            </Form.Label>
+                                                            <select
+                                                                className="form-select"
+                                                                required
+                                                                id="section_id"
+                                                                value={form.section_id}
+                                                                onChange={handleInputChange}
+                                                            >
+                                                                <option value="0">Select Section</option>
+                                                                {(sections || []).map((sections) => (
+                                                                    <option key={sections.section_id} value={sections.section_id}>
+                                                                        {sections.section_name}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <Form.Group>
+                                                            <Form.Label> Subject<span className="requiredStar">*</span></Form.Label>
+                                                            <Form.Select
+                                                                id="subject_id"
+                                                                value={form.subject_id}
+                                                                onChange={handleInputChange}
+                                                                style={{ maxHeight: "150px", overflowY: "auto" }}
+                                                                required
+                                                            >
+                                                                <option value="">Select Subject</option>
+                                                                {(subjects || [])
+                                                                    .filter((subject) => subject.is_active === "Active")
+                                                                    .map((subject) => (
+                                                                        <option key={subject.subject_id} value={subject.subject_id}>
+                                                                            {subject.subject_name}
+                                                                        </option>
+                                                                    ))}
+                                                            </Form.Select>
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <Form.Group>
+                                                            <Form.Label>
+                                                                Teacher
+                                                            </Form.Label>
+                                                            <div>
                                                                 <Form.Control
-                                                                    required
-                                                                    as="textarea"
-                                                                    id="portion_alloted"
-                                                                    value={form.portion_alloted}
-                                                                    placeholder="Portion Alloted"
-                                                                    maxLength={250}
-                                                                    rows={4} 
-                                                                    onChange={(e) => {
-                                                                        const value = e.target.value;
-                                                                        if (/^[A-Za-z\s]*$/.test(value)) {
-                                                                            handleInputChange(e);
-                                                                        }
-                                                                    }}
+                                                                    placeholder="Teacher "
+                                                                    type="text"
+                                                                    value={form.username || ''}
+                                                                    readOnly
                                                                 />
-                                                            </Form.Group>
-                                                        </div>
-                                                    </Col>
-                                                </Row>
-                                                <div> 
-                                                    <Col>
+                                                            </div>
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <Form.Group>
+                                                            <Form.Label>
+                                                                Month<span className="requiredStar">*</span>
+                                                            </Form.Label>
+                                                            <select
+                                                                className="form-select"
+                                                                id="month_id"
+                                                                required
+                                                                value={form.month_id}
+                                                                onChange={handleInputChange}>
+                                                                <option value="">Select Month</option>
+                                                                {(months || []).map((months) => (
+                                                                    <option key={months.month_id} value={months.month_id}>
+                                                                        {months.month_name}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={6} xxl={6}>
+                                                    <div className="commonInput">
+                                                        <Form.Group>
+                                                            <Form.Label>Portion Alloted <span className="requiredStar">*</span></Form.Label>
+                                                            <Form.Control
+                                                                required
+                                                                as="textarea"
+                                                                id="portion_alloted"
+                                                                value={form.portion_alloted}
+                                                                placeholder="Portion Alloted"
+                                                                maxLength={250}
+                                                                rows={4}
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
+                                                                    if (/^[A-Za-z\s]*$/.test(value)) {
+                                                                        handleInputChange(e);
+                                                                    }
+                                                                }}
+                                                            />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                            </Row>
+                                            <div>
+                                                <Col>
                                                     <div className="d-flex justify-content-between mt-3">
                                                         <div>
                                                             <Button
@@ -443,17 +422,17 @@ const AddSyllabus = () => {
                                                         </div>
                                                     </div>
                                                 </Col>
-                                                </div>
                                             </div>
-                                        </form>
-                                    </Card.Body>
-                                </Card>
-                            </div>
-                        </Container>
-                    </div>
+                                        </div>
+                                    </form>
+                                </Card.Body>
+                            </Card>
+                        </div>
+                    </Container>
                 </div>
             </div>
-        </Container>
+        </div>
+
     );
 }
 export default AddSyllabus;

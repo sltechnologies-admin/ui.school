@@ -15,7 +15,7 @@ import Tooltip from "@mui/material/Tooltip";
 const Users = () => {
     const [showFilterModal, setShowFilterModal] = useState(false);
     const handleCloseFilterModal = () => setShowFilterModal(false);
-   
+
     const [roles, setRoles] = useState([]);
     const [departments, setDepartments] = useState([]);
     const fileInputRef = useRef(null);
@@ -27,29 +27,32 @@ const Users = () => {
     const navigate = useNavigate();
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
     const userData = sessionStorage.getItem('user');
+
+
     const userObj = userData ? JSON.parse(userData) : {};
+    const readOnlyRoles = ["Class Teacher", "Teacher", "Class Incharge", "School Admin"];
+    const canSubmit = !readOnlyRoles.includes(userObj.role_name?.trim());
+
     useEffect(() => {
-    setIsLoading(true);
+        setIsLoading(true);
+        fetchDataRead("/Users/", setUserRecords, userObj.school_id)
+            .finally(() => {
+                setIsLoading(false);
+            });
+    }, []);
 
-    fetchDataRead("/Users", setUserRecords, userObj.school_id)
-        .finally(() => {
-            setIsLoading(false);  
-           
-        });
-}, []);
-
-const handleShowFilterModal = () => {
-    if (states.length === 0) {
-        fetchDataRead("/states", setStates, userObj.school_id);
-    }
-    if (roles.length === 0) {
-        fetchDataRead("/role", setRoles);
-    }
-    if (departments.length === 0) {
-        fetchDataRead("/department", setDepartments);
-    }
-    setShowFilterModal(true);
-};
+    const handleShowFilterModal = () => {
+        if (states.length === 0) {
+            fetchDataRead("/states/", setStates, userObj.school_id);
+        }
+        if (roles.length === 0) {
+            fetchDataRead("/role/", setRoles);
+        }
+        if (departments.length === 0) {
+            fetchDataRead("/department/", setDepartments);
+        }
+        setShowFilterModal(true);
+    };
 
 
     const handleEditClick = (userid) => {
@@ -58,10 +61,12 @@ const handleShowFilterModal = () => {
             navigate("/usersadd", { state: { userData: UserdataEdit } });
         }
     };
+    // delete method
     const handleDeleteClick = async (userid) => {
         if (!window.confirm('Are you sure you want to change the status?')) return;
+
         try {
-            const response = await axios.post(baseUrl + '/Users', { userid, action: 'DELETE' }, {
+            const response = await axios.post(baseUrl + '/Users/', { userid, action: 'DELETE' }, {
                 headers: { 'Content-Type': 'application/json' },
             });
             if (response.status >= 200 && response.status < 300) {
@@ -146,42 +151,38 @@ const handleShowFilterModal = () => {
             ),
             sortable: true
         },
-        {
-            name: "Actions",
-            cell: row =>
-                row.userid !== "No Records Found" ? (
-                    <div className="tableActions">
-                        <Tooltip title="Edit" arrow>
-                            <span
-                                className="commonActionIcons"
-                                onClick={() => handleEditClick(row.userid)}
-                            >
-                                <MdEdit />
-                            </span>
-                        </Tooltip>
-                        <Tooltip title="Delete" arrow>
-                            <span
-                                className="commonActionIcons"
-                                onClick={() => handleDeleteClick(row.userid)}
-                            >
-                                <MdDelete />
-                            </span>
-                        </Tooltip>
-                    </div>
-                ) : null
-        }
+    ...(canSubmit ? [{
+    name: "Actions",
+    cell: row =>
+      row.userid !== "No Records Found" ? (
+        <div className="tableActions">
+          <Tooltip title="Edit" arrow>
+            <span className="commonActionIcons" onClick={() => handleEditClick(row.userid)}>
+              <MdEdit />
+            </span>
+          </Tooltip>
+          <Tooltip title="Delete" arrow>
+            <span className="commonActionIcons" onClick={() => handleDeleteClick(row.userid)}>
+              <MdDelete />
+            </span>
+          </Tooltip>
+        </div>
+      ) : null
+  }] : [])
+
     ];
 
     const searchableColumns = [
         row => row.firstname, row => row.surname, row => row.email, row => row.state_name,
-        row => row.city, row => row.role_name, row => row.dept_name, row => row.phonenumber,
+        row => row.city, row => row.role_name, row => row.dept_name, row => row.phonenumber, row => row.status
+
     ];
     const filteredRecords = (userRecords || []).filter((user) =>
         searchableColumns.some((selector) => {
             const value = selector(user);
             return String(value || "")
                 .toLowerCase()
-                .includes(searchQuery.toLowerCase());
+                .includes(searchQuery.toLowerCase().replace(/[-\s]+/g, ''));
         })
     );
     const [filter, setFilter] = useState(
@@ -230,10 +231,10 @@ const handleShowFilterModal = () => {
         setFilter({
             userid: 0, firstname: "", surname: "", phonenumber: "", role_id: 0, dept_id: 0, state_id: 0, city: "", email: "", action: "FILTER"
         });
-        fetchDataRead("/Users", setUserRecords, userObj.school_id);
+        fetchDataRead("/Users/", setUserRecords, userObj.school_id);
     };
     const handleSearchChange = (event) => {
-        fetchDataRead("/Users", setUserRecords, userObj.school_id);
+        fetchDataRead("/Users/", setUserRecords, userObj.school_id);
         setSearchQuery(event.target.value);
     };
     //excel upload
@@ -305,7 +306,7 @@ const handleShowFilterModal = () => {
                 if (fileInputRef.current) {
                     fileInputRef.current.value = "";
                 }
-                fetchDataRead("/Users", setUserRecords, userObj.school_id);
+                fetchDataRead("/Users/", setUserRecords, userObj.school_id);
             }
         };
         reader.readAsArrayBuffer(file);
@@ -346,9 +347,15 @@ const handleShowFilterModal = () => {
                                     </Button>
                                 </OverlayTrigger>
                                 <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Add</Tooltip>}>
-                                    <Button className="primaryBtn" variant="primary" onClick={() => navigate("/usersadd")}>
+                                    <Button
+                                        className="primaryBtn"
+                                        disabled={!canSubmit}
+                                        variant="primary"
+                                        onClick={() => navigate("/usersadd")}
+                                    >
                                         <span><MdAddCircle /></span>
                                     </Button>
+
                                 </OverlayTrigger>
                             </div>
                         </div>
@@ -396,10 +403,10 @@ const handleShowFilterModal = () => {
                             <Col xs={12}>
                                 <div className='commonInput'>
                                     <Form.Group controlId="firstName">
-                                        <Form.Label>First Name</Form.Label>
+                                        <Form.Label>Enter First Name</Form.Label>
                                         <Form.Control
                                             type="text" id="firstname" name="firstname" placeholder="First Name" value={filter.firstname} maxLength={30}
-                                            onChange={(e) => {  const value = e.target.value.replace(/[^A-Za-z\s]/g, ''); setFilter({ ...filter, firstname: value });}}
+                                            onChange={(e) => { const value = e.target.value.replace(/[^A-Za-z\s]/g, ''); setFilter({ ...filter, firstname: value }); }}
                                         />
                                     </Form.Group>
                                 </div>
@@ -407,9 +414,9 @@ const handleShowFilterModal = () => {
                             <Col xs={12}>
                                 <div className='commonInput'>
                                     <Form.Group controlId="surname">
-                                        <Form.Label>Surname</Form.Label>
+                                        <Form.Label>Enter Surname</Form.Label>
                                         <Form.Control type="text" id="surname" name="surname" placeholder="Surname" value={filter.surname} maxLength={30}
-                                            onChange={(e) => { const value = e.target.value.replace(/[^A-Za-z\s]/g, ''); setFilter({ ...filter, surname: value });}}
+                                            onChange={(e) => { const value = e.target.value.replace(/[^A-Za-z\s]/g, ''); setFilter({ ...filter, surname: value }); }}
                                         />
                                     </Form.Group>
                                 </div>
@@ -426,9 +433,9 @@ const handleShowFilterModal = () => {
                             <Col xs={12}>
                                 <div className='commonInput'>
                                     <Form.Group controlId="department">
-                                        <Form.Label>PhoneNumber</Form.Label>
-                                        <Form.Control type="text" name="phonenumber" id="phonenumber" placeholder="Enter PhoneNumber" maxLength={10} value={filter.phonenumber}
-                                            onChange={(e) => {   const value = e.target.value.replace(/\D/g, ''); setFilter({ ...filter, phonenumber: value });}}
+                                        <Form.Label>Phone Number</Form.Label>
+                                        <Form.Control type="text" name="phonenumber" id="phonenumber" placeholder="Enter Phone Number" maxLength={10} value={filter.phonenumber}
+                                            onChange={(e) => { const value = e.target.value.replace(/\D/g, ''); setFilter({ ...filter, phonenumber: value }); }}
                                         />
                                     </Form.Group>
                                 </div>
@@ -438,7 +445,7 @@ const handleShowFilterModal = () => {
                                     <Form.Group controlId="city">
                                         <Form.Label>City</Form.Label>
                                         <Form.Control type="text" name="city" id="city" placeholder="Enter City" maxLength={50} value={filter.city}
-                                            onChange={(e) => { const value = e.target.value.replace(/[^A-Za-z\s]/g, ''); setFilter({ ...filter, city: value });}}
+                                            onChange={(e) => { const value = e.target.value.replace(/[^A-Za-z\s]/g, ''); setFilter({ ...filter, city: value }); }}
                                         />
                                     </Form.Group>
                                 </div>

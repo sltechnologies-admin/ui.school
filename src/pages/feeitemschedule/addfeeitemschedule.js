@@ -6,6 +6,7 @@ import Header from "../../components/layout/header/header";
 import { ToastContainer, toast } from 'react-toastify';
 import LeftNav from "../../components/layout/leftNav/leftNav";
 import FeesScheduleApi from "./FeesScheduleApi ";
+import { useFeeModuleAccess } from "../hooks/useFeeModuleAccess";
 
 function AddFeeItemSchedule() {
     const userData = sessionStorage.getItem('user');
@@ -29,6 +30,9 @@ function AddFeeItemSchedule() {
         class_id: "",
         item_id: 0,
     })
+
+    const currentUserRole = userObj.role_name?.trim();
+    const { canWrite } = useFeeModuleAccess(currentUserRole);
 
     useEffect(() => {
         if (routeLocation.state?.userData) {
@@ -104,9 +108,10 @@ function AddFeeItemSchedule() {
                     class_id: "",
                     item_id: "",
                 });
-            } else {
-                toast.error("Failed to save data.");
             }
+            // else {
+            //     toast.error("Failed to save data.");
+            // }
         }
     };
 
@@ -124,24 +129,20 @@ function AddFeeItemSchedule() {
                             <Card.Body>
                                 <form>
                                     <Row>
+                                        <Col xs={12}>
+                                            <h6 className='commonSectionTitle'>Fees Item Schedule Details</h6>
+                                        </Col>
+                                    </Row>
+                                    <Row>
                                         <Col xs={12} md={6} lg={4} xxl={3}>
-                                            <div className='commonInput'>
+                                            <div className="commonInput">
                                                 <Form.Group>
-                                                    <Form.Label>Academic Year</Form.Label>
-                                                    <select
-                                                        disabled
-                                                        className="form-select"
-                                                        id="academic_year_id"
-                                                        value={form.academic_year_id}
-                                                        onChange={handleInputChange}
-                                                    >
-                                                        <option value="0">Select Academic Year</option>
-                                                        {(academics || []).map((academic) => (
-                                                            <option key={academic.academic_year_id} value={academic.academic_year_id}>
-                                                                {academic.academic_year_name}
-                                                            </option>
-                                                        ))}
-                                                    </select>
+                                                    <Form.Label>
+                                                        Academic Year Name<span className="requiredStar">*</span>
+                                                    </Form.Label>
+                                                    <div className="form-control-plaintext">
+                                                        {userObj.academic_year_name}
+                                                    </div>
                                                 </Form.Group>
                                             </div>
                                         </Col>
@@ -202,13 +203,15 @@ function AddFeeItemSchedule() {
                                             >
                                                 Cancel
                                             </Button>
-                                            <Button
-                                                variant="primary"
-                                                className="btn-success primaryBtn"
-                                                onClick={handleSaveAll}
-                                            >
-                                                Submit
-                                            </Button>
+                                            {canWrite && (
+                                                <Button
+                                                    variant="primary"
+                                                    className="btn-success primaryBtn"
+                                                    onClick={handleSaveAll}
+                                                >
+                                                    Submit
+                                                </Button>
+                                            )}
                                         </div>
                                     </div>
                                 </form>

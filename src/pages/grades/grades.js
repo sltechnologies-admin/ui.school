@@ -1,16 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { IoMdAdd } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
-import {
-  Container,
-  Button,
-  Modal,
-  Row,
-  Col,
-  Form,
-  OverlayTrigger,
-} from "react-bootstrap";
+import { Container, Button, Modal, Row, Col, Form, OverlayTrigger, } from "react-bootstrap";
 import { MdFilterList, MdAddCircle } from "react-icons/md";
 import DataTable from "react-data-table-component";
 import { ToastContainer, toast } from "react-toastify";
@@ -32,7 +23,8 @@ const Grades = () => {
   const [isLoading, setIsLoading] = useState(true);
   const userData = sessionStorage.getItem("user");
   const userObj = userData ? JSON.parse(userData) : {};
-
+  const readOnlyRoles = ["Class Teacher", "Teacher", "Class Incharge", "School Admin"];
+  const canSubmit = !readOnlyRoles.includes(userObj.role_name?.trim());
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
   const navigate = useNavigate();
 
@@ -58,7 +50,7 @@ const Grades = () => {
       console.error("Error fetching Board Data:", error);
     }
   };
-  const fetchSubjects = async (class_id, section_id) => {
+  const fetchSubjects = async () => {
     try {
       const response = await axios.post(baseUrl + "/subjectmaster/", {
         action: "READ",
@@ -71,170 +63,155 @@ const Grades = () => {
   };
 
   useEffect(() => {
-    fetchGrades();
+
     fetchBoards();
     fetchSubjects();
   }, []);
-   const handleEditClick = (grade_id) => {
-          const gradesToEdit = grades.find(grades => grades.grade_id === grade_id);
-  
-          if (gradesToEdit) {
-              navigate("/addgrades", { state: { userData: gradesToEdit } });
-          } else {
-              console.error(`User with ID ${grade_id} not found.`);
-          }
-      };
-  
-      useEffect(() => {
-          fetchGrades();
-      }, []);
+  const handleEditClick = (grade_id) => {
+    const gradesToEdit = grades.find(grades => grades.grade_id === grade_id);
 
-      const handleDeleteClick = async (grade_id) => {
-        const confirmDelete = window.confirm('Are you sure you want to update the status?');
+    if (gradesToEdit) {
+      navigate("/addgrades", { state: { userData: gradesToEdit } });
+    } else {
+      console.error(`User with ID ${grade_id} not found.`);
+    }
+  };
 
-        if (!confirmDelete) {
-            return;
-        }
-        const requestBody = {
-          grade_id: grade_id,
-            action: "DELETE"
-        };
-        try {
-            const response = await axios.post(baseUrl + "/grades/", requestBody, {
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-            });
-            if (response.status < 200 || response.status >= 300) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            toast.success("Record Set to Inactive");
-            fetchGrades();
-        } catch (error) {
-            console.error('Error:', error);
-        }
+
+
+  const handleDeleteClick = async (grade_id) => {
+    const confirmDelete = window.confirm('Are you sure you want to update the status?');
+
+    if (!confirmDelete) {
+      return;
+    }
+    const requestBody = {
+      grade_id: grade_id,
+      action: "DELETE"
     };
+    try {
+      const response = await axios.post(baseUrl + "/grades/", requestBody, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      });
+      if (response.status < 200 || response.status >= 300) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      toast.success("Record Set to Inactive");
+      fetchGrades();
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
 
   useEffect(() => {
     setIsLoading(true);
     fetchGrades("/grades/", setGrades).finally(() => setIsLoading(false));
   }, []);
+ const baseColumns = [
+  {
+    name: "Grade Name ",
+    selector: (row) => row.grade_name,
+    cell: (row) => (
+      <Tooltip title={row.grade_name}>
+        <span>{row.grade_name}</span>
+      </Tooltip>
+    ),
+    sortable: true,
+  },
+  {
+    name: "Minimum Marks ",
+    selector: (row) => row.min_marks,
+    cell: (row) => (
+      <Tooltip title={row.min_marks}>
+        <span>{row.min_marks}</span>
+      </Tooltip>
+    ),
+    sortable: true,
+  },
+  {
+    name: "Maximum Marks ",
+    selector: (row) => row.max_marks,
+    cell: (row) => (
+      <Tooltip title={row.max_marks}>
+        <span>{row.max_marks}</span>
+      </Tooltip>
+    ),
+    sortable: true,
+  },
+  {
+    name: "Grade Points ",
+    selector: (row) => row.grade_points,
+    cell: (row) => (
+      <Tooltip title={row.grade_points}>
+        <span>{row.grade_points}</span>
+      </Tooltip>
+    ),
+    sortable: true,
+  },
+  {
+    name: "Subject",
+    selector: (row) => row.subject_name,
+    cell: (row) => (
+      <Tooltip title={row.subject_name || "-"}>
+        <span>{(row.subject_name || "-").slice(0, 10)}</span>
+      </Tooltip>
+    ),
+    sortable: true,
+  },
+  {
+    name: "Curriculum",
+    selector: (row) => row.board_name,
+    cell: (row) => (
+      <Tooltip title={row.board_name || "-"}>
+        <span>{(row.board_name || "-").slice(0, 10)}</span>
+      </Tooltip>
+    ),
+    sortable: true,
+  },
+  {
+    name: "Status",
+    selector: (row) => row.is_active,
+    cell: (row) => (
+      <Tooltip title={row.is_active}>
+        <span>{row.is_active}</span>
+      </Tooltip>
+    ),
+    sortable: true,
+  },
+];
 
-  const formatDate1 = (datetime) => {
-    const date = new Date(datetime);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${day}-${month}-${year}`;
-  };
-
-  const columns = [
-    {
-      name: "Grade Name ",
-      selector: (row) => row.grade_name,
-      cell: (row) => (
-        <Tooltip title={row.grade_name}>
-          <span>{row.grade_name}</span>
-        </Tooltip>
-      ),
-      sortable: true,
-    },
-    {
-      name: "Minimum Marks ",
-      selector: (row) => row.min_marks,
-      cell: (row) => (
-        <Tooltip title={row.min_marks}>
-          <span>{row.min_marks}</span>
-        </Tooltip>
-      ),
-      sortable: true,
-    },
-    {
-      name: "Maximum Marks ",
-      selector: (row) => row.max_marks,
-      cell: (row) => (
-        <Tooltip title={row.max_marks}>
-          <span>{row.max_marks}</span>
-        </Tooltip>
-      ),
-      sortable: true,
-    },
-    {
-      name: "Gpa ",
-      selector: (row) => row.grade_points,
-      cell: (row) => (
-        <Tooltip title={row.grade_points}>
-          <span>{row.grade_points}</span>
-        </Tooltip>
-      ),
-      sortable: true,
-    },
-    {
-      name: "Subject ",
-      selector: (row) => row.subject_name,
-      cell: (row) => (
-        <Tooltip title={row.subject_name}>
-          <span>{row.subject_name}</span>
-        </Tooltip>
-      ),
-      sortable: true,
-    },
-    {
-      name: "Curriculum ",
-      selector: (row) => row.board_name,
-      cell: (row) => (
-        <Tooltip title={row.board_name}>
-          <span>{row.board_name}</span>
-        </Tooltip>
-      ),
-      sortable: true,
-    },
-    {
-      name: "Is Active",
-      selector: (row) => row.is_active,
-      cell: (row) => (
-        <Tooltip title={row.is_active}>
-          <span>{row.is_active}</span>
-        </Tooltip>
-      ),
-      sortable: true,
-    },
-     {
-                name: "Actions",
-                cell: (row) => row.grade_id !== "No records found" ? (
-                    <div className='tableActions'>
-                        <Tooltip title="Edit" arrow>
-                            <a className='commonActionIcons' onClick={() => handleEditClick(row.grade_id)}>
-                                <span><MdEdit /></span>
-                            </a>
-                        </Tooltip>
-    
-                        <Tooltip title="Delete" arrow>
-                            <a className='commonActionIcons' onClick={() => handleDeleteClick(row.grade_id)}>
-                                <span><MdDelete /></span>
-                            </a>
-                        </Tooltip>
-                    </div>
-                ) : null
-            },
-        ];
-  const customStyles = {
-    headCells: {
-      style: {
-        backgroundColor: "#EAE4E4",
-        color: "#757575",
-        fontSize: "16px",
-        textAlign: "center",
+// Conditionally add the Actions column
+const columns = canSubmit
+  ? [
+      ...baseColumns,
+      {
+        name: "Actions",
+        cell: (row) =>
+          row.grade_id !== "No records found" ? (
+            <div className="tableActions">
+              <Tooltip title="Edit" arrow>
+                <span
+                  className="commonActionIcons"
+                  onClick={() => handleEditClick(row.grade_id)}
+                >
+                  <MdEdit />
+                </span>
+              </Tooltip>
+              <Tooltip title="Delete" arrow>
+                <span
+                  className="commonActionIcons"
+                  onClick={() => handleDeleteClick(row.grade_id)}
+                >
+                  <MdDelete />
+                </span>
+              </Tooltip>
+            </div>
+          ) : null,
       },
-      className: "commonTH",
-    },
-    cells: {
-      style: {
-        fontSize: "16px",
-      },
-      className: "commonTD",
-    },
-  };
+    ]
+  : baseColumns;
 
   const searchableColumns = [
     (row) => row.grade_name,
@@ -246,12 +223,12 @@ const Grades = () => {
     (row) => row.is_active,
   ];
 
-  const filteredRecords = (grades || []).filter((grades) =>
+  const filteredRecords = (grades || []).filter((item) =>
     searchableColumns.some((selector) => {
-      const value = selector(grades);
-      return String(value || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      const value = selector(item);
+      const stringValue = String(value || '').toLowerCase().replace(/[-\s]+/g, '');
+      const normalizedQuery = searchQuery.toLowerCase().replace(/[-\s]+/g, '');
+      return stringValue.includes(normalizedQuery);
     })
   );
   const [form, setForm] = useState({
@@ -281,7 +258,7 @@ const Grades = () => {
       min_marks: form.min_marks || 0,
       max_marks: form.max_marks || 0,
       grade_points: form.grade_points || 0,
-      subject_name: form.subject_name || 0,
+      subject_id: form.subject_id || 0,
       board_name: form.board_name || 0,
       board_id: form.board_id || 0,
       school_id: userObj.school_id,
@@ -289,11 +266,13 @@ const Grades = () => {
     };
 
     try {
+      console.log(formData);
       const response = await axios.post(baseUrl + "/grades/", formData, {
         headers: {
           "Content-Type": "application/json",
         },
       });
+      console.log(response.data);
       const filterData = response.data || [];
       setGrades(filterData);
 
@@ -323,19 +302,6 @@ const Grades = () => {
     fetchGrades();
     setSearchQuery(event.target.value);
   };
-  const handleFilterClear = async () => {
-    setForm({
-      grade_name: "",
-      min_marks: "",
-      max_marks: "",
-      grade_points: "",
-      subject_name: "",
-      board_name: "",
-      action: "FILTER",
-    });
-    fetchGrades();
-  };
-
   return (
     <div className="pageMain">
       <ToastContainer />
@@ -347,15 +313,12 @@ const Grades = () => {
         <div className="pageBody">
           <div className="commonDataTableHead">
             <div className="d-flex justify-content-between align-items-center w-100">
-              {/* Title */}
               <div
                 className="d-flex align-items-center"
                 style={{ gap: "10px" }}
               >
                 <h6 className="commonTableTitle">Grades</h6>
               </div>
-
-              {/* Search Input */}
               <div className="">
                 <input
                   type="text"
@@ -365,8 +328,6 @@ const Grades = () => {
                   onChange={handleSearchChange}
                 />
               </div>
-
-              {/* Right Side - Filter and Add Buttons */}
               <div className="d-flex align-items-center" style={{ gap: 6 }}>
                 <OverlayTrigger
                   placement="top"
@@ -397,11 +358,11 @@ const Grades = () => {
                     Array.isArray(filteredRecords) && filteredRecords.length > 0
                       ? filteredRecords
                       : [
-                          {
-                            grade_id: "No records found",
-                            grade_points: "No records found",
-                          },
-                        ]
+                        {
+                          grade_id: "No records found",
+                          grade_points: "No records found",
+                        },
+                      ]
                   }
                   pagination={
                     Array.isArray(filteredRecords) && filteredRecords.length > 0
@@ -427,8 +388,6 @@ const Grades = () => {
           </div>
         </div>
       </div>
-
-      {/* Filter Modal Starts Here */}
       <Modal
         show={showFilterModal}
         onHide={handleCloseFilterModal}
@@ -450,29 +409,34 @@ const Grades = () => {
                     placeholder="Enter Grade Name"
                     maxLength={30}
                     onChange={handleInputChange}
-                    style={{ textTransform: "uppercase" }}
                   />
                 </Form.Group>
               </div>
             </Col>
             <Col xs={12}>
               <div className="commonInput">
-                <Form.Group controlId="firstName">
+                <Form.Group controlId="min_marks">
                   <Form.Label>Minimum Marks</Form.Label>
                   <Form.Control
                     type="text"
                     id="min_marks"
                     value={form.min_marks}
-                    placeholder="Enter Minimum Marks "
+                    placeholder="Enter Minimum Marks"
                     maxLength={3}
-                    onChange={handleInputChange}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (/^\d*\.?\d*$/.test(value)) {
+                        handleInputChange(e);
+                      }
+                    }}
                   />
                 </Form.Group>
               </div>
             </Col>
+
             <Col xs={12}>
               <div className="commonInput">
-                <Form.Group controlId="firstName">
+                <Form.Group controlId="max_marks">
                   <Form.Label>Maximum Marks</Form.Label>
                   <Form.Control
                     type="text"
@@ -480,14 +444,20 @@ const Grades = () => {
                     value={form.max_marks}
                     placeholder="Enter Maximum Marks"
                     maxLength={3}
-                    onChange={handleInputChange}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (/^\d*\.?\d*$/.test(value)) {
+                        handleInputChange(e);
+                      }
+                    }}
                   />
                 </Form.Group>
               </div>
             </Col>
+
             <Col xs={12}>
               <div className="commonInput">
-                <Form.Group controlId="firstName">
+                <Form.Group controlId="grade_points">
                   <Form.Label>Grade Points</Form.Label>
                   <Form.Control
                     type="text"
@@ -495,26 +465,40 @@ const Grades = () => {
                     value={form.grade_points}
                     placeholder="Enter Grade Points"
                     maxLength={3}
-                    onChange={handleInputChange}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (/^\d*\.?\d*$/.test(value)) {
+                        handleInputChange(e);
+                      }
+                    }}
                   />
                 </Form.Group>
               </div>
             </Col>
+
             <Col xs={12}>
               <div className="commonInput">
-                <Form.Group controlId="firstName">
+                <Form.Group>
                   <Form.Label>Subject</Form.Label>
-                  <Form.Control
-                    type="text"
-                    id="subject_name"
-                    value={form.subject_name}
-                    placeholder="Enter Subject Name"
-                    maxLength={30}
+                  <Form.Select
+                    required
+                    id="subject_id"
+                    value={form.subject_id || ""}
                     onChange={handleInputChange}
-                  />
+                  >
+                    <option value="">Select Subject</option>
+                    {(subjects || [])
+                      .filter((subject) => subject.is_active === "Active")
+                      .map((subject) => (
+                        <option key={subject.subject_id} value={subject.subject_id}>
+                          {subject.subject_name}
+                        </option>
+                      ))}
+                  </Form.Select>
                 </Form.Group>
               </div>
             </Col>
+
             <Col xs={12}>
               <div className="commonInput">
                 <Form.Label>Curriculum</Form.Label>

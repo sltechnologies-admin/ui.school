@@ -13,6 +13,8 @@ import axios from "axios";
 import DataTable from "react-data-table-component";
 import { Tooltip } from '@mui/material';
 import loading from "../../assets/images/common/loading.gif";
+import { useFeeModuleAccess } from "../hooks/useFeeModuleAccess";
+import { fetchDataRead } from "../../Utility";
 
 const Feeitemslist = () => {
     const [feeitemslists, setfeeitemslists] = useState([]);
@@ -22,14 +24,21 @@ const Feeitemslist = () => {
     const handleCloseFilterModal = () => setShowFilterModal(false);
     const handleShowFilterModal = () => setShowFilterModal(true);
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
+    const [feeCategories, setFeeCategories] = useState([]);
     const navigate = useNavigate();
     const userData = sessionStorage.getItem('user');
     const userObj = userData ? JSON.parse(userData) : {};
+    const [academicyears, setAcademicyears] = useState([]);
+
+    const currentUserRole = userObj.role_name?.trim();
+    const { canWrite } = useFeeModuleAccess(currentUserRole);
 
     useEffect(() => {
         document.title = "SCHOLAS";
         setIsLoading(true);
         fetchData("/feeitemslist/", setfeeitemslists).finally(() => setIsLoading(false));
+        fetchDataRead("/feecategory/", setFeeCategories, userObj.school_id);
+        fetchacademicyear();
     }, []);
 
     const handleEditClick = (fees_item_id) => {
@@ -37,7 +46,7 @@ const Feeitemslist = () => {
         if (employeemasterToEdit) {
             navigate("/addfeeitemslist", { state: { feeitemslistData: employeemasterToEdit } });
         } else {
-             console.error(`Fees Item Id ${fees_item_id} not found.`);
+            console.error(`Fees Item Id ${fees_item_id} not found.`);
         }
     };
 
@@ -45,6 +54,15 @@ const Feeitemslist = () => {
         try {
             const response = await axios.post(baseUrl + "/Feeitemslist/", { action: "READ", school_id: userObj.school_id });
             setfeeitemslists(response.data);
+        } catch (error) {
+            console.log("Error fetching data:", error);
+        }
+    };
+
+    const fetchacademicyear = async () => {
+        try {
+            const response = await axios.post(baseUrl + "/AcademicYear/", { action: "DROPDOWNREAD", school_id: userObj.school_id });
+            setAcademicyears(response.data);
         } catch (error) {
             console.log("Error fetching data:", error);
         }
@@ -60,7 +78,7 @@ const Feeitemslist = () => {
             fees_item_id: fees_item_id,
             action: "DELETE"
         };
-      
+
         try {
             const response = await axios.post(baseUrl + '/Feeitemslist/', requestBody, {
                 headers: {
@@ -78,24 +96,30 @@ const Feeitemslist = () => {
     };
 
     const columns = [
+       
         {
             name: "Fees Item",
-            selector: (row) => row.fees_item || "No Records Found",
+            selector: (row) => row.fees_item,
+            sortable: true,
+            cell: (row) => <Tooltip title={row.fees_item}>{row.fees_item}</Tooltip>,
+        },
+        {
+            name: "Fee Category",
+            selector: (row) => row.fee_category_name,
             sortable: true,
             cell: (row) =>
                 filteredRecords.length > 0 ? (
-                    <Tooltip title={row.fees_item}> {row.fees_item}</Tooltip>
-                ) : (
-                    <div className="noDataMessage">No Records Found</div>
-                ),
+                    <Tooltip title={row.fee_category_name}>{row.fee_category_name}</Tooltip>) : (<div className="noDataMessage">No Records Found</div>),
         },
         {
             name: "Status",
-            selector: (row) => <Tooltip title={row.status}> {row.status}</Tooltip>,
+            selector: (row) => row.status,
             sortable: true,
+            cell: (row) => <Tooltip title={row.status}> {row.status}</Tooltip>
         },
         {
             name: "Actions",
+            omit: !canWrite,
             cell: (row) =>
                 filteredRecords.length > 0 ? (
                     <div className='tableActions'>
@@ -118,6 +142,9 @@ const Feeitemslist = () => {
     const searchableColumns = [
         (row) => row.fees_item,
         (row) => row.status,
+        (row) => row.academic_year_name,
+        (row) => row.fee_category_name,
+
     ];
 
     const trimmedQuery = searchQuery.trim().toLowerCase();
@@ -137,6 +164,8 @@ const Feeitemslist = () => {
     const [form, setForm] = useState({
         fees_item: "",
         status: "",
+      academic_year_id: userObj.academic_year_id || "",
+        fee_category_id: "",
         action: "FILTER"
     });
 
@@ -157,9 +186,10 @@ const Feeitemslist = () => {
             fees_item: form.fees_item,
             status: form.status || "A",
             school_id: userObj.school_id,
+            fee_category_id: form.fee_category_id,
+            academic_year_id: userObj.academic_year_id || 0,
             action: 'FILTER',
         };
-
         try {
             const response = await axios.post(baseUrl + "/Feeitemslist/", formData, {
                 headers: {
@@ -167,7 +197,7 @@ const Feeitemslist = () => {
                 },
             });
             const filterData = response.data || [];
-            
+
             setfeeitemslists(filterData);
 
             setShowFilterModal(false);
@@ -181,7 +211,9 @@ const Feeitemslist = () => {
         e.preventDefault();
         setForm({
             fees_item: "",
-            status: ""
+            status: "",
+            academic_year_id: "",
+              fee_category_id: "",  
         });
         setShowFilterModal(true);
 
@@ -210,7 +242,7 @@ const Feeitemslist = () => {
                         <div className="commonDataTableHead">
                             <div className="d-flex justify-content-between align-items-center w-100">
                                 <div className="d-flex align-items-center" style={{ gap: "10px" }}>
-                                    <h6 className="commonTableTitle">Fee Items List</h6>
+                                    <h6 className="commonTableTitle">Fee Items List({userObj.academic_year_name})</h6>
                                 </div>
                                 <div className="">
                                     <input
@@ -227,11 +259,13 @@ const Feeitemslist = () => {
                                             <MdFilterList />
                                         </Button>
                                     </OverlayTrigger>
-                                    <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Add</Tooltip>}>
-                                        <Button className="primaryBtn" variant="primary" onClick={() => navigate("/addfeeitemslist")}>
-                                            <MdAddCircle />
-                                        </Button>
-                                    </OverlayTrigger>
+                                    {canWrite && (
+                                        <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Add</Tooltip>}>
+                                            <Button className="primaryBtn" variant="primary" onClick={() => navigate("/addfeeitemslist")}>
+                                                <MdAddCircle />
+                                            </Button>
+                                        </OverlayTrigger>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -248,7 +282,7 @@ const Feeitemslist = () => {
                                         data={
                                             filteredRecords.length > 0
                                                 ? filteredRecords
-                                                : [{ fees_item: "No Records Found" }]
+                                                : [{ fee_category_name: "No Records Found" }]
                                         }
                                         pagination={filteredRecords.length > 0}
                                         highlightOnHover
@@ -267,6 +301,28 @@ const Feeitemslist = () => {
                         <Modal.Body className="modalBodyScrollable">
                             <Row>
                                 <Col xs={12}>
+                                    <div className="commonInput">
+                                        <Form.Group>
+                                            <Form.Label>
+                                                Academic Year Name
+                                            </Form.Label>
+                                            <select
+                                                className="form-select"
+                                                name="academic_year_id"
+                                                value={form.academic_year_id}
+                                                onChange={handleInputChange}
+                                            >
+                                                <option value="">Select Academic Year Name</option>
+                                                {(academicyears || []).map((academicyear) => (
+                                                    <option key={academicyear.academic_year_id} value={academicyear.academic_year_id}>
+                                                        {academicyear.academic_year_name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </Form.Group>
+                                    </div>
+                                </Col>
+                                <Col xs={12}>
                                     <div className='commonInput'>
                                         <Form.Group controlId="feesitem">
                                             <Form.Label>Fees Item</Form.Label>
@@ -282,6 +338,34 @@ const Feeitemslist = () => {
                                                     }
                                                 }}
                                             />
+                                        </Form.Group>
+                                    </div>
+                                </Col>
+                                <Col xs={12} >
+                                    <div className="commonInput">
+                                        <Form.Group>
+                                            <Form.Label>
+                                                Fee Category<span className="requiredStar">*</span>
+                                            </Form.Label>
+                                            <select
+                                                required
+                                                className="form-select"
+                                                id="fee_category_id"
+                                                name="fee_category_id" 
+                                                value={form.fee_category_id}
+                                                onChange={handleInputChange}
+                                            >
+                                                <option value="">Select Fee Category</option>
+                                                {(feeCategories || [])
+                                                    .filter((category) => category.is_active === 'Active')
+                                                    .map((category) => (
+                                                        <option key={category.fee_category_id} value={category.fee_category_id}>
+                                                            {category.fee_category_name}
+                                                        </option>
+                                                    ))}
+                                            </select>
+
+
                                         </Form.Group>
                                     </div>
                                 </Col>

@@ -11,6 +11,8 @@ import { Tooltip } from '@mui/material';
 import loading from "../../assets/images/common/loading.gif";
 
 const Departments = () => {
+    const userData = sessionStorage.getItem('user');
+    const userObj = userData ? JSON.parse(userData) : {};
     const [Departments, setDepartments] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const navigate = useNavigate();
@@ -37,7 +39,8 @@ const Departments = () => {
     const fetchDepartments = async () => {
         try {
             const response = await axios.post(baseUrl + "/department/", {
-                action: "READ"
+                action: "READ",
+                school_id:userObj.school_id
             });
             setDepartments(response.data);
         } catch (error) {
@@ -46,7 +49,7 @@ const Departments = () => {
     };
     useEffect(() => {
         setIsLoading(true);
-        fetchDepartments("/Departments/", setDepartments).finally(() => setIsLoading(false));
+        fetchDepartments().finally(() => setIsLoading(false));
     }, []);
 
     const columns = [
@@ -57,7 +60,7 @@ const Departments = () => {
                     sortable: true,
                   },
                   {
-                    name: 'Is Active',
+                    name: 'Status',
                     selector: (row) => row.is_active,
                     cell: (row) => <Tooltip title={row.is_active}><span>{row.is_active}</span></Tooltip>,
                     sortable: true,

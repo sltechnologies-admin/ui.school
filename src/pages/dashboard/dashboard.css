@@ -205,3 +205,74 @@
  .dashboard-container::-webkit-scrollbar-thumb:hover {
      background: #555;
  }
+ .event-highlight {
+    background: #ffecb3 !important;
+    border-radius: 50%;
+    color: #000 !important;
+    font-weight: bold;
+  }
+  .custom-fee-table {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
+  padding: 8px 12px;
+  font-weight: bold;
+  background-color: #f1f3f5;
+  border-bottom: 2px solid #ccc;
+}
+
+.table-scroll-body {
+  overflow-y: auto;
+  max-height: 280px;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.table-row:nth-child(even) {
+  background-color: #fff;
+}
+
+.table-row:nth-child(odd) {
+  background-color: #f8f9fa;
+}
+
+.badge-danger {
+  background-color: #ffe5e5;
+  color: #d9534f;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-align: right;
+}
+
+.badge-success {
+  background-color: #e6ffea;
+  color: #28a745;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-align: right;
+}
+.table-sm th,
+.table-sm td {
+  vertical-align: middle;
+  text-align: center;
+}
+.table-header,
+.table-row {
+  grid-template-columns: 80px 1.5fr 1fr 1fr 1fr 1fr; /* ← add 1fr for current_due */
+}
+

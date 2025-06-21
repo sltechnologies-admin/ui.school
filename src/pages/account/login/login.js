@@ -254,7 +254,7 @@ const Login = () => {
                     <Image src={appIcon} alt="App Icon" fluid rounded />
                   </div>
                   <h2>Welcome Back!</h2>
-                  <p>Enter to get unlimited access to data & information.</p>
+                  <p>Log in to get things done..</p>
                 </Col>
               </Row>
             </div>

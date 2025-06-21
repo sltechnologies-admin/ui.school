@@ -21,11 +21,13 @@ function Exam() {
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
     const userData = sessionStorage.getItem('user');
     const userObj = userData ? JSON.parse(userData) : {};
+    const readOnlyRoles = ["Class Teacher", "Teacher", "Class Incharge", "School Admin"];
+    const canSubmit = !readOnlyRoles.includes(userObj.role_name?.trim());
 
     const handleEditClick = (exam_id) => {
         const ExamdataEdit = exams.find((user) => user.exam_id === exam_id);
         if (ExamdataEdit) {
-            navigate("/addexam", { state: { ExamData:  ExamdataEdit } });
+            navigate("/addexam", { state: { ExamData: ExamdataEdit } });
         }
     };
     const handleDeleteClick = async (exam_id) => {
@@ -60,24 +62,30 @@ function Exam() {
             sortable: true
         },
         {
-            name: "Is Active",
+            name: "Status",
             selector: row => row.is_active,
             cell: row => <Tooltip title={row.is_active}><span>{row.is_active}</span></Tooltip>,
             sortable: true
         },
-        {
-            name: "Actions",
-            cell: row => row.exam_id !== "No records found" ? (
-                <div className="tableActions">
-                    <Tooltip title="Edit" arrow>
-                        <span className="commonActionIcons" onClick={() => handleEditClick(row.exam_id)}> <MdEdit /></span>
-                    </Tooltip>
-                    <Tooltip title="Delete" arrow>
-                        <span className="commonActionIcons" onClick={() => handleDeleteClick(row.exam_id)}><MdDelete /> </span>
-                    </Tooltip>
-                </div>
-            ) : null
-        }
+        ...(canSubmit ? [
+            {
+                name: "Actions",
+                cell: row => row.exam_id !== "No records found" ? (
+                    <div className="tableActions">
+                        <Tooltip title="Edit" arrow>
+                            <span className="commonActionIcons" onClick={() => handleEditClick(row.exam_id)}>
+                                <MdEdit />
+                            </span>
+                        </Tooltip>
+                        <Tooltip title="Delete" arrow>
+                            <span className="commonActionIcons" onClick={() => handleDeleteClick(row.exam_id)}>
+                                <MdDelete />
+                            </span>
+                        </Tooltip>
+                    </div>
+                ) : null
+            }
+        ] : [])
     ];
     useEffect(() => {
         setIsLoading(true);
@@ -88,14 +96,15 @@ function Exam() {
         row => row.exam_name,
         row => row.is_active
     ];
-    const filteredRecords = (exams || []).filter((user) =>
-        searchableColumns.some((selector) => {
-            const value = selector(user);
-            return String(value || "")
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase());
-        })
-    );
+  const filteredRecords = (exams || []).filter((user) =>
+  searchableColumns.some((selector) => {
+    const value = selector(user);
+    return String(value || "")
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+  })
+);
+
     const [filter, setFilter] = useState({
         exam_name: "",
         school_id: userObj.school_id,
@@ -104,9 +113,10 @@ function Exam() {
 
     const handleFilterSubmit = async (e) => {
         e.preventDefault();
-        setIsLoading(true);
+
         const formData = {
             exam_name: filter.exam_name || "",
+            school_id: userObj.school_id,
             action: "FILTER",
         };
         try {
@@ -131,15 +141,13 @@ function Exam() {
             } else {
                 toast.error("Network error. Please check your connection.");
             }
-        } finally {
-            setIsLoading(false);
         }
     };
     const handleFilterClear = async () => {
         setFilter((prev) => ({ ...prev, exam_name: "" }));
         setIsLoading(true);
         try {
-            await fetchDataRead("/exammaster", setExams, userObj.school_id);
+            await fetchDataRead("/exammaster/", setExams, userObj.school_id);
         } catch (error) {
             console.error("Error fetching all exams:", error);
         } finally {
@@ -147,7 +155,7 @@ function Exam() {
         }
     };
     const handleSearchChange = (event) => {
-        fetchDataRead("/exammaster", setExams, userObj.school_id);
+        fetchDataRead("/exammaster/", setExams, userObj.school_id);
         setSearchQuery(event.target.value);
     };
     return (
@@ -173,11 +181,22 @@ function Exam() {
                                         <MdFilterList />
                                     </Button>
                                 </OverlayTrigger>
-                                <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Add</Tooltip>}>
-                                    <Button className="primaryBtn" variant="primary" onClick={() => navigate("/addexam")}>
-                                        < MdAddCircle />
-                                    </Button>
+                                <OverlayTrigger
+                                    placement="top"
+                                    overlay={<Tooltip id="tooltip-top">{canSubmit ? "Add" : "No Permission"}</Tooltip>}
+                                >
+                                    <span>
+                                        <Button
+                                            className="primaryBtn"
+                                            variant="primary"
+                                            onClick={() => navigate("/addexam")}
+                                            disabled={!canSubmit}
+                                        >
+                                            <MdAddCircle />
+                                        </Button>
+                                    </span>
                                 </OverlayTrigger>
+
                             </div>
                         </div>
                     </div>
@@ -193,7 +212,8 @@ function Exam() {
                                     columns={columns}
                                     data={(Array.isArray(filteredRecords) && filteredRecords.length > 0)
                                         ? filteredRecords
-                                        : [{ exam_id: "No records found", is_active: "No records found",
+                                        : [{
+                                            exam_id: "No records found", is_active: "No records found",
                                         }]
                                     }
                                     pagination={Array.isArray(filteredRecords) && filteredRecords.length > 0}
@@ -226,8 +246,14 @@ function Exam() {
                                 <div className="commonInput">
                                     <Form.Group controlId="groupName">
                                         <Form.Label>Exam Name</Form.Label>
-                                        <Form.Control type="text" placeholder="Enter Exam Name" maxLength={35} value={filter.exam_name}
-                                            onChange={(e) => {const value = e.target.value;  if (/^[a-zA-Z0-9\s]*$/.test(value)) { setFilter({ ...filter, exam_name: value }); }}} 
+                                        <Form.Control type="text" placeholder="Enter Exam Name" maxLength={20} value={filter.exam_name}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                if (/^[a-zA-Z0-9\s-]*$/.test(value)) {
+                                                    setFilter({ ...filter, exam_name: value });
+                                                }
+                                            }}
+
                                         />
                                     </Form.Group>
                                 </div>
@@ -240,7 +266,7 @@ function Exam() {
                         <Button variant="secondary" className="btn-info clearBtn" onClick={handleFilterClear}>   Reset  </Button>
                     </div>
                     <div className="">
-                        <Button variant="secondary" className="btn-danger secondaryBtn" onClick={handleCloseFilterModal}> Close </Button>
+                        <Button variant="secondary" className="btn-danger secondaryBtn" onClick={handleCloseFilterModal}> Cancel </Button>
                         <Button variant="primary" className="btn-success primaryBtn" type="submit" form="filterForm" onClick={handleCloseFilterModal}>  Search </Button>
                     </div>
                 </Modal.Footer>

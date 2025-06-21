@@ -45,6 +45,7 @@ const FeesScheduleApi = forwardRef(({ p_academic_year_id, p_class_id, p_school_i
                         fees_item_id: row.fees_item_id,
                         fees_schedule_id: row.fees_schedule_id,
                         total_amount: row.total_amount,
+                        fee_category_name: row.fee_category_name,
                         due_dates: { ...row.result },
                         result: { ...row.result }
                     });
@@ -86,10 +87,14 @@ const FeesScheduleApi = forwardRef(({ p_academic_year_id, p_class_id, p_school_i
         const rowTotal = terms.reduce((total, term) => total + (currentRow.result[term] || 0), 0);
         const newRowTotal = rowTotal - (currentRow.result[term] || 0) + numericValue;
 
-        if (newRowTotal > currentRow.total_amount) {
+        if (
+            currentRow.fees_item.toLowerCase() !== "previous due" &&
+            newRowTotal > currentRow.total_amount
+        ) {
             alert(`Total amount for "${feesItem}" cannot exceed ${currentRow.total_amount}`);
             return;
         }
+
 
         setData((prevData) =>
             prevData.map((item) =>
@@ -130,9 +135,9 @@ const FeesScheduleApi = forwardRef(({ p_academic_year_id, p_class_id, p_school_i
             let isRowValid = true;
             let rowTotal = 0;
 
-            if (row.total_amount === 0) {
-                return;
-            }
+            // if (row.total_amount === 0) {
+            //     return;
+            // }
 
             Object.keys(row.result).forEach((term) => {
                 const amount = row.result[term];
@@ -188,7 +193,10 @@ const FeesScheduleApi = forwardRef(({ p_academic_year_id, p_class_id, p_school_i
     };
 
     return (
-        <div>
+        <div style={{
+    maxWidth: "1500px",
+    overflowX: "auto",
+  }}>
             <table className="fees-table">
                 <thead>
                     <tr>
@@ -210,8 +218,15 @@ const FeesScheduleApi = forwardRef(({ p_academic_year_id, p_class_id, p_school_i
                                         value={row.result[term] || ''}
                                         onChange={(e) => handleAmountChange(row.fees_item, term, e.target.value)}
                                         style={{ width: '80px' }}
-                                        disabled={row.total_amount === 0}
+                                        disabled={
+                                            // row.total_amount === 0 ||
+                                            (row.fee_category_name === 'Onetime Fee'
+                                                ? term !== 'Others'
+                                                : term === 'Others')
+                                        }
                                     />
+
+
                                 </td>
                             ))}
                             <td className="total-cell">{calculateRowTotal(row)}</td>

@@ -1,0 +1,85 @@
+# Node modules and package manager files
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+pnpm-lock.yaml
+
+# Build artifacts
+dist/
+build/
+.cache/
+.vite/
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Temporary files
+*.swp
+*.swo
+*.bak
+
+# **VS Code Specific**
+.vscode/*
+!.vscode/settings.json  # Allow project-specific settings
+!.vscode/extensions.json  # Allow recommended extensions
+.vscode/*.code-workspace
+.history/  # VS Code History extension
+
+# macOS / Linux / Windows system files
+.DS_Store
+Thumbs.db
+*.~lock.*
+
+# Jest / Testing
+coverage/
+jest/
+*.snap
+test-output/
+
+# Parcel, Webpack, and Babel cache
+.cache/
+.babelrc
+.parcel-cache/
+
+# Linting reports
+.eslintcache
+
+# Docker related
+docker-compose.override.yml
+.dockerignore
+
+# Public runtime files
+public/static/
+public/media/
+
+# Security / Secrets (DO NOT COMMIT API Keys)
+firebase.json
+*.pem
+config.json
+secret.json
+serviceAccountKey.json
+
+# Deployment
+out/
+.now/
+.vercel/
+.netlify/
+
+# GitHub Actions
+.github/workflows/*.log
+
+# TypeScript / Next.js (if applicable)
+.next/
+.nuxt/
+*.tsbuildinfo

@@ -11,14 +11,21 @@ import { ToastContainer, toast } from 'react-toastify';
 import Header from '../../components/layout/header/header';
 import LeftNav from '../../components/layout/leftNav/leftNav';
 import axios from "axios";
+import { useFeeModuleAccess } from "../hooks/useFeeModuleAccess";
+import { fetchDataRead } from "../../Utility";
 
 const AddFeeSchedule = () => {
     const routeLocation = useLocation();
     const [editId, setEditId] = useState(null);
     const [academics, setAcademics] = useState([]);
+    const [feeScheduleTypes, setFeeScheduleTypes] = useState([]);
+
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
     const userData = sessionStorage.getItem('user');
     const userObj = JSON.parse(userData);
+
+    const currentUserRole = userObj.role_name?.trim();
+    const { canWrite } = useFeeModuleAccess(currentUserRole);
 
     const [form, setForm] = useState({
         fee_schedule_id: "",
@@ -27,12 +34,18 @@ const AddFeeSchedule = () => {
         schedule_name: "",
         due_date: "",
         alerts_on: "",
+        fee_schedule_type_id:"",
         school_id: "",
-        status: "A"
+        status: "A",
+        start_date: "",
+        end_date: "",
+        alerts_start_date: ""
     });
 
     useEffect(() => {
         fetchAcademicYears();
+        fetchDataRead("/feescheduletype/", setFeeScheduleTypes, userObj.school_id);
+
     }, []);
 
     useEffect(() => {
@@ -74,14 +87,18 @@ const AddFeeSchedule = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const approveStatus = { 'Yes': 'Y', 'No': 'N' };
-        const selectedStatus = approveStatus[form.alerts_on] || form.alerts_on;
+        // const approveStatus = { 'Yes': 'Y', 'No': 'N' };
+        // const selectedStatus = approveStatus[form.alerts_on] || form.alerts_on;
 
         const formData = {
             academic_year_id: userObj.academic_year_id,
             schedule_name: form.schedule_name,
             due_date: form.due_date,
-            alerts_on: selectedStatus,
+            start_date: form.start_date,
+            end_date: form.end_date,
+            alerts_start_date: form.alerts_start_date,
+            fee_schedule_type_id:form.fee_schedule_type_id,
+            //alerts_on: selectedStatus,
             school_id: userObj.school_id,
             status: form.status || "A",
             action: editId !== null ? 'UPDATE' : 'CREATE'
@@ -108,8 +125,12 @@ const AddFeeSchedule = () => {
             setForm({
                 schedule_name: "",
                 due_date: "",
-                alerts_on: "",
+                //alerts_on: "",
                 status: "A",
+                fee_schedule_type_id:"",
+                start_date: "",
+                end_date: "",
+                alerts_start_date: "",
             });
         }
         catch (error) {
@@ -119,6 +140,12 @@ const AddFeeSchedule = () => {
                 if (status === 400) {
                     if (data.error === "Duplicate entry for academic_year_id") {
                         toast.error("Record Already Exists.", { position: "top-right" });
+                    }
+                    if (data.error === "New due date cannot be less than or equal to the maximum existing date for academic_year_id") {
+                        toast.error("Due Date Can Not Be Less Than or Equal To Previous Due Date", { position: "top-right" });
+                    }
+                    if (data.error === "Overlapping fee schedule already exists for the selected date range") {
+                        toast.error("Fee Schedule Already Exists For The Selected Date Range", { position: "top-right" });
                     }
                 }
 
@@ -153,32 +180,51 @@ const AddFeeSchedule = () => {
                                         <div className=''>
                                             <Row>
                                                 <Col xs={12}>
-                                                    <h6 className='commonSectionTitle'>Fees Schedule</h6>
+                                                    <h6 className='commonSectionTitle'>Fees Schedule Details</h6>
                                                 </Col>
                                             </Row>
                                             <Row>
                                                 <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className='commonInput'>
+                                                    <div className="commonInput">
                                                         <Form.Group>
-                                                            <Form.Label>Academic Year<span className='requiredStar'>*</span></Form.Label>
+                                                            <Form.Label>
+                                                                Academic Year Name<span className="requiredStar">*</span>
+                                                            </Form.Label>
+                                                            <div className="form-control-plaintext">
+                                                                {userObj.academic_year_name}
+                                                            </div>
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className="commonInput">
+                                                        <Form.Group controlId="fee_schedule_type_id">
+                                                            <Form.Label>
+                                                                Fee Schedule Type<span className="requiredStar">*</span>
+                                                            </Form.Label>
                                                             <select
-                                                                disabled
                                                                 className="form-select"
-                                                                id="academic_year_id"
-                                                                required
-                                                                value={form.academic_year_id}
+                                                                name="fee_schedule_type_id"
+                                                                id='fee_schedule_type_id'
+                                                                value={form.fee_schedule_type_id}
                                                                 onChange={handleInputChange}
                                                             >
-                                                                <option value="">Select Academic Year</option>
-                                                                {academics.map((academic) => (
-                                                                    <option key={academic.academic_year_id} value={academic.academic_year_id}>
-                                                                        {academic.academic_year_name}
-                                                                    </option>
-                                                                ))}
+                                                                <option value="">Select Fee Schedule Type</option>
+                                                                {(feeScheduleTypes || [])
+                                                                    .filter(type => type.is_active === 'Active') // Only active types
+                                                                    .map((type) => (
+                                                                        <option
+                                                                            key={type.fee_schedule_type_id}
+                                                                            value={type.fee_schedule_type_id}
+                                                                        >
+                                                                            {type.fee_schedule_type_name}
+                                                                        </option>
+                                                                    ))}
                                                             </select>
                                                         </Form.Group>
                                                     </div>
                                                 </Col>
+
                                                 <Col xs={12} md={6} lg={4} xxl={3}>
                                                     <div className='commonInput'>
                                                         <Form.Group>
@@ -190,12 +236,44 @@ const AddFeeSchedule = () => {
                                                                 value={form.schedule_name}
                                                                 placeholder="Enter Schedule Name"
                                                                 onChange={(e) => {
-                                                                    const regex = /^[A-Za-z\s]*$/;
+                                                                    const regex = /^[A-Za-z0-9\s]*$/;
                                                                     if (regex.test(e.target.value)) {
                                                                         handleInputChange(e);
                                                                     }
                                                                 }}
                                                                 maxLength={30}
+                                                            />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
+                                                            <Form.Label>Start Date<span className='requiredStar'>*</span></Form.Label>
+                                                            <Form.Control
+                                                                required
+                                                                type="date"
+                                                                id="start_date"
+                                                                value={form.start_date}
+                                                                placeholder="Enter Start Date"
+                                                                onChange={handleInputChange}
+                                                            />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
+                                                            <Form.Label>End Date<span className='requiredStar'>*</span></Form.Label>
+                                                            <Form.Control
+                                                                required
+                                                                type="date"
+                                                                id="end_date"
+                                                                value={form.end_date}
+                                                                placeholder="Enter End Date"
+                                                                onChange={handleInputChange}
+                                                                  min={form.start_date}
+
                                                             />
                                                         </Form.Group>
                                                     </div>
@@ -211,11 +289,30 @@ const AddFeeSchedule = () => {
                                                                 value={form.due_date}
                                                                 placeholder="Enter Due Date"
                                                                 onChange={handleInputChange}
+                                                                  min={form.start_date}
+
                                                             />
                                                         </Form.Group>
                                                     </div>
                                                 </Col>
                                                 <Col xs={12} md={6} lg={4} xxl={3}>
+                                                    <div className='commonInput'>
+                                                        <Form.Group>
+                                                            <Form.Label>Alerts Start Date<span className='requiredStar'>*</span></Form.Label>
+                                                            <Form.Control
+                                                                required
+                                                                type="date"
+                                                                id="alerts_start_date"
+                                                                value={form.alerts_start_date}
+                                                                placeholder="Enter Alerts Start Date"
+                                                                onChange={handleInputChange}
+                                                                  min={form.start_date}
+
+                                                            />
+                                                        </Form.Group>
+                                                    </div>
+                                                </Col>
+                                                {/* <Col xs={12} md={6} lg={4} xxl={3}>
                                                     <div className="commonInput">
                                                         <Form.Group>
                                                             <Form.Label>Alerts On<span className='requiredStar'>*</span></Form.Label>
@@ -248,7 +345,7 @@ const AddFeeSchedule = () => {
                                                             </div>
                                                         </Form.Group>
                                                     </div>
-                                                </Col>
+                                                </Col> */}
                                             </Row>
                                         </div>
                                         <div className="d-flex justify-content-between mt-3">
@@ -260,7 +357,10 @@ const AddFeeSchedule = () => {
                                                     onClick={() => setForm({
                                                         schedule_name: "",
                                                         due_date: "",
-                                                        alerts_on: "",
+                                                        start_date: "",
+                                                        fee_schedule_type_id:"",
+                                                        end_date: "",
+                                                        alerts_start_date: ""
                                                     })}
                                                 >
                                                     Reset
@@ -275,9 +375,11 @@ const AddFeeSchedule = () => {
                                                 >
                                                     Cancel
                                                 </Button>
-                                                <Button type="submit" variant="primary" className="btn-success primaryBtn">
-                                                    Submit
-                                                </Button>
+                                                {canWrite && (
+                                                    <Button type="submit" variant="primary" className="btn-success primaryBtn">
+                                                        Submit
+                                                    </Button>
+                                                )}
                                             </div>
                                         </div>
                                     </form>

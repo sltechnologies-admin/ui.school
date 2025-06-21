@@ -42,6 +42,7 @@ const LeftNav = () => {
             location.pathname.startsWith('/roles') || location.pathname.startsWith('/AddRoles') ||
             location.pathname.startsWith('/departments') || location.pathname.startsWith('/AddDepartments') ||
             location.pathname.startsWith('/dashboard') ||
+            location.pathname.startsWith('/principaldashboard') ||
             location.pathname.startsWith('/schoolcalendar') || location.pathname.startsWith('/addevent')
 
         ) {
@@ -66,14 +67,29 @@ const LeftNav = () => {
             location.pathname.startsWith('/syllabus') ||
             location.pathname.startsWith('/addsyllabus') ||
             location.pathname.startsWith('/timetable') ||
-            location.pathname.startsWith('/addtimetable')
+
+            location.pathname.startsWith('/addtimetable') ||
+            location.pathname.startsWith('/academicyear') ||
+            location.pathname.startsWith('/category') ||
+            location.pathname.startsWith('/addcategory') ||
+            location.pathname.startsWith('/promotestudents') ||
+            location.pathname.startsWith('/approvals') ||
+            location.pathname.startsWith('/teachertimetable')
+
+
+
+
+
+
+
+
         ) {
             setActiveKey("2");
 
         } else if (
             location.pathname.startsWith('/creategroups') || location.pathname.startsWith('/addcreategroups') ||
             location.pathname.startsWith('/sendnotifications') || location.pathname.startsWith('/addnotifications') ||
-            // location.pathname.startsWith('/createnotifications') || location.pathname.startsWith('/addnotifiaction') ||
+            location.pathname.startsWith('/notifications') || location.pathname.startsWith('/addnewnotification') ||
             location.pathname.startsWith('/groupmembers') || location.pathname.startsWith('/addgroupmembers')
         ) {
             setActiveKey("13");
@@ -86,7 +102,8 @@ const LeftNav = () => {
             location.pathname.startsWith('/feeitemschedule1') || location.pathname.startsWith('/addfeeitemschedule1') ||
             location.pathname.startsWith('/feeschedule') || location.pathname.startsWith('/addfeeschedule') ||
             location.pathname.startsWith('/feesstudentsschedule') || location.pathname.startsWith('/addfeesstudentsschedule') ||
-            location.pathname.startsWith('/feereceipts') || location.pathname.startsWith('/addfeereceipts')
+            location.pathname.startsWith('/feereceipts') || location.pathname.startsWith('/addfeereceipts') ||
+            location.pathname.startsWith('/feecategory') || location.pathname.startsWith('/addfeecategory')
 
         ) {
             setActiveKey("3");
@@ -106,7 +123,10 @@ const LeftNav = () => {
             location.pathname.startsWith('/wiseattendancereport') ||
             location.pathname.startsWith('/admissionreport') ||
             location.pathname.startsWith('/typereport') ||
-            location.pathname.startsWith('/schoolstrength')
+            location.pathname.startsWith('/schoolstrength') ||
+            location.pathname.startsWith('/classwisestudentsreport') ||
+            location.pathname.startsWith('/classwiseteachersreport') ||
+            location.pathname.startsWith('/classwisetechersubject')
         ) {
             setActiveKey("6");
         }
@@ -143,13 +163,30 @@ const LeftNav = () => {
                         </Accordion.Header>
                         <Accordion.Collapse eventKey="2">
                             <Nav className="flex-column">
-                                <NavLink to="/studentacademicyear" className={({ isActive }) =>
+                                <NavLink to="/academicyear" className={({ isActive }) =>
+                                    isActive || location.pathname.startsWith('/academicyear') ? 'nav-link active' : 'nav-link'
+                                }>
+                                    <OverlayTrigger placement="right" overlay={<Tooltip>Academic </Tooltip>}>
+                                        <span className='leftNavIcon'><BsCalendar /></span>
+                                    </OverlayTrigger>
+                                    <span className='leftNavIconLabel'>Academic </span>
+                                </NavLink>
+
+                                {/* <NavLink to="/studentacademicyear" className={({ isActive }) =>
                                     isActive || location.pathname.startsWith('/AddStudentAcademic') ? 'nav-link active' : 'nav-link'
                                 }>
                                     <OverlayTrigger placement="right" overlay={<Tooltip>Academic Years</Tooltip>}>
                                         <span className='leftNavIcon'><BsCalendar /></span>
                                     </OverlayTrigger>
                                     <span className='leftNavIconLabel'>Academic Years</span>
+                                </NavLink> */}
+                                <NavLink to="/category" className={({ isActive }) =>
+                                    isActive || location.pathname.startsWith('/addcategory') ? 'nav-link active' : 'nav-link'
+                                }>
+                                    <OverlayTrigger placement="right" overlay={<Tooltip>Category</Tooltip>}>
+                                        <span className='leftNavIcon'><BsBook /></span>
+                                    </OverlayTrigger>
+                                    <span className='leftNavIconLabel'>Category</span>
                                 </NavLink>
                                 <NavLink to="/classes" className={({ isActive }) =>
                                     isActive || location.pathname.startsWith('/addnewclass') ? 'nav-link active' : 'nav-link'
@@ -167,22 +204,22 @@ const LeftNav = () => {
                                     </OverlayTrigger>
                                     <span className='leftNavIconLabel'>Subjects</span>
                                 </NavLink>
-                                <NavLink to="/sections" className={({ isActive }) =>
+                                {/* <NavLink to="/sections" className={({ isActive }) =>
                                     isActive || location.pathname.startsWith('/AddNewSections') ? 'nav-link active' : 'nav-link'
                                 }>
                                     <OverlayTrigger placement="right" overlay={<Tooltip>Academic Sections</Tooltip>}>
                                         <span className='leftNavIcon'><BsCardChecklist /></span>
                                     </OverlayTrigger>
                                     <span className='leftNavIconLabel'>Academic Sections</span>
-                                </NavLink>
-                                <NavLink to="/teachersubjectmap" className={({ isActive }) =>
+                                </NavLink> */}
+                                {/* <NavLink to="/teachersubjectmap" className={({ isActive }) =>
                                     isActive || location.pathname.startsWith('/addteachersubjectmap') ? 'nav-link active' : 'nav-link'
                                 }>
                                     <OverlayTrigger placement="right" overlay={<Tooltip>Academic Class Setup</Tooltip>}>
                                         <span className='leftNavIcon'><HiOutlineAcademicCap /></span>
                                     </OverlayTrigger>
                                     <span className='leftNavIconLabel'>Academic Class Setup</span>
-                                </NavLink>
+                                </NavLink> */}
                                 <NavLink
                                     to="/students"
                                     className={({ isActive }) =>
@@ -246,14 +283,42 @@ const LeftNav = () => {
                                     </OverlayTrigger>
                                     <span className='leftNavIconLabel'>Syllabus Planning</span>
                                 </NavLink>
-                                <NavLink to="/Promote Students" className={({ isActive }) =>
-                                    isActive || location.pathname.startsWith('/Promote Students') ? 'nav-link active' : 'nav-link'
+                                <NavLink to="/promotestudents" className={({ isActive }) =>
+                                    isActive || location.pathname.startsWith('/promotestudents') ? 'nav-link active' : 'nav-link'
                                 }>
                                     <OverlayTrigger placement="right" overlay={<Tooltip>Promote Students</Tooltip>}>
                                         <span className='leftNavIcon'><BsBook /></span>
                                     </OverlayTrigger>
                                     <span className='leftNavIconLabel'>Promote Students</span>
                                 </NavLink>
+
+                                <NavLink to="/assignlanguages" className={({ isActive }) =>
+                                    isActive || location.pathname.startsWith('/assignlanguages') ? 'nav-link active' : 'nav-link'
+                                }>
+                                    <OverlayTrigger placement="right" overlay={<Tooltip>Assign languages</Tooltip>}>
+                                        <span className='leftNavIcon'><BsBook /></span>
+                                    </OverlayTrigger>
+                                    <span className='leftNavIconLabel'>Assign languages</span>
+                                </NavLink>
+
+                                <NavLink to="/teachertimetable" className={({ isActive }) =>
+                                    isActive || location.pathname.startsWith('/teachertimetable') ? 'nav-link active' : 'nav-link'
+                                }>
+                                    <OverlayTrigger placement="right" overlay={<Tooltip>Teacher Timetable</Tooltip>}>
+                                        <span className='leftNavIcon'><BsBook /></span>
+                                    </OverlayTrigger>
+                                    <span className='leftNavIconLabel'>Teacher Timetable</span>
+                                </NavLink>
+
+                                <NavLink to="/approvals" className={({ isActive }) =>
+                                    isActive || location.pathname.startsWith('/approvals') ? 'nav-link active' : 'nav-link'
+                                }>
+                                    <OverlayTrigger placement="right" overlay={<Tooltip> Approvals</Tooltip>}>
+                                        <span className='leftNavIcon'><BsBook /></span>
+                                    </OverlayTrigger>
+                                    <span className='leftNavIconLabel'>Approvals </span>
+                                </NavLink>
+
 
                             </Nav>
                         </Accordion.Collapse>
@@ -269,7 +334,16 @@ const LeftNav = () => {
                             <span className='leftNavIconLabel'>Fee Management</span>
                         </Accordion.Header>
                         <Accordion.Collapse eventKey="3">
+
                             <Nav className="flex-column">
+                                <NavLink to="/feecategory" className={({ isActive }) =>
+                                    isActive || location.pathname === '/addfeecategory' ? 'nav-link active' : 'nav-link'
+                                }>
+                                    <OverlayTrigger placement="right" overlay={<Tooltip>Fee Category</Tooltip>}>
+                                        <span className='leftNavIcon'><BsPeople /></span>
+                                    </OverlayTrigger>
+                                    <span className='leftNavIconLabel'>Fee Category</span>
+                                </NavLink>
                                 <NavLink to="/feeitemslist" className={({ isActive }) =>
                                     isActive || location.pathname === '/addfeeitemslist' ? 'nav-link active' : 'nav-link'
                                 }>
@@ -285,6 +359,14 @@ const LeftNav = () => {
                                         <span className='leftNavIcon'><BsPeople /></span>
                                     </OverlayTrigger>
                                     <span className='leftNavIconLabel'>Fees Items Amount</span>
+                                </NavLink>
+                                 <NavLink to="/feescheduletype" className={({ isActive }) =>
+                                    isActive || location.pathname === '/addfeescheduletype' ? 'nav-link active' : 'nav-link'
+                                }>
+                                    <OverlayTrigger placement="right" overlay={<Tooltip>Fee Schedule Type </Tooltip>}>
+                                        <span className='leftNavIcon'><BsPeople /></span>
+                                    </OverlayTrigger>
+                                    <span className='leftNavIconLabel'>Fee Schedule Type</span>
                                 </NavLink>
                                 <NavLink to="/feeschedule" className={({ isActive }) =>
                                     isActive || location.pathname === '/addfeeschedule' ? 'nav-link active' : 'nav-link'
@@ -318,6 +400,7 @@ const LeftNav = () => {
                                     </OverlayTrigger>
                                     <span className='leftNavIconLabel'>Fee Receipts</span>
                                 </NavLink>
+                               
                             </Nav>
                         </Accordion.Collapse>
                     </Accordion.Item>
@@ -370,7 +453,7 @@ const LeftNav = () => {
                                     <OverlayTrigger placement="right" overlay={<Tooltip>Exam Results</Tooltip>}>
                                         <span className="leftNavIcon"><BsClipboardData /></span>
                                     </OverlayTrigger>
-                                    <span className="leftNavIconLabel">Upload Results</span>
+                                    <span className="leftNavIconLabel">Exam Results</span>
                                 </NavLink>
 
                             </Nav>
@@ -405,15 +488,15 @@ const LeftNav = () => {
                                     </OverlayTrigger>
                                     <span className='leftNavIconLabel'>Group Members</span>
                                 </NavLink>
-                                {/* <NavLink to="/createnotifications" className={({ isActive }) =>
-                                    isActive || location.pathname.startsWith('/addnotification') ? 'nav-link active' : 'nav-link'
+                                <NavLink to="/notifications" className={({ isActive }) =>
+                                    isActive || location.pathname.startsWith('/addnewnotification') ? 'nav-link active' : 'nav-link'
                                 }>
 
                                     <OverlayTrigger placement="right" overlay={<Tooltip>Create Notifications</Tooltip>}>
                                         <span className='leftNavIcon'><BsPeople /></span>
                                     </OverlayTrigger>
                                     <span className='leftNavIconLabel'>Create Notifications</span>
-                                </NavLink> */}
+                                </NavLink>
                                 <NavLink to="/sendnotifications" className={({ isActive }) =>
                                     isActive || location.pathname.startsWith('/addnotifications') ? 'nav-link active' : 'nav-link'
                                 }>
@@ -450,6 +533,17 @@ const LeftNav = () => {
                                         <span className='leftNavIcon'><BsPeople /></span>
                                     </OverlayTrigger>
                                     <span className='leftNavIconLabel'>Dashboard</span>
+                                </NavLink>
+                                <NavLink
+                                    to="/principaldashboard"
+                                    className={({ isActive }) =>
+                                        isActive || location.pathname.startsWith('/principaldashboard') ? 'nav-link active' : 'nav-link'
+                                    }
+                                >
+                                    <OverlayTrigger placement="right" overlay={<Tooltip>Principal Dashboard</Tooltip>}>
+                                        <span className='leftNavIcon'><BsPeople /></span>
+                                    </OverlayTrigger>
+                                    <span className='leftNavIconLabel'>Principal Dashboard</span>
                                 </NavLink>
 
                                 <NavLink
@@ -572,10 +666,10 @@ const LeftNav = () => {
                                 <NavLink to="/wiseattendancereport" className={({ isActive }) =>
                                     isActive || location.pathname.startsWith('/wiseattendancereport') ? 'nav-link active' : 'nav-link'
                                 }>
-                                    <OverlayTrigger placement="right" overlay={<Tooltip>Student Day Wise Attendance Report</Tooltip>}>
+                                    <OverlayTrigger placement="right" overlay={<Tooltip> Day Wise Attendance Report</Tooltip>}>
                                         <span className="leftNavIcon"><RiUserStarFill /></span>
                                     </OverlayTrigger>
-                                    <span className="leftNavIconLabel">Student Day Wise Attendance Report</span>
+                                    <span className="leftNavIconLabel"> Day Wise Attendance Report</span>
                                 </NavLink>
 
                                 <NavLink to="/schoolstrength" className={({ isActive }) =>
@@ -586,6 +680,39 @@ const LeftNav = () => {
                                     </OverlayTrigger>
                                     <span className='leftNavIconLabel'>School Strength</span>
                                 </NavLink>
+                                 <NavLink to="/classwisestudentsreport" className={({ isActive }) =>
+                                    isActive || location.pathname.startsWith('/classwisestudentsreport') ? 'nav-link active' : 'nav-link'
+                                }>
+                                    <OverlayTrigger placement="right" overlay={<Tooltip>Classwise Students</Tooltip>}>
+                                        <span className='leftNavIcon'><BsPersonCheck /></span>
+                                    </OverlayTrigger>
+                                    <span className='leftNavIconLabel'>Classwise Students</span>
+                                </NavLink>
+                                 <NavLink to="/classwiseteachersreport" className={({ isActive }) =>
+                                    isActive || location.pathname.startsWith('/classwiseteachersreport') ? 'nav-link active' : 'nav-link'
+                                }>
+                                    <OverlayTrigger placement="right" overlay={<Tooltip>Classwise Teachers</Tooltip>}>
+                                        <span className='leftNavIcon'><BsPersonCheck /></span>
+                                    </OverlayTrigger>
+                                    <span className='leftNavIconLabel'>Classwise Teachers</span>
+                                </NavLink>
+                                 <NavLink to="/classwisetechersubject" className={({ isActive }) =>
+                                    isActive || location.pathname.startsWith('/classwisetechersubject') ? 'nav-link active' : 'nav-link'
+                                }>
+                                    <OverlayTrigger placement="right" overlay={<Tooltip>Classwise Teacher and Subject</Tooltip>}>
+                                        <span className='leftNavIcon'><BsPersonCheck /></span>
+                                    </OverlayTrigger>
+                                    <span className='leftNavIconLabel'>Classwise Teacher and Subject</span>
+                                </NavLink>
+                                 <NavLink to="/siblings" className={({ isActive }) =>
+                                    isActive || location.pathname.startsWith('/siblings') ? 'nav-link active' : 'nav-link'
+                                }>
+                                    <OverlayTrigger placement="right" overlay={<Tooltip>Siblings</Tooltip>}>
+                                        <span className='leftNavIcon'><BsBook /></span>
+                                    </OverlayTrigger>
+                                    <span className='leftNavIconLabel'>Siblings</span>
+                                </NavLink>
+ 
                             </Nav>
                         </Accordion.Collapse>
                     </Accordion.Item>

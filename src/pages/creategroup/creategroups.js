@@ -1,9 +1,9 @@
-import React, { useEffect, useState,} from "react";
+import React, { useEffect, useState, } from "react";
 import axios from "axios";
-import { IoMdAdd } from "react-icons/io";
+import { IoMdAdd ,} from "react-icons/io";
 import { Button, Modal, Row, Col, Form, OverlayTrigger } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { MdEdit, MdDelete, MdFilterList } from "react-icons/md";
+import { MdEdit, MdDelete, MdFilterList ,MdAddCircle} from "react-icons/md";
 import DataTable from "react-data-table-component";
 import { ToastContainer, toast } from 'react-toastify';
 import loading from "../../assets/images/common/loading.gif";
@@ -23,6 +23,9 @@ const CreateGroups = () => {
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
     const userData = sessionStorage.getItem('user');
     const userObj = userData ? JSON.parse(userData) : {};
+    const readOnlyRoles = ["Class Teacher", "Teacher", "Class Incharge", "School Admin"];
+    const canSubmit = !readOnlyRoles.includes(userObj.role_name?.trim());
+
     const handleEditClick = (group_id) => {
         const GroupdataEdit = groups.find((user) => user.group_id === group_id);
         if (GroupdataEdit) {
@@ -54,37 +57,56 @@ const CreateGroups = () => {
         }
     };
 
-    const columns = [
+    const baseColumns = [
         {
             name: "Group Name",
             selector: row => row.group_name,
-            cell: row => <Tooltip title={row.group_name}><span>{row.group_name}</span></Tooltip>,
+            cell: row => (
+                <Tooltip title={row.group_name}>
+                    <span>{row.group_name}</span>
+                </Tooltip>
+            ),
             sortable: true
         },
         {
-            name: "Is Active",
+            name: "Status",
             selector: row => row.status,
-            cell: row => <Tooltip title={row.status}><span>{row.status}</span></Tooltip>,
+            cell: row => (
+                <Tooltip title={row.status}>
+                    <span>{row.status}</span>
+                </Tooltip>
+            ),
             sortable: true
-        },
-        {
-            name: "Actions",
-            cell: row => row.group_id !== "No records found" ?(
-                <div className="tableActions">
-                    <Tooltip title="Edit" arrow>
-                        <span className="commonActionIcons" onClick={() => handleEditClick(row.group_id)}>
-                            <MdEdit />
-                        </span>
-                    </Tooltip>
-                    <Tooltip title="Delete" arrow>
-                        <span className="commonActionIcons" onClick={() => handleDeleteClick(row.group_id)}>
-                            <MdDelete />
-                        </span>
-                    </Tooltip>
-                </div>
-            ):null
         }
     ];
+
+    const actionColumn = {
+        name: "Actions",
+        cell: row => row.group_id !== "No records found" ? (
+            <div className="tableActions">
+                <Tooltip title="Edit" arrow>
+                    <span
+                        className="commonActionIcons"
+                        onClick={() => handleEditClick(row.group_id)}
+                    >
+                        <MdEdit />
+                    </span>
+                </Tooltip>
+                <Tooltip title="Delete" arrow>
+                    <span
+                        className="commonActionIcons"
+                        onClick={() => handleDeleteClick(row.group_id)}
+                    >
+                        <MdDelete />
+                    </span>
+                </Tooltip>
+            </div>
+        ) : null,
+
+    };
+
+    const columns = canSubmit ? [...baseColumns, actionColumn] : [...baseColumns];
+
     useEffect(() => {
         setIsLoading(true);
         fetchDataRead("/creategroup/", setGroups, userObj.school_id).finally(() => setIsLoading(false));
@@ -92,6 +114,7 @@ const CreateGroups = () => {
 
     const searchableColumns = [
         row => row.group_name,
+        row => row.status
     ];
     const filteredRecords = (groups || []).filter((user) =>
         searchableColumns.some((selector) => {
@@ -112,6 +135,7 @@ const CreateGroups = () => {
         setIsLoading(true);
         const formData = {
             group_name: filter.group_name || "",
+               school_id: userObj.school_id,
             action: "FILTER",
         };
         try {
@@ -145,7 +169,7 @@ const CreateGroups = () => {
         setFilter((prev) => ({ ...prev, group_name: "" }));
         setIsLoading(true);
         try {
-            await fetchDataRead("/creategroup", setGroups, userObj.school_id);
+            await fetchDataRead("/creategroup/", setGroups, userObj.school_id);
         } catch (error) {
             console.error("Error fetching all groups:", error);
         } finally {
@@ -153,7 +177,7 @@ const CreateGroups = () => {
         }
     };
     const handleSearchChange = (event) => {
-        fetchDataRead("/creategroup", setGroups, userObj.school_id);
+        fetchDataRead("/creategroup/", setGroups, userObj.school_id);
         setSearchQuery(event.target.value);
     };
     return (
@@ -171,7 +195,7 @@ const CreateGroups = () => {
                                 <h6 className="commonTableTitle">Create Groups</h6>
                             </div>
                             <div className="">
-                                <input type="text" placeholder="Search..." value={searchQuery} className="searchInput" onChange={handleSearchChange} />     
+                                <input type="text" placeholder="Search..." value={searchQuery} className="searchInput" onChange={handleSearchChange} />
                             </div>
                             <div className="d-flex align-items-center" style={{ gap: 6 }}>
                                 <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Filter</Tooltip>}>
@@ -179,11 +203,18 @@ const CreateGroups = () => {
                                         <MdFilterList />
                                     </Button>
                                 </OverlayTrigger>
-                                <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Add</Tooltip>}>
-                                    <Button className="primaryBtn" variant="primary" onClick={() => navigate("/addcreategroups")}>
-                                        <IoMdAdd />
-                                    </Button>
-                                </OverlayTrigger>
+                                {canSubmit && (
+                                    <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Add</Tooltip>}>
+                                        <Button
+                                            className="primaryBtn"
+                                            variant="primary"
+                                            onClick={() => navigate("/addcreategroups")}
+                                        >
+                                           <MdAddCircle />
+                                        </Button>
+                                    </OverlayTrigger>
+                                )}
+
                             </div>
                         </div>
                     </div>
@@ -193,14 +224,14 @@ const CreateGroups = () => {
                                 <div className="loadingContainer">
                                     <img src={loading} alt="Loading..." className="loadingGif" />
                                 </div>
-                            ) :  (
+                            ) : (
                                 <DataTable
                                     className="custom-table"
                                     columns={columns}
                                     data={(Array.isArray(filteredRecords) && filteredRecords.length > 0)
-                                        ? filteredRecords 
+                                        ? filteredRecords
                                         : [{
-                                            group_id: "No records found", 
+                                            group_id: "No records found",
                                             status: "No records found",
                                         }]
                                     }
@@ -212,7 +243,7 @@ const CreateGroups = () => {
                                     conditionalRowStyles={[
                                         {
                                             when: (row) => row.group_id === "No records found",
-                                            style: {textAlign: "center",fontSize: "16px",color: "red",backgroundColor: "#f9f9f9"},    
+                                            style: { textAlign: "center", fontSize: "16px", color: "red", backgroundColor: "#f9f9f9" },
                                         },
                                     ]}
                                 />
@@ -232,10 +263,10 @@ const CreateGroups = () => {
                                 <div className="commonInput">
                                     <Form.Group controlId="groupName">
                                         <Form.Label>Group Name</Form.Label>
-                                        <Form.Control type="text" placeholder="Enter group name" maxLength={35}   value={filter.group_name}
+                                        <Form.Control type="text" placeholder="Enter group name" maxLength={35} value={filter.group_name}
                                             onChange={(e) => {
                                                 const value = e.target.value;
-                                                if (/^[a-zA-Z0-9\s]*$/.test(value)) { setFilter({ ...filter, group_name: value });}    
+                                                if (/^[a-zA-Z0-9\s]*$/.test(value)) { setFilter({ ...filter, group_name: value }); }
                                             }}
                                         />
                                     </Form.Group>
@@ -246,11 +277,11 @@ const CreateGroups = () => {
                 </Modal.Body>
                 <Modal.Footer className="modalFooterFixed">
                     <div className="">
-                        <Button variant="secondary" className="btn-info clearBtn" onClick={handleFilterClear}>Reset </Button> 
+                        <Button variant="secondary" className="btn-info clearBtn" onClick={handleFilterClear}>Reset </Button>
                     </div>
                     <div className="">
                         <Button variant="secondary" className="btn-danger secondaryBtn" onClick={handleCloseFilterModal}> Close </Button>
-                        <Button variant="primary" className="btn-success primaryBtn" type="submit"  form="filterForm"onClick={handleCloseFilterModal}>  Search </Button> 
+                        <Button variant="primary" className="btn-success primaryBtn" type="submit" form="filterForm" onClick={handleCloseFilterModal}>  Search </Button>
                     </div>
                 </Modal.Footer>
             </Modal>

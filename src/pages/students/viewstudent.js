@@ -104,13 +104,34 @@ function ViewStudent() {
         first_language_name: "",
         second_language_name: "",
         third_language_name: "",
-        previous_school_percentage:"",
+        previous_school_percentage: "",
+        permanent_education_number: "",
+        date_of_admission: "",
+        mole_1: "",
+        mole_2: "",
+        residential_proof: "",
+        medium: "",
+        class_of_leaving_id: "",
+        tc_upload: "",
+        reason_of_leaving: "",
+        date_of_tc_issued: "",
+        which_school_student_has_gone: "",
+        primary_language_id: "",
+        primary_language: "",
+        sports_certificate: "",
+        blood_group_certificate: "",
+        record_sheet_date: "",
+        record_sheet_upload: "",
+        record_sheet_submitted: "",
+        remarks: "",
+        apaar_number: "",
+        tc_number: "",
     })
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
     const [editId, setEditId] = useState(null);
     const routeLocation = useLocation();
 
-    
+
     useEffect(() => {
         if (routeLocation.state?.userData) {
             const userData = routeLocation.state.userData;
@@ -148,561 +169,638 @@ function ViewStudent() {
 
     return (
         <>
-                <div className="pageMain view_student">
+            <div className="pageMain view_student">
                 <ToastContainer />
-                    <LeftNav /> {/* Keeping LeftNav as it is */}
-                    <div className="pageRight">
-                        <div className="pageHead">
-                            <Header />
-                        </div>
-                        <div className="pageBody">
-                            <Container fluid>
-                                <Card>
-                                    <Card.Body className="hide-scrollbar" >
-                                        <form>
+                <LeftNav />
+                <div className="pageRight">
+                    <div className="pageHead">
+                        <Header />
+                    </div>
+                    <div className="pageBody">
+                        <Container fluid>
+                            <Card>
+                                <Card.Body className="hide-scrollbar" >
+                                    <form>
+                                        <Row>
+                                            <div className="position-relative">
+                                                <Button
+                                                    variant="primary"
+                                                    className="btn-sm position-absolute top-0 end-0 mt-n3 me-2 secondaryBtn ms-5 p-1"
+                                                    onClick={() => navigate("/students")}
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </div>
                                             <Row>
-                                                <div className="position-relative">
-                                                    <Button
-                                                        variant="primary"
-                                                        className="btn-sm position-absolute top-0 end-0 mt-n3 me-2 secondaryBtn ms-5 p-1"
-                                                        onClick={() => navigate("/students")}
-                                                    >
-                                                        Cancel
-                                                    </Button>
-                                                </div>
-                                                <Row>
-                                                    <u><b>Student Details</b></u>&nbsp;
-                                                </Row>
-                                                <Col xs={12} md={6} lg={4} xxl={3}  >
-                                                    <div className="commonInput">
-                                                        <span className="form-label"> Admission Number:</span>
-                                                        <span className="">{form.admission_number}</span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            First Name:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.student_first_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Surname:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.student_last_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            DOB:
-                                                        </span>
-                                                        <span className="">
-                                                            {formatDate1(form.dob)}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            DOJ:
-                                                        </span>
-                                                        <span className="">
-                                                            {formatDate1(form.date_of_join)}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Gender:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.gender}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Primary Contact:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.primary_contact}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Blood Group:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.blood_group_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Vaccination:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.vaccination}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            DOE:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.date_of_exit}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Row>
-                                                    <u><b>Class Details</b></u>&nbsp;
-                                                </Row>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Academic Year:
-                                                        </span>
-                                                        <span className="">
-                                                            {userObj.academic_year_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Admission To:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.next_joining_class_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Class:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.class_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Section:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.section_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Class Teacher:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.student_class_teacher_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Roll Number:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.roll_no}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Row>
-                                                    <u><b>ID Details</b></u>&nbsp;
-                                                </Row>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Aadhar Number:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.aadhar_card_no}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Caste:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.caste}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Birth Certificate Number:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.birth_certificate_no}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Nationality:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.nationality}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Religion:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.religion_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Row>
-                                                    <u><b>Previous School</b></u>&nbsp;
-                                                </Row>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Previous School:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.previous_school_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Previous Class:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.class_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            First Language:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.first_language_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Second Language:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.second_language_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Third Language:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.third_language_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Previous School Percentage:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.previous_school_percentage}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Row>
-                                                    <u><b>Father Details</b></u>&nbsp;
-                                                </Row>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Father Name:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.father_firstname + " " + form.father_surname}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Father Contact:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.father_phone_number}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Father Email:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.father_email}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Father Aadhar Number:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.father_aadhar_number}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Father Occupation:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.father_occupation}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Row>
-                                                    <u><b>Mother Details</b></u>&nbsp;
-                                                </Row>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Mother Name:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.mother_firstname + " " + form.mother_surname}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Mother Contact:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.mother_phone_number}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Mother Email:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.mother_email}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Mother Aadhar Number:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.mother_aadhar_number}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Mother Occupation:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.mother_occupation}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Row>
-                                                    <u><b>Guardian Details</b></u>&nbsp;
-                                                </Row>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Guardain Name:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.guardian_firstname + " " + form.guardian_surname}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Guardain Contact:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.guardian_phone_number}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Guardain Email:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.guardian_email}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Guardain Aadhar Number:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.guardian_aadhar_number}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Guardain Occupation:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.guardian_occupation}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Row>
-                                                    <u><b>Location Details</b></u>&nbsp;
-                                                </Row>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            City:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.city}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            State:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.state_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Country:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.country_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Address:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.address}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Permanent Address:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.permanent_address}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Row>
-                                                    <u><b>Sibling Details</b></u>&nbsp;
-                                                </Row>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Sibling 1:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.sibling1_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Sibling 2:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.sibling2_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
-                                                <Col xs={12} md={6} lg={4} xxl={3}>
-                                                    <div className="commonInput">
-                                                        <span className="form-label">
-                                                            Sibling 3:
-                                                        </span>
-                                                        <span className="">
-                                                            {form.sibling3_name}
-                                                        </span>
-                                                    </div>
-                                                </Col>
+                                                <u><b>Student Details</b></u>&nbsp;
                                             </Row>
-
-
-                                        </form>
-                                    </Card.Body>
-                                </Card>
-                            </Container>
-                        </div>
+                                            <Col xs={12} md={6} lg={4} xxl={3}  >
+                                                <div className="commonInput">
+                                                    <span className="form-label"> Admission Number:</span>
+                                                    <span className="">{form.admission_number}</span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Surname:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.student_last_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        First Name:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.student_first_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        DOB:
+                                                    </span>
+                                                    <span className="">
+                                                        {formatDate1(form.dob)}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        DOJ:
+                                                    </span>
+                                                    <span className="">
+                                                        {formatDate1(form.date_of_join)}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Gender:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.gender}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Primary Contact:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.primary_contact}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Blood Group:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.blood_group_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Vaccination:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.vaccination}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        DOE:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.date_of_exit}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Row>
+                                                <u><b>Class Details</b></u>&nbsp;
+                                            </Row>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Academic Year:
+                                                    </span>
+                                                    <span className="">
+                                                        {userObj.academic_year_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">Date of Admission:</span>
+                                                    <span className="">{formatDate1(form.date_of_admission)}</span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Admission To:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.next_joining_class_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Class:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.class_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Section:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.section_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Class Teacher:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.student_class_teacher_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Roll Number:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.roll_no}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">Class of Leaving:</span>
+                                                    <span className="">{form.class_of_leaving}</span>
+                                                </div>
+                                            </Col>
+                                            <Row>
+                                                <u><b>ID Details</b></u>&nbsp;
+                                            </Row>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Aadhar Number:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.aadhar_card_no}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Caste:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.caste}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Birth Certificate Number:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.birth_certificate_no}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Nationality:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.nationality}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Religion:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.religion_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">Mother Tongue:</span>
+                                                    <span className="">{form.mother_tongue}</span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">TC Number:</span>
+                                                    <span className="">{form.tc_number}</span>
+                                                </div>
+                                            </Col>
+                                            <Row>
+                                                <u><b>Previous School</b></u>&nbsp;
+                                            </Row>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Previous School:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.previous_school_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Previous Class:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.class_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        First Language:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.first_language_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Second Language:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.second_language_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Third Language:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.third_language_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        PEN:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.permanent_education_number}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Previous School Percentage:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.previous_school_percentage}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Row>
+                                                <u><b>Father Details</b></u>&nbsp;
+                                            </Row>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Father Name:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.father_firstname + " " + form.father_surname}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Father Contact:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.father_phone_number}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Father Email:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.father_email}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Father Aadhar Number:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.father_aadhar_number}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Father Occupation:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.father_occupation}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Row>
+                                                <u><b>Mother Details</b></u>&nbsp;
+                                            </Row>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Mother Name:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.mother_firstname + " " + form.mother_surname}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Mother Contact:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.mother_phone_number}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Mother Email:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.mother_email}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Mother Aadhar Number:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.mother_aadhar_number}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Mother Occupation:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.mother_occupation}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Row>
+                                                <u><b>Guardian Details</b></u>&nbsp;
+                                            </Row>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Guardain Name:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.guardian_firstname + " " + form.guardian_surname}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Guardain Contact:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.guardian_phone_number}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Guardain Email:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.guardian_email}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Guardain Aadhar Number:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.guardian_aadhar_number}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Guardain Occupation:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.guardian_occupation}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Row>
+                                                <u><b>Location Details</b></u>&nbsp;
+                                            </Row>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        City:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.city}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        State:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.state_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Country:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.country_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Address:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.address}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Permanent Address:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.permanent_address}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Row>
+                                                <u><b>Sibling Details</b></u>&nbsp;
+                                            </Row>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Sibling 1:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.sibling1_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Sibling 2:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.sibling2_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">
+                                                        Sibling 3:
+                                                    </span>
+                                                    <span className="">
+                                                        {form.sibling3_name}
+                                                    </span>
+                                                </div>
+                                            </Col>
+                                            <Row>
+                                                <u><b>Other Details</b></u>&nbsp;
+                                            </Row>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">Reason of Leaving:</span>
+                                                    <span className="">{form.reason_of_leaving}</span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">Date of TC Issueed:</span>
+                                                    <span className="">{formatDate1(form.date_of_tc_issued)}</span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">Primary Language:</span>
+                                                    <span className="">{form.primary_language}</span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">Record Sheet Date:</span>
+                                                    <span className="">{formatDate1(form.record_sheet_date)}</span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">APAAR Number:</span>
+                                                    <span className="">{form.apaar_number}</span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">Record Sheet Submitted:</span>
+                                                    <span className="">{form.record_sheet_submitted}</span>
+                                                </div>
+                                            </Col>
+                                            <Col xs={12} md={6} lg={4} xxl={3}>
+                                                <div className="commonInput">
+                                                    <span className="form-label">Remarks:</span>
+                                                    <span className="">{form.remarks}</span>
+                                                </div>
+                                            </Col>
+                                        </Row>
+                                    </form>
+                                </Card.Body>
+                            </Card>
+                        </Container>
                     </div>
                 </div>
+            </div>
         </>
     );
 };

@@ -28,36 +28,32 @@ function AddGrades() {
   });
 
   useEffect(() => {
-    // Fetch boards and subjects (example API calls)
     const fetchBoards = async () => {
       try {
-          const response = await axios.post(baseUrl + "/board/", {
-              action: "READ",
-          });
-          setBoards(response.data);
+        const response = await axios.post(baseUrl + "/board/", {
+          action: "READ",school_id: userObj.school_id,
+        });
+        setBoards(response.data);
       } catch (error) {
-          console.error("Error fetching Board:", error);
+        console.error("Error fetching Board:", error);
       }
-  };
+    };
 
-  const fetchSubjects = async () => {
-    try {
+    const fetchSubjects = async () => {
+      try {
         const response = await axios.post(baseUrl + "/subjectmaster/", {
-            action: "READ",
+          action: "READ",school_id: userObj.school_id,
         });
         setSubjects(response.data);
-    } catch (error) {
+      } catch (error) {
         console.error("Error fetching subjects:", error);
-    }
-};
+      }
+    };
 
     fetchBoards();
     fetchSubjects();
-
-    // Check if the component is in editing mode
     if (routeLocation.state?.userData) {
       const userData = routeLocation.state.userData;
-      console.log(userData);
       setForm(userData);
       setEditId(userData.grade_id);
     }
@@ -77,15 +73,15 @@ function AddGrades() {
       ...prevForm,
       board_id: value,
     }));
-};
+  };
 
-const handleSubjectChange = (e) => {
+  const handleSubjectChange = (e) => {
     const { value } = e.target;
     setForm((prevForm) => ({
       ...prevForm,
       subject_id: value,
     }));
-};
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -115,12 +111,10 @@ const handleSubjectChange = (e) => {
 
       if (editId !== null) {
         toast.success("Record updated successfully", { position: "top-right" });
-        setEditId(null);  // Reset the editId after successful update
+        setEditId(null);
       } else {
         toast.success("Record added successfully", { position: "top-right" });
       }
-
-      // Reset the form after submission
       setForm({
         grade_name: "",
         min_marks: "",
@@ -148,200 +142,234 @@ const handleSubjectChange = (e) => {
       }
     }
   };
-
   return (
-  
-      <div className="pageMain">
-        <ToastContainer />
-        <LeftNav />
-        <div className="pageRight">
-          <div className="pageHead">
-            <Header />
-          </div>
-          <div className="pageBody">
-            <Container fluid>
-              <Card>
-                <Card.Body>
-                  <form onSubmit={handleSubmit}>
-                    <Row>
-                      <Col xs={12}>
-                        <h6 className="commonSectionTitle">Grade Details</h6>
-                      </Col>
-                    </Row>
-                    <Row>
-                      <Col xs={12} md={6} lg={4} xxl={3}>
-                        <div className="commonInput">
-                          <Form.Group>
-                            <Form.Label>
-                              Curriculum
-                              <span className="requiredStar">*</span>
-                            </Form.Label>
-                            <Form.Select
-                              required
-                              className="form-select"
-                              id="board_id"
-                              value={form.board_id}
-                              onChange={handleInputChange}
-                            >
-                              <option value="">Select Board</option>
-                              {boards.map((board) => (
-                                <option
-                                  key={board.board_id}
-                                  value={board.board_id}
-                                >
-                                  {board.board_name}
-                                </option>
-                              ))}
-                            </Form.Select>
-                          </Form.Group>
-                        </div>
-                      </Col>
-                      <Col xs={12} md={6} lg={4} xxl={3}>
-                        <div className="commonInput">
-                          <Form.Group>
-                            <Form.Label>Grade Name <span className="requiredStar">*</span></Form.Label>
-                            <Form.Control
-                              required
-                              type="text"
-                              id="grade_name"
-                              value={form.grade_name || ""}
-                              placeholder="Enter Grade Name"
-                              maxLength={30}
-                              onChange={handleInputChange}
-                            
-                            />
-                          </Form.Group>
-                        </div>
-                      </Col>
-                      <Col xs={12} md={6} lg={4} xxl={3}>
-                        <div className="commonInput">
-                          <Form.Group>
-                            <Form.Label>Minimum Marks <span className="requiredStar">*</span></Form.Label>
-                            <Form.Control
-                              required
-                              type="text"
-                              id="min_marks"
-                              value={form.min_marks || ""}
-                              placeholder="Enter Minimum Marks"
-                              maxLength={10}
-                              onChange={handleInputChange}
-                            />
-                          </Form.Group>
-                        </div>
-                      </Col>
-                      <Col xs={12} md={6} lg={4} xxl={3}>
-                        <div className="commonInput">
-                          <Form.Group>
-                            <Form.Label>Maximum Marks <span className="requiredStar">*</span></Form.Label>
-                            <Form.Control
-                              required
-                              type="text"
-                              id="max_marks"
-                              value={form.max_marks || ""}
-                              placeholder="Enter Maximum Marks"
-                              maxLength={10}
-                              onChange={handleInputChange}
-                            />
-                          </Form.Group>
-                        </div>
-                      </Col>
-                      <Col xs={12} md={6} lg={4} xxl={3}>
-                        <div className="commonInput">
-                          <Form.Group>
-                            <Form.Label>Grade Points <span className="requiredStar">*</span></Form.Label>
-                            <Form.Control
-                              required
-                              type="text"
-                              id="grade_points"
-                              value={form.grade_points || ""}
-                              placeholder="Enter Grade Points"
-                              maxLength={10}
-                              onChange={handleInputChange}
-                            />
-                          </Form.Group>
-                        </div>
-                      </Col>
-                      <Col xs={12} md={6} lg={4} xxl={3}>
-                        <div className="commonInput">
-                          <Form.Group>
-                            <Form.Label>Passing Marks <span className="requiredStar">*</span></Form.Label>
-                            <Form.Control
-                              required
-                              type="text"
-                              id="passing_marks"
-                              value={form.passing_marks || ""}
-                              placeholder="Enter Passing Marks"
-                              maxLength={10}
-                              onChange={handleInputChange}
-                            />
-                          </Form.Group>
-                        </div>
-                      </Col>
-                      <Col xs={12} md={6} lg={4} xxl={3}>
-                        <div className="commonInput">
-                          <Form.Group>
-                            <Form.Label>Subject</Form.Label>
-                            <Form.Select
-                              required
-                              value={form.subject_id || ""}
-                              onChange={handleSubjectChange}
-                            >
-                              <option value="">Select Subject</option>
-                              {subjects.map((subject) => (
-                                <option key={subject.subject_id} value={subject.subject_id}>
-                                  {subject.subject_name}
-                                </option>
-                              ))}
-                            </Form.Select>
-                          </Form.Group>
-                        </div>
-                      </Col>
-                    </Row>
-                    <div className="d-flex justify-content-between mt-3">
+    <div className="pageMain">
+      <ToastContainer />
+      <LeftNav />
+      <div className="pageRight">
+        <div className="pageHead">
+          <Header />
+        </div>
+        <div className="pageBody">
+          <Container fluid>
+            <Card>
+              <Card.Body>
+                <form onSubmit={handleSubmit}>
+                  <Row>
+                    <Col xs={12}>
+                      <h6 className="commonSectionTitle">Grade Details</h6>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col xs={12} md={6} lg={4} xxl={3}>
+                      <div className="commonInput">
+                        <Form.Group>
+                          <Form.Label>
+                            Curriculum
+                            <span className="requiredStar">*</span>
+                          </Form.Label>
+                          <Form.Select
+                            required
+                            className="form-select"
+                            id="board_id"
+                            value={form.board_id}
+                            onChange={handleInputChange}
+                          >
+                            <option value="">Select Board</option>
+                            {boards.map((board) => (
+                              <option
+                                key={board.board_id}
+                                value={board.board_id}
+                              >
+                                {board.board_name}
+                              </option>
+                            ))}
+                          </Form.Select>
+                        </Form.Group>
+                      </div>
+                    </Col>
+                    <Col xs={12} md={6} lg={4} xxl={3}>
+                      <div className="commonInput">
+                        <Form.Group>
+                          <Form.Label>Grade Name <span className="requiredStar">*</span></Form.Label>
+                          <Form.Control
+                            required
+                            type="text"
+                            id="grade_name"
+                            value={form.grade_name || ""}
+                            placeholder="Enter Grade Name"
+                            maxLength={30}
+                            onChange={handleInputChange}
+                          />
+                        </Form.Group>
+                      </div>
+                    </Col>
+                    <Col xs={12} md={6} lg={4} xxl={3}>
+                      <div className="commonInput">
+                        <Form.Group>
+                          <Form.Label>Minimum Marks <span className="requiredStar">*</span></Form.Label>
+                          <Form.Control
+                            required
+                            type="text"
+                            id="min_marks"
+                            value={form.min_marks || ""}
+                            placeholder="Enter Minimum Marks"
+                            maxLength={3}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (/^\d*\.?\d*$/.test(value)) {
+                                setForm((prevForm) => ({
+                                  ...prevForm,
+                                  [e.target.id]: value,
+                                }));
+                              }
+                            }}
+                          />
+                        </Form.Group>
+                      </div>
+                    </Col>
+
+                    <Col xs={12} md={6} lg={4} xxl={3}>
+                      <div className="commonInput">
+                        <Form.Group>
+                          <Form.Label>Maximum Marks <span className="requiredStar">*</span></Form.Label>
+                          <Form.Control
+                            required
+                            type="text"
+                            id="max_marks"
+                            value={form.max_marks || ""}
+                            placeholder="Enter Maximum Marks"
+                            maxLength={3}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (/^\d*\.?\d*$/.test(value)) {
+                                setForm((prevForm) => ({
+                                  ...prevForm,
+                                  [e.target.id]: value,
+                                }));
+                              }
+                            }}
+                          />
+                        </Form.Group>
+                      </div>
+                    </Col>
+
+                    <Col xs={12} md={6} lg={4} xxl={3}>
+                      <div className="commonInput">
+                        <Form.Group>
+                          <Form.Label>Grade Points <span className="requiredStar">*</span></Form.Label>
+                          <Form.Control
+                            required
+                            type="text"
+                            id="grade_points"
+                            value={form.grade_points || ""}
+                            placeholder="Enter Grade Points"
+                            maxLength={3}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (/^\d*\.?\d*$/.test(value)) {
+                                setForm((prevForm) => ({
+                                  ...prevForm,
+                                  [e.target.id]: value,
+                                }));
+                              }
+                            }}
+                          />
+                        </Form.Group>
+                      </div>
+                    </Col>
+
+                    <Col xs={12} md={6} lg={4} xxl={3}>
+                      <div className="commonInput">
+                        <Form.Group>
+                          <Form.Label>Passing Marks <span className="requiredStar">*</span></Form.Label>
+                          <Form.Control
+                            required
+                            type="text"
+                            id="passing_marks"
+                            value={form.passing_marks || ""}
+                            placeholder="Enter Passing Marks"
+                            maxLength={3}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (/^\d*\.?\d*$/.test(value)) {
+                                setForm((prevForm) => ({
+                                  ...prevForm,
+                                  [e.target.id]: value,
+                                }));
+                              }
+                            }}
+                          />
+                        </Form.Group>
+                      </div>
+                    </Col>
+
+                    <Col xs={12} md={6} lg={4} xxl={3}>
+                      <div className="commonInput">
+                        <Form.Group>
+                          <Form.Label>Subject</Form.Label>
+                          <Form.Select
+                            required
+                            value={form.subject_id || ""}
+                            onChange={handleSubjectChange}
+                          >
+                            <option value="">Select Subject</option>
+                            {(subjects || []).map((subject) => (
+                              <option key={subject.subject_id} value={subject.subject_id}>
+                                {subject.subject_name}
+                              </option>
+                            ))}
+
+                          </Form.Select>
+                        </Form.Group>
+                      </div>
+                    </Col>
+                  </Row>
+                  <div className="d-flex justify-content-between mt-3">
+                    <Button
+                      type="button"
+                      variant="primary"
+                      className="btn-info clearBtn"
+                      onClick={() =>
+                        setForm({
+                          grade_name: "",
+                          min_marks: "",
+                          max_marks: "",
+                          grade_points: "",
+                          passing_marks: "",
+                          board_id: "",
+                          subject_id: "",
+                        })
+                      }
+                    >
+                      Reset
+                    </Button>
+                    <div>
                       <Button
                         type="button"
                         variant="primary"
-                        className="btn-info clearBtn"
-                        onClick={() =>
-                          setForm({
-                            grade_name: "",
-                            min_marks: "",
-                            max_marks: "",
-                            grade_points: "",
-                            passing_marks: "",
-                            board_id: "",
-                            subject_id: "",
-                          })
-                        }
+                        className="btn-danger secondaryBtn me-2"
+                        onClick={() => navigate(-1)}
                       >
-                        Reset
+                        Cancel
                       </Button>
-                      <div>
-                        <Button
-                          type="button"
-                          variant="primary"
-                          className="btn-danger secondaryBtn me-2"
-                          onClick={() => navigate(-1)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="submit"
-                          variant="primary"
-                          className="btn-success primaryBtn"
-                        >
-                          Submit
-                        </Button>
-                      </div>
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        className="btn-success primaryBtn"
+                      >
+                        Submit
+                      </Button>
                     </div>
-                  </form>
-                </Card.Body>
-              </Card>
-            </Container>
-          </div>
+                  </div>
+                </form>
+              </Card.Body>
+            </Card>
+          </Container>
         </div>
       </div>
-   
+    </div>
+
   );
 }
 

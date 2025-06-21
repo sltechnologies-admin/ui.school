@@ -11,6 +11,7 @@ import { MdFilterList } from "react-icons/md";
 import Header from "../../components/layout/header/header";
 import LeftNav from "../../components/layout/leftNav/leftNav";
 import loading from "../../assets/images/common/loading.gif";
+import { useFeeModuleAccess } from "../hooks/useFeeModuleAccess";
 
 const FeeReceipts = () => {
     const userData = sessionStorage.getItem("user");
@@ -31,6 +32,9 @@ const FeeReceipts = () => {
     const [students, setStudents] = useState([]);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [selectedRowData, setSelectedRowData] = useState(null);
+
+    const currentUserRole = userObj.role_name?.trim();
+    const { canWrite } = useFeeModuleAccess(currentUserRole);
 
     useEffect(() => {
         document.title = "SCHOLAS";
@@ -106,26 +110,27 @@ const FeeReceipts = () => {
         student_id: 0,
     });
 
-    const handleFilterSubmit = async (e) => {
-        e.preventDefault();
+const handleFilterSubmit = async (e) => {
+    e.preventDefault();
 
-        const filteredData = baseFeesTerms.filter(
-            (term) =>
-                (String(filter.class_id) === "0" || !filter.class_id
-                    ? true
-                    : String(term.class_id) === String(filter.class_id)) &&
-                (String(filter.student_id) === "0" || !filter.student_id
-                    ? true
-                    : String(term.student_id) === String(filter.student_id))
-        );
+    const filteredData = baseFeesTerms.filter((term) => {
+        const matchClass =
+            !filter.class_id || filter.class_id === "0"
+                ? true
+                : String(term.class_id) === String(filter.class_id);
 
-        if (filteredData.length === 0) {
-            setFeesTerms([]);
-        } else {
-            setFeesTerms(filteredData);
-        }
-        setShowFilterModal(false);
-    };
+        const matchStudent =
+            !filter.student_id || filter.student_id === "0"
+                ? true
+                : String(term.student_id) === String(filter.student_id);
+
+        return matchClass && matchStudent;
+    });
+
+    setFeesTerms(filteredData);
+    setShowFilterModal(false);
+};
+
 
     const handleFilterClear = async () => {
         setFilter({
@@ -165,7 +170,7 @@ const FeeReceipts = () => {
     };
 
     const searchableColumns1 = [
-        (row) => row.academic_year_name,
+        (row) => row.admission_number,
         (row) => row.class_name,
         (row) => row.fees_item,
         (row) => row.total_amount,
@@ -178,7 +183,7 @@ const FeeReceipts = () => {
 
         data.forEach((item) => {
             Object.keys(item).forEach((key) => {
-                if (key.startsWith("Term")) {
+                if (key.toLowerCase().startsWith("term") || key.toLowerCase().startsWith("others")) {
                     termKeys.add(key.trim());
                 }
                 if (key.startsWith("due_date")) {
@@ -187,15 +192,23 @@ const FeeReceipts = () => {
             });
         });
 
+        // return {
+        //     termKeys: Array.from(termKeys).sort(),
+        //     dueDateKeys: Array.from(dueDateKeys).sort(),
+        // };
+        const sortedTermKeys = Array.from(termKeys).sort();
+        const sortedDueDateKeys = Array.from(dueDateKeys).sort();
+
         return {
-            termKeys: Array.from(termKeys).sort(),
-            dueDateKeys: Array.from(dueDateKeys).sort(),
+            termKeys: [...sortedTermKeys],
+            dueDateKeys: [...sortedDueDateKeys],
+            allKeys: [...sortedTermKeys, ...sortedDueDateKeys]
         };
     };
 
-    const { termKeys } = extractAllKeys(feesTerms);
+    const { allKeys } = extractAllKeys(feesTerms);
 
-    const dynamicTermColumns = termKeys.map((term) => ({
+    const dynamicTermColumns = allKeys.map((term) => ({
         name: term,
         selector: (row) => row[term],
         cell: (row) => {
@@ -226,8 +239,8 @@ const FeeReceipts = () => {
                 <Tooltip title={`${row[term]}`}>
                     <span
                         style={{
-                            backgroundColor,
-                            fontWeight,
+                            //backgroundColor,
+                            //fontWeight,
                             padding: "2px",
                             borderRadius: "5px",
                         }}
@@ -255,15 +268,13 @@ const FeeReceipts = () => {
 
     const columnsFeesItem = [
         {
-            name: "Academic Year",
-            selector: (row) => row.academic_year_name,
+            name: "Admission Number",
+            selector: (row) => row.admission_number,
             sortable: true,
             cell: (row) =>
-                filteredRecords1.length > 0 ? (
-                    <Tooltip title={row.academic_year_name}> {row.academic_year_name}</Tooltip>
-                ) : (
-                    <div className="noDataMessage">No Records Found</div>
-                ),
+               
+                    <Tooltip title={row.admission_number}> {row.admission_number}</Tooltip>
+             
         },
         {
             name: "Student Name",
@@ -294,23 +305,27 @@ const FeeReceipts = () => {
             ),
             sortable: true,
         },
-        {
-            name: "Total Fee",
-            selector: (row) => row.total,
-            cell: (row) => (
-                <span
-                    style={{
-                        cursor: "pointer",
-                        color: "blue",
-                        textDecoration: "underline",
-                    }}
-                    onClick={() => handleTotalAmountClick(row)}
-                >
-                    {row.total}
-                </span>
-            ),
-            sortable: true,
-        },
+    {
+    name: "Total Fee",
+    selector: (row) => row.total,
+    cell: (row) =>
+        filteredRecords1.length > 0 ? (
+            <span
+                style={{
+                    cursor: "pointer",
+                    color: "blue",
+                    textDecoration: "underline",
+                }}
+                onClick={() => handleTotalAmountClick(row)}
+            >
+                {row.total}
+            </span>
+        ) : (
+            <div className="noDataMessage">No Records Found</div>
+        ),
+    sortable: true,
+}
+,
         ...dynamicTermColumns,
     ];
 
@@ -410,6 +425,7 @@ const FeeReceipts = () => {
                 sortable: true,
             },
             {
+
                 name: "Term",
                 selector: (row) => row.schedule_name,
                 cell: (row) => (
@@ -451,6 +467,7 @@ const FeeReceipts = () => {
             },
             {
                 name: "Actions",
+                omit: !canWrite,
                 cell: (row) =>
                     feesItems1.length > 0 ? (
                         <div className='tableActions'>
@@ -511,7 +528,7 @@ const FeeReceipts = () => {
                         data={
                             feesItems1.length > 0
                                 ? feesItems1
-                                : [{ schedule_name: "No records found" }]
+                                : [{ schedule_name: <div className="noDataMessage">No Records Found</div> }]
                         }
                         noHeader
                         dense
@@ -564,53 +581,18 @@ const FeeReceipts = () => {
                     .sort((a, b) => (a.category > b.category ? 1 : -1))
                 : [];
 
-        const dynamicKeys =
-            filteredData.length > 0
-                ? Object.keys(filteredData[0]).filter(
-                    (key) => key.toLowerCase().startsWith("term") && !key.toLowerCase().includes("bal")
-                )
-                : [];
-
-
-        const dynamicColumns = dynamicKeys.map((key) => {
-            const match = key.match(/(.+)\s\((.+)\)/);
-            const term = match ? match[1] : key;
-
-            return {
-                name: (
-                    <div style={{ textAlign: "right" }}>
-                        <div>{term}</div>
-                    </div>
-                ),
-                selector: (row) => row[key],
-                cell: (row) => (
-                    <Tooltip title={row[key]}>
-                        <span
-                            style={{ textAlign: "right", display: "block" }}
-                        >
-                            {row[key]}
-                        </span>
-                    </Tooltip>
-                ),
-                sortable: true,
-                right: true,
-                style: { textAlign: "right" },
-            };
-        });
-
         const columns = [
             {
                 name: "Fees Item",
-                selector: (row) => row.category,
+                // selector: (row) => row.category,
                 cell: (row) => (
                     <Tooltip title={row.category}>
                         <span>{row.category}</span>
                     </Tooltip>
                 ),
-                sortable: true,
+                // sortable: true,
                 width: "150px",
             },
-            ...dynamicColumns,
             {
                 name: <span style={{ paddingRight: "22px" }}>Total</span>,
                 selector: (row) => row.total,
@@ -630,20 +612,16 @@ const FeeReceipts = () => {
         ];
 
         const columnSums = filteredData.reduce((acc, row) => {
-            Object.keys(row).forEach((key) => {
-                if (typeof row[key] === "number") {
-                    acc[key] = (acc[key] || 0) + row[key];
-                }
-            });
+            if (typeof row.total === "number") {
+                acc.total = (acc.total || 0) + row.total;
+            }
             return acc;
         }, {});
 
         const footerRow = {
             class_name: "Total",
             category: "Total",
-            ...Object.fromEntries(
-                Object.keys(columnSums).map((key) => [key, columnSums[key] || "-"])
-            ),
+            total: columnSums.total || "-",
         };
 
         const conditionalRowStyles = [
@@ -679,6 +657,7 @@ const FeeReceipts = () => {
             </div>
         );
     };
+
 
     const ChildHyperLinkComponent = ({ data }) => {
         const [feesItems1, setFeesItems1] = useState([]);
@@ -732,9 +711,7 @@ const FeeReceipts = () => {
                 selector: (row) => row.amount_paid,
                 cell: (row) => (
                     <Tooltip title={row.amount_paid}>
-                        <span
-
-                        >
+                        <span>
                             {row.amount_paid}
                         </span>
                     </Tooltip>
@@ -794,7 +771,7 @@ const FeeReceipts = () => {
                         data={
                             feesItems1.length > 0
                                 ? [...feesItems1, footerRow]
-                                : [{ fees_item: "No records found" }]
+                                : [{ fees_item: <div className="noDataMessage">No Records Found</div> }]
                         }
                         highlightOnHover
                         responsive
@@ -820,7 +797,7 @@ const FeeReceipts = () => {
                     <div className="commonDataTableHead">
                         <div className="d-flex justify-content-between align-items-center w-100">
                             <div className="d-flex align-items-center" style={{ gap: "10px" }}>
-                                <h6 className="commonTableTitle">Fee Receipts</h6>
+                                <h6 className="commonTableTitle">Fee Receipts({userObj.academic_year_name})</h6>
                             </div>
                             <div className="">
                                 <input
@@ -844,18 +821,20 @@ const FeeReceipts = () => {
                                         <MdFilterList />
                                     </Button>
                                 </OverlayTrigger>
-                                <OverlayTrigger
-                                    placement="top"
-                                    overlay={<Tooltip id="tooltip-top">Add</Tooltip>}
-                                >
-                                    <Button
-                                        className="primaryBtn"
-                                        variant="primary"
-                                        onClick={() => navigate("/addfeereceipts")}
+                                {canWrite && (
+                                    <OverlayTrigger
+                                        placement="top"
+                                        overlay={<Tooltip id="tooltip-top">Add</Tooltip>}
                                     >
-                                        <MdAddCircle />
-                                    </Button>
-                                </OverlayTrigger>
+                                        <Button
+                                            className="primaryBtn"
+                                            variant="primary"
+                                            onClick={() => navigate("/addfeereceipts")}
+                                        >
+                                            <MdAddCircle />
+                                        </Button>
+                                    </OverlayTrigger>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -888,6 +867,8 @@ const FeeReceipts = () => {
                     </div>
                 </div>
             </div>
+
+
             <Modal
                 show={showFilterModal}
                 onHide={handleCloseFilterModal}
@@ -912,7 +893,7 @@ const FeeReceipts = () => {
                                                 setFilter({ ...filter, class_id: e.target.value })
                                             }
                                         >
-                                            <option value="">Class</option>
+                                            <option value="">Select Class</option>
                                             {(classes || []).map((classe) => (
                                                 <option key={classe.class_id} value={classe.class_id}>
                                                     {classe.class_name}
@@ -991,6 +972,7 @@ const FeeReceipts = () => {
                 onHide={() => setShowDetailsModal(false)}
                 dialogClassName="custom-modal"
             >
+
                 <Modal.Header closeButton>
                     <Modal.Title>Details for {selectedRowData?.student_name}</Modal.Title>
                 </Modal.Header>

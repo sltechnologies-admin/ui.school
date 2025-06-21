@@ -10,10 +10,11 @@ const FeesScheduleStudent = forwardRef(({ p_academic_year_id, p_class_id, p_scho
     const [remarks, setRemarks] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
+    const [previousDue, setPreviousDue] = useState("");
 
     useEffect(() => {
         if (p_academic_year_id && p_class_id && p_school_id && p_student_id) {
-            fetchData().finally(() => setIsLoading(false));;
+            fetchData().finally(() => setIsLoading(false));
         } else {
             setApiData([]);
             setData([]);
@@ -24,7 +25,6 @@ const FeesScheduleStudent = forwardRef(({ p_academic_year_id, p_class_id, p_scho
     useImperativeHandle(ref, () => ({
         handleFetchData: () => handleFetchData()
     }));
-
 
     const fetchData = async () => {
         try {
@@ -88,7 +88,6 @@ const FeesScheduleStudent = forwardRef(({ p_academic_year_id, p_class_id, p_scho
 
     const handleAmountChange = (feesItem, term, value) => {
         const sanitizedValue = value.replace(/[^0-9]/g, '');
-
         const numericValue = sanitizedValue ? Number(sanitizedValue) : 0;
 
         if (numericValue < 0) {
@@ -100,7 +99,10 @@ const FeesScheduleStudent = forwardRef(({ p_academic_year_id, p_class_id, p_scho
         const rowTotal = terms.reduce((total, term) => total + (currentRow.result[term] || 0), 0);
         const newRowTotal = rowTotal - (currentRow.result[term] || 0) + numericValue;
 
-        if (newRowTotal > currentRow.total_amount) {
+        if (
+            currentRow.fees_item.toLowerCase() !== "previous due" &&
+            newRowTotal > currentRow.total_amount
+        ) {
             alert(`Total amount for "${feesItem}" cannot exceed ${currentRow.total_amount}`);
             return;
         }
@@ -138,57 +140,33 @@ const FeesScheduleStudent = forwardRef(({ p_academic_year_id, p_class_id, p_scho
 
     const handleFetchData = async () => {
         const saveObject = [];
-        const skippedRows = [];
-        const underpaidRows = [];
 
         data.forEach((row) => {
-            let isRowValid = true;
-            let rowTotal = 0;
-
-            if (row.total_amount === 0) {
-                //skippedRows.push(row.fees_item);
+            // Allow "Previous Due" even if total_amount is 0
+            if (row.total_amount === 0 && row.fees_item.toLowerCase() !== "previous due") {
                 return;
             }
 
             Object.keys(row.result).forEach((term) => {
                 const amount = row.result[term];
 
-                if (!amount || Number(amount) <= 0) {
-                    isRowValid = false;
-                } else {
-                    rowTotal += Number(amount);
+                const rawRow = apiData.find(
+                    (item) =>
+                        item.fees_item === row.fees_item &&
+                        item.fees_item_id === row.fees_item_id &&
+                        item.result[term] !== undefined
+                );
 
-                    const rawRow = apiData.find(
-                        (item) =>
-                            item.fees_item === row.fees_item &&
-                            item.fees_item_id === row.fees_item_id &&
-                            item.result[term] !== undefined
-                    );
-
-                    saveObject.push({
-                        fees_students_schedule_id: rawRow ? rawRow.fees_students_schedule_id : null,
-                        academic_year_id: p_academic_year_id,
-                        school_id: p_school_id,
-                        class_id: p_class_id,
-                        amount_to_be_paid: amount,
-                        remarks: remarks
-                    });
-                }
+                saveObject.push({
+                    fees_students_schedule_id: rawRow ? rawRow.fees_students_schedule_id : null,
+                    academic_year_id: p_academic_year_id,
+                    school_id: p_school_id,
+                    class_id: p_class_id,
+                    amount_to_be_paid: amount ? amount : 0,
+                    remarks: remarks
+                });
             });
-
-            if (rowTotal < row.total_amount) {
-                underpaidRows.push(row.fees_item);
-            }
-
-            if (!isRowValid) {
-                skippedRows.push(row.fees_item);
-            }
         });
-
-        if (skippedRows.length > 0) {
-            alert(`Skipped rows with empty or zero values: ${skippedRows.join(', ')}`);
-            return;
-        }
 
         if (saveObject.length === 0) {
             alert("No valid rows to save.");
@@ -202,7 +180,7 @@ const FeesScheduleStudent = forwardRef(({ p_academic_year_id, p_class_id, p_scho
                 },
             });
 
-            toast.success("Records added successfully");
+            toast.success("Records Added Successfully");
             setRemarks('');
             return true;
         } catch (error) {
@@ -239,7 +217,10 @@ const FeesScheduleStudent = forwardRef(({ p_academic_year_id, p_class_id, p_scho
                                             value={row.result[term] || ''}
                                             onChange={(e) => handleAmountChange(row.fees_item, term, e.target.value)}
                                             style={{ width: '80px' }}
-                                            disabled={row.total_amount === 0}
+                                            disabled={
+                                                row.total_amount === 0 &&
+                                                row.fees_item.toLowerCase() !== 'previous due'
+                                            }
                                         />
                                     </td>
                                 ))}
@@ -256,6 +237,7 @@ const FeesScheduleStudent = forwardRef(({ p_academic_year_id, p_class_id, p_scho
                                             onChange={(e) => setRemarks(e.target.value)}
                                             placeholder="Enter remarks..."
                                             style={{ width: '100%', minHeight: '50px', resize: 'vertical' }}
+                                            maxLength={255}
                                         />
                                     </td>
                                 </tr>
@@ -272,7 +254,7 @@ const FeesScheduleStudent = forwardRef(({ p_academic_year_id, p_class_id, p_scho
                     </tbody>
                 </table>
             )}
-        </div >
+        </div>
     );
 });
 

@@ -22,6 +22,8 @@ const SendNotifications = () => {
     const [notification, setNotificationid] = useState([]);
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
     const navigate = useNavigate();
+    const readOnlyRoles = ["Class Teacher", "Teacher", "Class Incharge",];
+    const canSubmit = !readOnlyRoles.includes(userObj.role_name?.trim());
 
     const [filter, setFilter] = useState({
         notification_id: 0,
@@ -41,12 +43,13 @@ const SendNotifications = () => {
     const fetchData = async () => {
         try {
             const response = await axios.post(baseUrl + "/sendnotifications/", {
-                action: "READ"
+                action: "READ",
+                school_id: userObj.school_id
             });
             setNotificationdata(response.data);
         } catch (error) {
             console.log("Error fetching data:", error);
-        }finally {
+        } finally {
             setIsLoading(false);
         }
     };
@@ -58,11 +61,11 @@ const SendNotifications = () => {
             console.error(`Error fetching ${endpoint}:`, error);
         }
     };
-      useEffect(() => {
-          fetchData("/sendnotifications/",setNotificationdata,userObj.school_id);
-          fetchDropdownData('/notifications/', setNotificationid);
-          fetchDropdownData('/creategroup/', setGroup);
-      }, []);
+    useEffect(() => {
+        fetchData("/sendnotifications/", setNotificationdata, userObj.school_id);
+        fetchDropdownData('/notifications/', setNotificationid, userObj.school_id);
+        fetchDropdownData('/creategroup/', setGroup, userObj.school_id);
+    }, []);
 
     const handleFilterSubmit = async (e) => {
         e.preventDefault();
@@ -123,7 +126,7 @@ const SendNotifications = () => {
                                     placeholder="Search..."
                                     value={searchQuery}
                                     className="searchInput"
-                                    onChange={handleSearchChange}/>
+                                    onChange={handleSearchChange} />
                             </div>
                             <div className="d-flex align-items-center" style={{ gap: "6px" }}>
                                 <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Filter</Tooltip>}>
@@ -132,12 +135,15 @@ const SendNotifications = () => {
                                     </Button>
                                 </OverlayTrigger>
 
-                                <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Add</Tooltip>}>
-                                    <Button className="primaryBtn" variant="primary" onClick={() => navigate("/addnotifications")}>
-                                        <MdAddCircle />
-                                    </Button>
-                                </OverlayTrigger>
-                             </div>
+                                {canSubmit && (
+                                    <OverlayTrigger placement="top" overlay={<Tooltip id="tooltip-top">Add</Tooltip>}>
+                                        <Button className="primaryBtn" variant="primary" onClick={() => navigate("/addnotifications")}>
+                                            <MdAddCircle />
+                                        </Button>
+                                    </OverlayTrigger>
+                                )}
+
+                            </div>
                         </div>
                     </div>
                     <div className="commonTable height100">
