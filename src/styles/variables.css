@@ -1,0 +1,1409 @@
+:root {
+    --labelColor: #757575;
+    --valueColor: #333333;
+    --formLabel: #000000;
+    --primaryColor: #0461FE;
+    --whiteColor: #ffffff;
+    --grayColor: #757575;
+    --navIcon: #333333;
+    --navLabel: #333333;
+    --navSubLabel: #898989;
+    --cardHeaderBg: #D9D9D9;
+    --scrollBar: #757575;
+    --blackColor: #212121;
+    --error: #ff0022;
+    --errorBg: #ff00221a;
+    --unclickableBtn: #eeeeee;
+}
+
+/* Inside src/index.css or your custom CSS */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap');
+
+html,
+body {
+    height: 100%;
+    overflow-y: hidden;
+}
+
+body {
+    background: rgb(255, 255, 255);
+    /* background: linear-gradient(-98deg, rgba(255,255,255,1) 0%, rgba(185,202,231,0.10407913165266103) 100%); */
+    background: linear-gradient(-98deg, rgb(245 250 255) 0%, rgba(185, 202, 231, 0.10407913165266103) 100%);
+    font-family: "Poppins", serif;
+}
+
+.height100 {
+    height: 100%;
+}
+
+.row {
+    margin: 0px;
+    padding: 0px;
+}
+
+.mar0 {
+    margin: 0px;
+}
+
+.floatR {
+    float: right;
+}
+
+.primaryBtn,
+.primaryBtn:hover {
+    background-color: var(--primaryColor);
+    color: var(--whiteColor);
+    font-size: 14px;
+}
+
+.requiredStar {
+    color: var(--error);
+    font-size: 14px;
+}
+
+.secondaryBtn,
+.secondaryBtn:hover {
+    background-color: transparent;
+    border: 1px solid var(--primaryColor);
+    color: var(--primaryColor);
+    font-size: 14px;
+    margin-right: 8px;
+}
+
+.clearBtn,
+.clearBtn:hover {
+    background-color: var(--whiteColor);
+    border: 0px solid var(--grayColor);
+    color: var(--grayColor);
+    font-size: 14px;
+    text-decoration: underline;
+    padding: 0px;
+}
+
+.linkBtn,
+.linkBtn:hover {
+    background-color: transparent;
+    text-decoration: underline;
+    border: 0px;
+    font-size: 14px;
+}
+
+.arrowBtn {
+    background-color: var(--grayColor);
+    width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 0px;
+    color: var(--whiteColor);
+}
+
+.addBtn {
+    border-radius: 20px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.searchInput {
+    padding: 10px;
+    font-size: 14px;
+    border-radius: 5px;
+    height: 35px;
+    border: 1px solid var(--cardHeaderBg);
+}
+
+.commonCard {
+    padding: 16px;
+    background-color: var(--whiteColor);
+    border: 0px;
+    border-radius: 0px;
+}
+
+.commonActionIcons {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #DEE5F8;
+    border-radius: 16px;
+    color: var(--primaryColor);
+    font-size: 16px;
+}
+
+.deleteIcon {
+    background-color: var(--errorBg);
+    color: var(--error);
+}
+
+.commonHorizontalCenter {
+    display: flex;
+    justify-content: center;
+}
+
+.commonLabel {
+    font-size: 12px;
+    color: var(--labelColor);
+    padding-right: 5px;
+}
+
+.commonValue {
+    font-size: 13px;
+    color: var(--valueColor);
+    font-weight: 500;
+}
+
+.commonInput {
+    margin-bottom: 16px;
+}
+
+.commonInput .form-control,
+.commonInput .form-select {
+    height: 40px;
+    background-color: transparent !important;
+    border: 1px solid #A5A5A5;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.commonInput .form-label {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--grayColor);
+    margin-bottom: 4px;
+}
+
+.commonInput .form-check-input {
+    width: 14px;
+    height: 14px;
+    border: 1px solid #A5A5A5;
+}
+
+.commonInput .form-check {
+    margin-top: 6px;
+}
+
+.commonInput .form-check-label {
+    font-size: 14px;
+}
+
+.commonFileUpload {
+    font-size: 14px;
+    width: 220px;
+}
+
+.fileUploadPart {
+    display: flex;
+    margin-right: 12px;
+    border-right: 1px dashed #212121;
+    padding-right: 12px;
+}
+
+.commonBtn {
+    background-color: var(--primaryColor);
+    color: var(--whiteColor);
+    border-radius: 0px;
+}
+
+.commonSectionTitle {
+    font-size: 16px;
+    text-decoration: underline;
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+.commonTabBtn,
+.commonTabBtn:hover,
+.commonTabBtn:focus,
+.commonTabBtn:active {
+    background-color: transparent !important;
+    border: 0px;
+    padding: 8px 12px;
+    color: #212121;
+    font-size: 14px;
+    border-radius: 0px;
+}
+
+.commonTabBtn.btn.btn-primary {
+    color: var(--primaryColor);
+    border-bottom: 3px solid var(--primaryColor);
+    font-weight: 500;
+}
+
+.commonTabsHead {
+    height: 50px;
+    padding: 0px 20px;
+}
+
+.commonTabsFooter {
+    border-top: 1px solid #cccccc;
+    padding: 16px;
+}
+
+/*Common Page Top Status Card*/
+/* .pageInfoStatusCard
+{
+    background-color: var(--whiteColor);
+    padding: 6px 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    height: 80px;
+} */
+.pageInfoStatusCard {
+    padding: 0px;
+}
+
+.pageInfoStatusCard .card {
+    border: 0px;
+    margin-bottom: 20px;
+}
+
+.pageInfoStatusCard .schoolInfo {
+    display: flex;
+    padding-left: 20px;
+}
+ 
+.pageInfoStatusCard .schoolLogo {
+    width: 100px;
+    height: 60px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 12px;
+}
+ 
+.pageInfoStatusCard .schoolLogo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+} 
+
+/**/
+.pageHeadTile {
+    display: flex;
+    justify-content: space-between;
+}
+
+/*Layout*/
+.pageMain {
+    display: flex;
+    height: 100%;
+}
+
+.pageHead {
+    height: 70px;
+    box-shadow: 0px 8px 6px -2px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid #ddd;
+}
+
+.pageRight {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    height: 100%;
+    width: calc(100% - 260px);
+}
+
+.pageBody {
+    /* height: calc(100% - 150px);*/
+    overflow-y: hidden;
+    padding: 24px;
+    height: 100%;
+}
+
+.rightActions {
+    display: flex;
+    justify-content: end;
+}
+
+/*Table Css*/
+.commonTH {
+    background-color: #EAE4E4 !important;
+    font-size: 14px;
+    color: var(--labelColor) !important;
+    font-weight: 500;
+}
+
+.tablePhoto {
+    width: 28px;
+    height: 28px;
+}
+
+.tablePhoto img {
+    border-radius: 14px;
+}
+
+.tableActions {
+    display: flex;
+}
+
+.tableActions .commonActionIcons {
+    margin-right: 12px;
+}
+
+/* .commonTable{
+    width: 80%;
+} */
+.form-check-input {
+    border-color: #000000;
+    transform: scale(1.2);
+}
+
+.noDataContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 60vh;
+    /* Adjust height based on layout */
+    width: 100%;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #555;
+}
+
+/* .loadingContainer,
+.noDataContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    width: 100%;
+    text-align: center;
+}
+ 
+.loadingGif {
+    width: 80px;
+    height: auto;
+} */
+.noDataContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    width: 100%;
+    text-align: center;
+}
+
+.loadingContainer {
+    display: flex;
+    position: absolute;
+    background-color: #21212140;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+}
+
+.loadingGif {
+    margin: 0 auto;
+    position: relative;
+    top: 40%;
+    width: 80px;
+    height: 80px;
+}
+
+.image-upload-container {
+    cursor: pointer;
+    position: relative;
+}
+
+.image-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #f1f1f1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    border: 2px solid #ccc;
+    position: relative;
+    font-size: 8px;
+    margin-bottom: 16px;
+}
+
+.image-circle i {
+    font-size: 30px;
+    color: #888;
+}
+
+.uploaded-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.edit-btn {
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    padding: 2px 6px;
+}
+
+.viewForm .form-control {
+    padding: 0px;
+    border: 0px;
+    height: 28px;
+}
+
+/*Scroll Bar Css Starts Here*/
+/* width */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 5px grey;
+    border-radius: 6px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: var(--scrollBar);
+    border-radius: 6px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollBar);
+}
+
+/*Common DataTable Css Starts Here*/
+.commonDataTableHead {
+    height: 40px;
+    margin-bottom: 10px;
+}
+
+.commonDataTableBody {
+    overflow: hidden;
+}
+
+.commonTableTitle {
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 36px;
+    margin-bottom: 0px;
+}
+
+/*Common Modal Css Starts Here*/
+.commonFilterModal .modal-dialog {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    margin: 0;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+}
+
+.commonFilterModal.show .modal-dialog {
+    transform: translateX(0);
+}
+
+.commonFilterModal .modal-content {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modalHeaderFixed,
+.modalFooterFixed {
+    position: sticky;
+    background: white;
+    z-index: 10;
+}
+
+.modalHeaderFixed {
+    top: 0;
+}
+
+.modalFooterFixed {
+    bottom: 0;
+}
+
+.modalBodyScrollable {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 15px;
+}
+
+.modalHeaderFixed .modal-title {
+    font-size: 16px;
+}
+
+.commonFilterModal .modal-content {
+    width: 350px;
+}
+
+.commonFilterModal .modalFooterFixed {
+    display: flex;
+    justify-content: space-between;
+}
+
+/*Common Modal Css Ends Here*/
+/*Common DataTable Css Ends Here*/
+
+/* body
+  {
+    background: #fdfdfd;
+  }
+.leftNav
+{
+    background-color: #e3e3e3;
+}
+.pageHead {
+    background-color: #efefef;
+    margin-bottom: 12px;
+} */
+/*Temporary Css*/
+.tempHeight {
+    height: 88%;
+}
+
+.tempHeight .card-body {
+    height: calc(100% - 170px);
+    overflow-y: auto;
+}
+
+/* .custom-table .rdt_TableHeadRow {
+    background-color: #EAE4E4 !important;
+    color: #757575 !important;
+    font-size: 12px !important;
+    text-align: center !important;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    padding-Left: "8px";
+    padding-Right: "8px";
+    padding: 13px;
+ 
+    min-height: 20px !important;
+ 
+}
+ 
+ 
+.custom-table .rdt_TableCell {
+    font-size: 12px !important;
+    transition: background-color 0.3s ease !important;
+    padding-Top: "0px";
+    padding-Bottom: "0px";
+    padding-Left: "8px";
+    padding-Right: "8px";
+    min-Height: "20px"
+} */
+
+/* Hover Effect */
+/* .custom-table .rdt_TableCell:hover {
+    background-color: #f0f0f0 !important;
+    cursor: pointer !important;
+} */
+
+/* Table Header */
+/* Table Header */
+/* .commonTable.height100 .tableBody {
+    overflow-y: auto !important;
+    max-height: calc(100vh - 200px) !important; 
+  } */
+.custom-table {
+    border-radius: 8px !important;
+    overflow: auto !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    background-color: #fff !important;
+    font-family: 'Roboto', Arial, sans-serif !important;
+    width: 100% !important;
+    display: block !important;
+    border-collapse: separate !important;
+    /* Required for cell spacing/borders to work with rounded corners */
+    border-spacing: 0 !important;
+    /* Ensures no extra spacing between cells */
+}
+
+/* Table container */
+.custom-table {
+    border-radius: 8px !important;
+    /* Apply rounded corners to the table */
+    /* Ensures content doesn't overflow out of the rounded corners */
+    border-collapse: separate !important;
+    /* Ensure borders don't collapse */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1) !important;
+    /* Optional shadow for styling */
+}
+
+/* Table Header */
+.custom-table .rdt_TableHeadRow {
+    background-color: #0d6efd !important;
+    color: #fff !important;
+    /* Smaller font */
+    /* padding: 6px 15px !important; Reduced padding */
+    border-bottom: 2px solid #0d6efd !important;
+    line-height: 0.2 !important;
+    /* Reduced line height for header */
+    min-height: 15px !important;
+    padding: 1px !important;
+
+}
+
+/* Table Cells */
+.custom-table .rdt_TableRow {
+    min-height: 5px !important;
+    /* Reduce row height */
+    line-height: 1 !important;
+    /* Adjust line spacing */
+    text-align: center !important;
+    padding: 1px !important;
+    /* Reduce padding */
+}
+
+.custom-table .rdt_TableCell {
+    min-height: 5px !important;
+    /* Reduce cell height */
+    /* Reduce padding */
+    font-size: 14px !important;
+    text-align: center !important;
+    padding: 1px !important;
+    /* Adjust font size */
+}
+
+/* Row hover effect */
+.custom-table .rdt_TableRow:hover {
+    background-color: #f5f5f5 !important;
+}
+
+/* Zebra striping */
+.custom-table .rdt_TableRow:nth-child(even) {
+    background-color: #fafafa !important;
+    text-align: center !important;
+}
+
+/* Rounded corners on the first and last header cells */
+.custom-table .rdt_TableHeadRow th:first-child {
+    border-top-left-radius: 8px !important;
+}
+
+.custom-table .rdt_TableHeadRow th:last-child {
+    border-top-right-radius: 8px !important;
+}
+
+/* Rounded corners on the first and last cells of the last row */
+.custom-table .rdt_TableRow:last-child td:first-child {
+    border-bottom-left-radius: 8px !important;
+}
+
+.custom-table .rdt_TableRow:last-child td:last-child {
+    border-bottom-right-radius: 8px !important;
+}
+
+/* Ensure table rows are compact */
+
+
+
+/* Scrollbar styling (unchanged) */
+/* ... (same as previous example) */
+
+/* Optional: Add a subtle gradient to the header for a modern touch */
+
+.position-relative {
+    /* Ensure relative positioning for the dropdown */
+    position: relative;
+}
+
+.dropdown-toggle-custom {
+    /* Style the dropdown toggle (icon container) */
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+    cursor: pointer;
+    /* Make it clickable */
+}
+
+.filter-icon {
+    /* Style the filter icon itself */
+    cursor: pointer;
+    /* Ensure the icon has a pointer cursor */
+}
+
+.dropdown-menu-custom {
+    /* Style the dropdown menu */
+    z-index: 1051 !important;
+    /* Ensure it's above the table */
+    min-width: 200px;
+    /* Adjust as needed */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    border: 1px solid #ced4da;
+    background-color: #fff;
+    position: absolute;
+    /* Position it relative to the toggle */
+    top: 100%;
+    /* Position below the toggle */
+    left: 0;
+    /* Align to the left of the toggle */
+    display: block;
+    /* Make it visible */
+    margin-top: 2px;
+    /* Add a small margin */
+}
+
+/* Optional styles for form elements within the dropdown */
+.dropdown-menu-custom .form-group {
+    margin-bottom: 8px;
+}
+
+.dropdown-menu-custom .form-label {
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.dropdown-menu-custom .form-control {
+    font-size: 14px;
+    height: 35px;
+}
+
+/* CRITICAL: Ensure the table container doesn't clip the dropdown */
+.custom-table-container {
+    overflow: visible !important;
+    /* Allow the dropdown to extend outside */
+}
+
+.noDataMessage {
+    text-align: center;
+    font-size: 16px;
+    color: red;
+    margin-top: 20px;
+}
+
+.tableBody {
+    /* overflow-x: auto; */
+    max-width: 100%;
+}
+
+.dataTable-container {
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+.custom-table {
+    min-width: 800px;
+}
+
+.tableActions {
+    position: sticky;
+    right: 0;
+    background: white;
+    /* z-index: 2; */
+}
+
+.hide-scrollbar {
+    max-height: 575px;
+    /* Adjust height as needed */
+    overflow-y: auto;
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/*Add Sudent Css Starts Here*/
+.addStudent .pageBody {
+    height: calc(100% - 70px);
+}
+
+.addStudent .commonTabsBody {
+    height: calc(100% - 110px);
+    overflow-y: auto;
+}
+
+.timetableGrid {
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.timetableGrid table {
+    height: 75%;
+    width: 100%;
+    border-collapse: collapse;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.timetableGrid th,
+.timetableGrid td {
+    padding: 10px;
+    border: 1px solid #ccc;
+    text-align: center;
+}
+
+.timetableGrid th {
+    text-transform: uppercase;
+    font-size: 15px;
+    font-weight: 500;
+    background-color: #ebf2fc;
+    height: 36px;
+}
+
+.timetableGrid td {
+    background-color: var(--whiteColor);
+    height: 50px;
+    font-size: 14px;
+}
+
+.cdFRoJ {
+    /* padding-left: 6px !important; */
+    padding: 5px !important;
+}
+
+/* Ensure the table container expands */
+.commonTable {
+    width: 100%;
+    overflow-x: auto;
+    /* Allow horizontal scrolling if needed */
+    white-space: nowrap;
+    /* Prevent column wrapping */
+}
+
+/* Ensure table expands properly */
+.sc-fkSzgi {
+    width: max-content;
+    /* Allow table to expand based on content */
+}
+
+/* Reduce column width slightly to fit all 31 days */
+.rdt_TableCol {
+
+    /* Prevent shrinking below this size */
+    min-width: auto !important;
+    /* Adjust based on your column widths */
+}
+
+/* Ensure table rows don't wrap */
+.sc-hFflus {
+    display: flex;
+    flex-wrap: nowrap;
+    /* Prevent wrapping of columns */
+}
+
+/* Ensure parent containers do not hide overflow */
+.tableBody {
+    overflow: visible !important;
+}
+
+/* Optional: If you need horizontal scrolling */
+.commonTable,
+.tableBody {
+    overflow-x: auto;
+}
+
+.rdt_TableCol:first-child {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 5 !important;
+}
+
+.rdt_TableHeadRow {
+    display: flex !important;
+}
+
+/*School Calander Css Starts Here*/
+.pageBody.schoolCalander {
+    padding: 0px;
+}
+
+.schoolCalander .eventsPart {
+    background-color: var(--whiteColor);
+    height: 100%;
+    padding: 16px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.schoolCalander .rbc-month-view {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.schoolCalander .rbc-calendar {
+    height: 95%;
+}
+
+.schoolCalander .rbc-date-cell {
+    padding-right: 12px;
+    font-size: 14px;
+    padding-top: 12px;
+}
+
+.schoolCalander .rbc-off-range-bg {
+    background-color: var(--unclickableBtn);
+}
+
+.schoolCalander .rbc-event {
+    background-color: var(--primaryColor);
+    font-size: 12px;
+    width: 90%;
+    margin: 0 auto;
+}
+
+.schoolCalander .rbc-header {
+    text-transform: uppercase;
+    font-size: 15px;
+    font-weight: 500;
+    background-color: #ebf2fc;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.schoolCalander .eventsPartHead {
+    margin-bottom: 16px;
+}
+
+/*School Calander Css Ends Here*/
+.contentAllignLR {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.tableBody .homework-details-cell {
+    max-height: 40px;
+    /* Limit the height */
+    overflow: hidden;
+    /* Hide the overflowing text */
+    text-overflow: ellipsis;
+    /* Add ellipsis for truncated text */
+    white-space: nowrap;
+    /* Prevent text wrapping */
+}
+
+.custom-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 10px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 3px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+    background-color: #f1f1f1;
+}
+.nav-item button{
+    cursor: default !important;
+    letter-spacing: 1px;
+    font-size: 14px;
+}
+.card-header-tabs .nav-link.active {
+    background-color: #ffffff00 !important;
+    border-bottom: 2px solid #0d6efd !important;
+    font-size: 15px;
+    letter-spacing: 1px;
+   
+}
+.view_student .hide-scrollbar {
+    max-height: 700px !important; /* Adjust height as needed */
+    overflow-y: auto;
+    scrollbar-width: none;
+    background: #f8f8f8 !important; /* Firefox */
+  }
+  .nav-tabs .nav-link.active {
+    border-color: #00000000;
+}
+.card-footer{
+    background-color:white;
+}
+.swal-custom-popup {
+    font-family: "Poppins", sans-serif;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background: #fff;
+    width: 300px; /* Reduce modal width */
+}
+
+.swal-custom-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 8px; /* Reduce space below title */
+}
+
+.swal-custom-select {
+   
+    padding: 6px;  /* Reduce padding */
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background: #fff;
+    transition: border-color 0.2s;
+}
+
+.swal-custom-select:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+.swal-custom-confirm {
+    background: #007bff;
+    color: white;
+    border-radius: 6px;
+    padding: 8px 12px; /* Smaller padding */
+    font-size: 14px;
+    font-weight: bold;
+    transition: background 0.2s;
+    margin-right: 5px; /* Reduce button spacing */
+}
+
+.swal-custom-confirm:hover {
+    background: #0056b3;
+}
+
+.swal-custom-cancel {
+    background: white;
+    color: #007bff;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #007bff;
+    font-size: 14px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.swal-custom-cancel:hover {
+    background: #007bff;
+    color: white;
+}
+.tableBody .homework-details-cell {
+    max-height: 40px; /* Limit the height */
+    overflow: hidden; /* Hide the overflowing text */
+    text-overflow: ellipsis; /* Add ellipsis for truncated text */
+    white-space: nowrap; /* Prevent text wrapping */
+  }
+  .scrollable-table {
+    max-height: 420px; /* Adjust the height as needed */
+    overflow-y: auto;
+    overflow-x: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  
+    /* Hide scrollbar for Webkit-based browsers */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+  }
+  
+  /* Hide scrollbar for Webkit-based browsers (Chrome, Safari) */
+  .scrollable-table::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .scrollable-table table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+  }
+  
+  
+  .scrollable-table th, .scrollable-table td {
+    padding: 7px 10px; /* Smaller padding for a compact table */
+    text-align: center;
+    font-size: 14px; /* Smaller font size for better readability */
+  }
+  
+  .scrollable-table th {
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+    position: sticky;
+    top: 0; /* Sticky header for subjects */
+    z-index: 2; /* Ensure it stays on top */
+  }
+  
+  .scrollable-table td:first-child {
+    position: sticky;
+    left: 0; /* Sticky student names column */
+    background-color: #f9f9f9; /* Add background color to avoid overlap with other cells */
+    z-index: 1; /* Keep the first column on top */
+  }
+  
+  .scrollable-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
+  .scrollable-table tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+  }
+  
+  .scrollable-table tbody tr:hover {
+    background-color: #eaeaea;
+  }
+  
+  .scrollable-table .form-control {
+    padding: 5px; /* Smaller padding for inputs */
+    font-size: 14px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    max-width: 70px; /* Limiting the width of the input fields */
+  }
+  
+  .scrollable-table::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .scrollable-table::-webkit-scrollbar-thumb {
+    background-color: #007bff;
+    border-radius: 10px;
+  }
+  
+  .scrollable-table::-webkit-scrollbar-thumb:hover {
+    background-color: #0056b3;
+  }
+  thead.thead-light {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 100; /* Ensures it's above other elements */
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: separate; /* Important for sticky positioning */
+  }
+  
+  th {
+    padding: 10px;
+    border: 1px solid #ddd;
+    background: #f8f9fa;
+    text-align: left;
+  }
+  /* Add to your main CSS file or module */
+.expandedTableWrapper {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    padding: 16px;
+    margin: 10px 0;
+    overflow-x: auto;
+  }
+  
+  .customExpandedTable {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 15px;
+  }
+  
+  .customExpandedTable thead {
+    background-color: #f5f7fa;
+  }
+  
+  .customExpandedTable th,
+  .customExpandedTable td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid rgba(0, 0, 0, .12);;
+  }
+  
+  .customExpandedTable tbody tr:hover {
+    background-color: #f9f9f9;
+    transition: background 0.3s ease;
+  }
+  
+  .expandedActions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .actionIcon {
+    font-size: 20px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+  
+  .actionIcon:hover {
+    transform: scale(1.2);
+  }
+  
+  .actionIcon.edit {
+    color: #007bff;
+  }
+  
+  .actionIcon.delete {
+    color: #007bff;
+  }
+  
+  .gradePill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+  }
+  
+  .gradeA {
+    background-color: #28a745;
+  }
+  
+  .gradeB {
+    background-color: #17a2b8;
+  }
+  
+  .gradeC {
+    background-color: #ffc107;
+  }
+  
+  .gradeD {
+    background-color: #fd7e14;
+  }
+  
+  .gradeF {
+    background-color: #dc3545;
+  }
+  
+  .gradeDefault {
+    background-color: #6c757d;
+  }
+  .ant-picker {
+    height: 40px;
+    background-color: transparent !important;
+    border: 1px solid #A5A5A5 !important;
+    border-radius: 4px;
+    font-size: 13px;
+   
+  }
+  .border-blue{
+    border-bottom: 2px solid #0d6efd;
+    color: #757575;
+   
+  }
+  .border-blue th{
+    /* border-bottom: 2px solid #0d6efd; */
+    color: #757575;
+    background-color: #EAE4E4;
+  }
+  .image-upload-container {
+    display: flex;
+    justify-content: flex-start; /* Align to left */
+    align-items: center;
+    margin-top: 10px;
+  }
+ 
+  .image-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #ddd;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+  }
+ 
+  .image-circle:hover {
+    transform: scale(1.05);
+  }
+ 
+  .uploaded-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+ 
+  .image-placeholder {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+ 
+  /* Enlarged Image CSS */
+  .enlarged-image-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px; /* Size of the enlarged circle */
+    height: 300px;
+    border-radius: 50%; /* Circular enlarged image */
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.8); /* Optional background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+ 
+  .enlarged-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%; /* Keeps the image circular */
+  }
+  .custom-tablehis th { background-color: #007bff; color: white; padding: 10px; text-align: left; border: none; }
+  .tableWrapper {
+    overflow-x: auto; /* Allow horizontal scroll */
+    max-width: 100%; /* Ensure the table does not exceed the width of the container */
+  }
+ 
+  .commonTable {
+    width: 100%; /* Ensure the table takes up full width */
+  }
+ 
+  table {
+    width: 100%; /* Ensure the table takes up full width of the parent */
+    min-width: 900px; /* This is a minimum width to trigger the horizontal scroll, adjust based on your table content */
+  }
+  /* .attendance-table-wrapper {
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: #f9fafb;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+  } */
+  .exam-report-wrapper {
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 0 0.25rem;
+  }
+  
+  .exam-report-wrapper::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+  
+  .exam-report-wrapper::-webkit-scrollbar-thumb {
+    background-color: #e5e7eb;
+    border-radius: 3px;
+  }
+  .custom-modal {
+    max-width: 65%;
+    width: 900px;
+  }
+   
+  .custom-modal .modal-content {
+    height: auto;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+ .fileUpload{
+    display: flex;
+  
+    border-right: 1px dashed white;
+    
+ }
